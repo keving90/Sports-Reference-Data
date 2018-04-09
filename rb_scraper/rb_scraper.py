@@ -5,12 +5,57 @@ and `Beautiful Soup 4` modules to gather the web page data. A `Player` class is 
 program loops through the 5 most recent NFL seasons and gathers data for each season. A column for the player's fantasy points for the season 
 is added to each data frame. The points total is based on a standard Yahoo! league (0 PPR). The scoring can be changed in the 
 `FANTASY_SETTINGS_DICT` dictionary. A data frame for each season is placed in a list, and this list is concatenated into one big data frame. 
-Then, various manipulations are made to the data frame to find all runningbacks who have had 50 or more rushing attempts in each of the last 5 
+Then, various manipulations are made to the data frame to find all running backs who have had 50 or more rushing attempts in each of the last 5 
 years. The final data frame is saved as a `.csv` file.
 
-Note: This dataset does not include 2 point conversions. This will affect the fantasy point total for some players. Luckily, few runningbacks 
+Note: This dataset does not include 2 point conversions. This will affect the fantasy point total for some players. Luckily, few running backs 
 get many 2 point conversions (9 RB's in 2017 each had only 1 conversion; the rest had 0)  This will only have a small affect on the point 
-total for some of the runningbacks.
+total for some of the running backs.
+
+The HEADER and FANTASY_SETTINGS_DICT dictionaries should be of the following forms:
+
+    HEADER = {
+        'name': str,
+        'team': str,
+        'age': int,
+        'position': str,
+        'games_played': int,
+        'games_started': int,
+        'rush_attempts': int,
+        'rush_yards': int,
+        'rush_touchdowns': int,
+        'longest_run': int,
+        'yards_per_rush': float,
+        'yards_per_game': float,
+        'attempts_per_game': float,
+        'targets': int,
+        'receptions': int,
+        'rec_yards': int,
+        'yards_per_rec': float,
+        'rec_touchdowns': int,
+        'longest_rec': int,
+        'rec_per_game': float,
+        'rec_yards_per_game': float,
+        'catch_percentage': float,
+        'scrimmage_yards': int,
+        'rush_rec_touchdowns': int,
+        'fumbles': int
+    }
+
+    FANTASY_SETTINGS_DICT = {
+        'pass_yard': 1 / 25,  # 25 yards = 1 point
+        'pass_td': 4,
+        'interception': -1,
+        'rush_yard': 1 / 10,  # 10 yards = 1 point
+        'rush_td': 6,
+        'rec_yard': 1 / 10,  # 10 yards = 1 point
+        'reception': 0,
+        'receiving_td': 6,
+        'two_pt_conversion': 2,
+        'fumble_lost': -2,
+        'offensive_fumble_return_td': 6,
+        'return_yard': 1 / 25  # 25 yards = 1 point
+    }
 """
 
 import requests
@@ -148,7 +193,7 @@ def make_dataframe(dataframe_list, player_dict_list, year, header):
 def modify_data(dataframe_list, NUM_YEARS):
     """
     This function takes a list of data frames as input. It concatenates the data frames together
-    to create one large data frame. It then modifies the data to get the runningbacks with 50 or
+    to create one large data frame. It then modifies the data to get the running backs with 50 or
     more carries in each of the past NUM_YEARS season. The modified data frame is returned.
     """
     # Concatenate the data frames to create one large data frame that has data for each season.
@@ -164,11 +209,11 @@ def modify_data(dataframe_list, NUM_YEARS):
     # but no position is likely a running back.
     big_df['position'] = big_df['position'].fillna('RB')
 
-    # Some runningbacks have their position description in lowercase letters.
+    # Some running backs have their position description in lowercase letters.
     # Use a lambda function to fix this inconsistency.
     big_df['position'] = big_df['position'].apply(lambda x: 'RB' if 'rb' in x else x)
 
-    # Only interested in runningbacks
+    # Only interested in running backs
     big_df = big_df[big_df['position'] == 'RB']
 
     # Set the player's name and the season's year as the indexes.
@@ -237,22 +282,6 @@ def main():
         'scrimmage_yards': int,
         'rush_rec_touchdowns': int,
         'fumbles': int
-    }
-
-    # This dictionary holds the stat name as keys and their fantasy points worth as values.
-    FANTASY_SETTINGS_DICT = {
-        'pass_yard': 1/25, # 25 yards = 1 point
-        'pass_td': 4,
-        'interception': -1,
-        'rush_yard': 1/10, # 10 yards = 1 point
-        'rush_td': 6,
-        'rec_yard': 1/10, # 10 yards = 1 point
-        'reception': 0,
-        'receiving_td': 6,
-        'two_pt_conversion': 2,
-        'fumble_lost': -2,
-        'offensive_fumble_return_td': 6,
-        'return_yard': 1/25 # 25 yards = 1 point
     }
 
     # First, we need to scrape the data from Pro-Football Reference.
