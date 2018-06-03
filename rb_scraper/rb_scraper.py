@@ -18,46 +18,18 @@ This will only have a small affect on the point total for some of the running ba
 
 import requests
 import bs4
-import pandas as pd
 import numpy as np
+import pandas as pd
 import datetime
 
-
-class Player(object):
-    """
-    The Player class is used to represent a record in the data set. The player's 'name' and 'year' attributes will be
-    used in the data frame as a multi-hierarchical index. The class uses the HEADER dictionary to assign attributes
-    and use the appropriate datatype.
-    """
-    def __init__(self, data, header):
-        """
-        Initialize the Player object. This method will use the keys and values in HEADER to assign attributes and
-        data types for the attributes.
-        """
-        # Loop through the HEADER dictionary keys and values. An enumeration is also used to grab data from a specific
-        # column in the row.
-        for i, (attr, data_type) in enumerate(header.items()):
-            # Remove unwanted characters in data.
-            # '*' in the player's name indicates a Pro Bowl appearance.
-            # '+' in the player's name indicates a First-Team All-Pro award.
-            # '%' is included in the catch percentage stat on pro-football reference
-            if data[i].endswith('*+'):
-                data[i] = data[i][:-2]
-            elif data[i].endswith('%') or data[i].endswith('*') or data[i].endswith('+'):
-                data[i] = data[i][:-1]
-
-            # Set the class attribute. If the data is empty then we will assign a NumPy NaN value to the attribute.
-            # Otherwise, we set the attribute as usual.
-            if not data[i]:
-                setattr(self, type(data[i])(np.NaN), str(data[i]))
-            else:
-                setattr(self, attr, data_type(data[i]))
+from player import Player
+from constants import HEADER, FANTASY_SETTINGS_DICT
 
 
 def scrape_data(current_year):
     """
     This function goes to pro-football-reference.com 'Rushing and Receiving' page for the
-    given season and scrapes the data from the webpage. A Player object is used to represent
+    given season and scrapes the data from the web page. A Player object is used to represent
     the data for each player. The function uses a list called data frame_list to create a
     data frame for each year of data and append that data frame to the end of the list. The list
     is then returned.
@@ -110,7 +82,11 @@ def create_player_objects(player_list, header):
             # Collect the relevant info from the cells and place them in player_info
             player_info = []
             for stat in info_list:
+                # print(type(stat))
+                # print(stat['data-stat'])
                 player_info.append(stat.text)
+                if stat['data-stat'] == 'player':
+                    get_player_url(stat, player_info)
 
             # Create a Player object and append the __dict__ attribute to a list.
             # This list is used for the data in our data frame.
@@ -120,36 +96,49 @@ def create_player_objects(player_list, header):
     return list_of_player_dicts
 
 
-def make_data_frame(data_frame_list, player_dict_list, year, header, fantasy_settings):
+def get_player_url(stat, player_info):
     """
-    Creates a new data frame and inserts the the data frame into data frame_list. A 'year' and a
-    'fantasy_points' column is added to the data frame. The 'year' column indicates the year of
-    the season, and the 'fantasy_points' column calculates how many fantasy points the player
-    would have learned that season (excluding 2 point conversions).
+    Gets the URL to the player's personal career stat page and appends it to player_info list.
     """
+    # Every tag has an attribute.
+    # If the tag's data-stat attribute is 'player', then we get the player's URL.
+    href = stat.find_all('a', href=True)
+    url = href[0]['href']
+    player_info.append(url)
 
-    # Create the data frame, add column headers, and add a 'year' column for the current season.
-    df = pd.DataFrame(data=player_dict_list)
-    header_list = list(header.keys())
-    df = df[header_list]
-    df['year'] = year
+
+def make_data_frame(player_dict_list, year, header, fantasy_settings):
+    """
+    Creates a new data frame and returns it. A 'year' and a 'fantasy_points' column is added to the data frame.
+    The 'year' column indicates the year of the season, and the 'fantasy_points' column calculates how many fantasy
+    points the player would have earned that season (excluding 2 point conversions).
+    """
+    df = pd.DataFrame(data=player_dict_list)  # Create the data frame.
+    header_list = list(header.keys())         # Get header dict's keys for df's column names.
+    df = df[header_list]                      # Add column headers.
+    df['year'] = year                         # Add a 'year' column.
+
+    # Create fantasy_points column.
     df['fantasy_points'] = df['rush_yards'] * fantasy_settings['rush_yard'] + \
                            df['rush_touchdowns'] * fantasy_settings['rush_td'] + \
                            df['rush_touchdowns'] * fantasy_settings['rush_td'] + \
                            df['receptions'] * fantasy_settings['reception']
 
-    # Add the data frame to the data frame list.
-    data_frame_list.append(df)
+    return df
 
 
-def modify_data(data_frame_list, NUM_YEARS):
+def modify_data(data_frame_list, num_years, player_url=False):
     """
     This function takes a list of data frames as input. It concatenates the data frames together
-    to create one large data frame. It then modifies the data to get the runningbacks with 50 or
-    more carries in each of the past NUM_YEARS season. The modified data frame is returned.
+    to create one large data frame. It then modifies the data to get the running backs with 50 or
+    more carries in each of the past num_years season. The modified data frame is returned.
     """
     # Concatenate the data frames to create one large data frame that has data for each season.
     big_df = pd.concat(data_frame_list)
+
+    # Keep the player_url column in the data frame when player_url=True
+    if not player_url:
+        big_df.drop('url', axis=1, inplace=True)
 
     # The concatenation creates duplicate indexes, so we will reset the index
     big_df.reset_index(inplace=True, drop=True)
@@ -157,15 +146,15 @@ def modify_data(data_frame_list, NUM_YEARS):
     # Eliminate players with fewer than 50 rush attempts.
     big_df = big_df[big_df['rush_attempts'] >= 50]
 
-    # Some players have a NaN value their position. Any player with 50 or more rush attempts
+    # Some players have a NaN value their position. Any player with 50 or more rush attempts,
     # but no position is likely a running back.
     big_df['position'] = big_df['position'].fillna('RB')
 
-    # Some runningbacks have their position description in lowercase letters.
+    # Some running backs have their position description in lowercase letters.
     # Use a lambda function to fix this inconsistency.
     big_df['position'] = big_df['position'].apply(lambda x: 'RB' if 'rb' in x else x)
 
-    # Only interested in runningbacks
+    # Only interested in running backs
     big_df = big_df[big_df['position'] == 'RB']
 
     # Set the player's name and the season's year as the indexes.
@@ -177,10 +166,10 @@ def modify_data(data_frame_list, NUM_YEARS):
     # Get each player's name
     names = big_df.index.get_level_values('name').unique()
 
-    # Loop through each player. If they don't have NUM_YEARS season's worth of data, then we
+    # Loop through each player. If they don't have num_years season's worth of data, then we
     # drop them from the data set.
     for name in names:
-        if len(big_df.loc[name]) != NUM_YEARS:
+        if len(big_df.loc[name]) != num_years:
             big_df.drop(name, inplace=True)
 
     return big_df
@@ -192,7 +181,7 @@ def main():
     now = datetime.datetime.now()
 
     # Number of years of data.
-    NUM_YEARS = 5
+    num_years = 5
 
     # Starting with last year since it's a full season of data.
     # Regular season football ends in late December or early January, so if the current
@@ -205,52 +194,7 @@ def main():
     start_year = now.year - 1
 
     # Get the final year to gather data from.
-    end_year = start_year - NUM_YEARS
-
-    # This dictionary is used for creating columns in the data frame and assigning a datatype for each column.
-    HEADER = {
-        'name': str,
-        'team': str,
-        'age': int,
-        'position': str,
-        'games_played': int,
-        'games_started': int,
-        'rush_attempts': int,
-        'rush_yards': int,
-        'rush_touchdowns': int,
-        'longest_run': int,
-        'yards_per_rush': float,
-        'yards_per_game': float,
-        'attempts_per_game': float,
-        'targets': int,
-        'receptions': int,
-        'rec_yards': int,
-        'yards_per_rec': float,
-        'rec_touchdowns': int,
-        'longest_rec': int,
-        'rec_per_game': float,
-        'rec_yards_per_game': float,
-        'catch_percentage': float,
-        'scrimmage_yards': int,
-        'rush_rec_touchdowns': int,
-        'fumbles': int
-    }
-
-    # This dictionary holds the stat name as keys and their fantasy points worth as values.
-    FANTASY_SETTINGS_DICT = {
-        'pass_yard': 1/25, # 25 yards = 1 point
-        'pass_td': 4,
-        'interception': -1,
-        'rush_yard': 1/10, # 10 yards = 1 point
-        'rush_td': 6,
-        'rec_yard': 1/10, # 10 yards = 1 point
-        'reception': 0,
-        'receiving_td': 6,
-        'two_pt_conversion': 2,
-        'fumble_lost': -2,
-        'offensive_fumble_return_td': 6,
-        'return_yard': 1/25 # 25 yards = 1 point
-    }
+    end_year = start_year - num_years
 
     # First, we need to scrape the data from Pro-Football Reference.
 
@@ -260,12 +204,19 @@ def main():
 
     # Iterate through each year of data and create a data frame for each one.
     for year in range(start_year, end_year, -1):
+        # Scrape the data to get each player's web page elements.
         player_list = scrape_data(year)
-        list_of_player_dicts = create_player_objects(player_list, HEADER)
-        make_data_frame(data_frame_list, list_of_player_dicts, year, HEADER, FANTASY_SETTINGS_DICT)
 
-    # The data has been scraped. We will now concatenate the data frames and clean the data.
-    big_df = modify_data(data_frame_list, NUM_YEARS)
+        # Use the elements to create Player objects.
+        list_of_player_dicts = create_player_objects(player_list, HEADER)
+
+        # Create a data frame for the season
+        df = make_data_frame(list_of_player_dicts, year, HEADER, FANTASY_SETTINGS_DICT)
+
+        data_frame_list.append(df)
+
+    # Concatenate the data frames and clean the data.
+    big_df = modify_data(data_frame_list, num_years, False)
 
     # Write the data frame to a csv file and save it in the current working directory.
     big_df.to_csv('rb_data.csv')
