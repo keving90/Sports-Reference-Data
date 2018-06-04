@@ -1,10 +1,11 @@
 import numpy as np
 
+
 class Player(object):
     """
     The Player class is used to represent a record in the data set. The player's 'name' and 'year' attributes will be
     used in the data frame as a multi-hierarchical index. The class uses the HEADER dictionary to assign attributes
-    and use the appropriate datatype.
+    and use the appropriate data type.
     """
     def __init__(self, data, header):
         """
