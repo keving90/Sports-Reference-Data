@@ -5,10 +5,13 @@ A sample `.csv` output file is included in this repository.
 
 **Note:** This dataset does not include 2 point conversions. This will affect the fantasy point total for some players. Luckily, few running backs get many 2 point conversions (9 RB's in 2017 each had only 1 conversion; the rest had 0)  This will only have a small affect on the point total for some of the running backs.
 
-# Requirements
+### Requirements
 The following Python 3 libraries are needed to run this program: `Requests`, `Beautiful Soup 4 (bs4)`, `Pandas`, `NumPy`, and `datetime`.
 
-# Usage
-To run `rb_scraper.py`, make sure the libraries listed above are included and use the following Terminal command: `python3 rb_scraper.py`
+### Usage
+To run `5_seasons_50_carries.py`, make sure the libraries listed above are included and use the following Terminal command: `python3 5_seasons_50_carries.py`
 
-If no problems occur, a `.csv` output file should be saved in `rb_scraper.py`'s current directory. 
+If no problems occur, a `.csv` output file should be saved in `5_seasons_50_carries.py`'s current directory. 
+
+### rush_rec_scraper.py
+The `rush_rec_scraper.py` module contains functions for scraping data from the Rushing and Receiving table, creating player objects, and putting a season's worth of data into a data frame.
