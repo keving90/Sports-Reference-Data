@@ -13,6 +13,9 @@ import pandas as pd
 # another module (such as 5_seasons_50_carries.py).
 import sys
 import os
+
+# os.path.split() splits the head and tail of the path.
+# This line of code grabs the head, joins it with '..', and inserts the path into the first element of sys.path.
 sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
 
 from player import Player
