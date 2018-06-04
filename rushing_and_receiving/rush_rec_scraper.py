@@ -9,9 +9,11 @@ import requests
 import bs4
 import pandas as pd
 
-# Putting '..' on the path because Player import was causing an error in jupyter notebook.
+# Putting '..' on sys.path because Player import was causing an error when rush_rec_scraper.py is imported from 
+# another module (such as 5_seasons_50_carries.py).
 import sys
-sys.path.append("..")
+import os
+sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
 
 from player import Player
 
