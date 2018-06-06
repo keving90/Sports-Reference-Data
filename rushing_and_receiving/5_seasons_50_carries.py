@@ -18,9 +18,9 @@ This will only have a small affect on the point total for some of the running ba
 
 import pandas as pd
 import datetime
-import rush_rec_scraper as rrs
+import rushing_and_receiving.rush_rec_scraper as rrs
 
-from constants import HEADER, FANTASY_SETTINGS_DICT
+from constants import TOTAL_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT
 
 
 def modify_data_frame(data_frame_list, num_years, player_url=False):
@@ -102,14 +102,20 @@ def main():
 
     # Iterate through each year of data and create a data frame for each one.
     for year in range(start_year, end_year, -1):
+        # Create url for given season.
+        url = 'https://www.pro-football-reference.com/years/' + str(year) + '/rushing.htm'
+
+        # Identify the table ID to get scrape from the correct table.
+        table_id = 'rushing_and_receiving'
+
         # Scrape the data to get each player's web page elements.
-        player_list = rrs.scrape_data(year)
+        player_list = rrs.scrape_data(url, table_id)
 
         # Use the elements to create Player objects.
-        list_of_player_dicts = rrs.create_player_objects(player_list, HEADER)
+        list_of_player_dicts = rrs.create_player_objects(player_list, TOTAL_RUSH_REC_HEADER)
 
         # Create a data frame for the season
-        df = rrs.make_data_frame(list_of_player_dicts, year, HEADER, FANTASY_SETTINGS_DICT)
+        df = rrs.make_data_frame(list_of_player_dicts, year, TOTAL_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT)
 
         data_frame_list.append(df)
 
