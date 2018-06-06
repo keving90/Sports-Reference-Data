@@ -9,7 +9,7 @@ import requests
 import bs4
 import pandas as pd
 
-# Putting '..' on sys.path because Player import was causing an error when rush_rec_scraper.py is imported from 
+# Putting '..' on sys.path because Player import was causing an error when rush_rec_scraper.py is imported from
 # another module (such as 5_seasons_50_carries.py).
 import sys
 import os
@@ -21,21 +21,21 @@ sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
 from player import Player
 
 
-def scrape_data(year):
+def scrape_data(url, table_id):
     """
     This function sends a GET request to the pro-football-reference.com 'Rushing and Receiving' page for the
     given season and scrapes the data from the web page using Beautiful Soup 4. It returns a list containing
      each player's row data in the 'Rushing and Receiving' table.
     """
     # Send a GET request to Pro Football Reference's Rushing & Receiving page to gather the data.
-    r = requests.get('https://www.pro-football-reference.com/years/' + str(year) + '/rushing.htm')
+    r = requests.get(url)
     r.raise_for_status()
 
     # Create a BeautifulSoup object.
     soup = bs4.BeautifulSoup(r.text, 'lxml')
 
     # Find the first table with tag 'table' and id 'rushing_and_receiving
-    table = soup.find('table', id='rushing_and_receiving')
+    table = soup.find('table', id=table_id)
 
     # tbody is the table's body
     # Get the body of the table
@@ -112,10 +112,11 @@ def make_data_frame(player_dict_list, year, header, fantasy_settings):
     df['year'] = year                         # Add a 'year' column.
 
     # Create fantasy_points column.
-    df['fantasy_points'] = df['rush_yards'] * fantasy_settings['rush_yard'] + \
-                           df['rush_touchdowns'] * fantasy_settings['rush_td'] + \
-                           df['rush_touchdowns'] * fantasy_settings['rush_td'] + \
-                           df['receptions'] * fantasy_settings['reception']
+    df['fantasy_points'] = df['rush_yards'] * fantasy_settings['rush_yards'] + \
+                           df['rush_td'] * fantasy_settings['rush_td'] + \
+                           df['receptions'] * fantasy_settings['receptions'] + \
+                           df['rec_yards'] * fantasy_settings['rec_yards'] + \
+                           df['rec_td'] * fantasy_settings['rec_td']
 
     return df
 
