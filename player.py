@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-This module contains a Player class used to represent an NFL player. It's attributes are various statistics.
+This module contains a Player class used to represent an NFL player. Its attributes are various statistics.
 """
 
 import numpy as np
@@ -10,16 +10,15 @@ from datetime import datetime
 
 class Player(object):
     """
-    The Player class is used to represent a record in the data set. The player's 'name' and 'year' attributes will be
-    used in the data frame as a multi-hierarchical index. The class uses the HEADER dictionary to assign attributes
-    and give them appropriate data types.
+    This class is used to represent a record in the data set. It uses a header dictionary to assign attributes and
+    give them appropriate data types.
     """
     def __init__(self, data, header):
         """
-        Initialize the Player object. This method will use the keys and values in HEADER to assign attributes and
-        data types for the attributes.
+        Initialize the Player object. Uses the keys and values in HEADER to assign attributes and data types for
+        the attributes.
         """
-        # Loop through the HEADER dictionary keys and values. An enumeration is also used to grab data from a specific
+        # Loop through the header dictionary keys and values. An enumeration is used to grab data from a specific
         # column in the row.
         for i, (attr, data_type) in enumerate(header.items()):
             # In a player's game log table, if '@' is in the row, then it was an away game.
@@ -49,8 +48,8 @@ class Player(object):
             # Set the class attribute. If the data is empty then we will assign a NumPy NaN value to the attribute.
             # Otherwise, we set the attribute as usual.
             if not data[i]:
-                setattr(self, type(data[i])(np.NaN), str(data[i]))
-                # setattr(self, attr, data_type(np.NaN))
+                # setattr(self, type(data[i])(np.NaN), str(data[i]))
+                setattr(self, attr, np.NaN)
+                # print()
             else:
                 setattr(self, attr, data_type(data[i]))
-            # setattr(self, attr, data_type(data[i]))
