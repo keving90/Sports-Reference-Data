@@ -16,7 +16,9 @@ FANTASY_SETTINGS_DICT:
 This dictionary holds the stat name as keys and their fantasy points worth as values.
 """
 
-TOTAL_RUSH_REC_HEADER = {
+from datetime import datetime
+
+SEASON_RUSH_REC_HEADER = {
     'name': str,
     'url': str,
     'team': str,
@@ -61,7 +63,7 @@ FANTASY_SETTINGS_DICT = {
 }
 
 LOG_RUSH_REC_HEADER = {
-    'date': str,
+    'date': datetime,
     'game_number': int,
     'age': float,
     'team': str,
@@ -84,7 +86,7 @@ LOG_RUSH_REC_HEADER = {
 }
 
 LOG_RUSH_REC_PASS_HEADER = {
-    'date': str,
+    'date': datetime,
     'game_number': int,
     'age': float,
     'team': str,
