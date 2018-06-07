@@ -18,7 +18,7 @@ This will only have a small affect on the point total for some of the running ba
 
 import pandas as pd
 import datetime
-import rushing_and_receiving.rush_rec_scraper as rrs
+import rush_rec_scraper as rrs
 
 from constants import SEASON_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT
 
