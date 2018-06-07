@@ -1,11 +1,18 @@
+#!/usr/bin/env python3
+
+"""
+This module contains a Player class used to represent an NFL player. It's attributes are various statistics.
+"""
+
 import numpy as np
+from datetime import datetime
 
 
 class Player(object):
     """
     The Player class is used to represent a record in the data set. The player's 'name' and 'year' attributes will be
     used in the data frame as a multi-hierarchical index. The class uses the HEADER dictionary to assign attributes
-    and use the appropriate data type.
+    and give them appropriate data types.
     """
     def __init__(self, data, header):
         """
@@ -15,6 +22,21 @@ class Player(object):
         # Loop through the HEADER dictionary keys and values. An enumeration is also used to grab data from a specific
         # column in the row.
         for i, (attr, data_type) in enumerate(header.items()):
+            # In a player's game log table, if '@' is in the row, then it was an away game.
+            # Otherwise, it was a home game.
+            if attr == 'location':
+                if data[i] == '@':
+                    setattr(self, attr, 'away')
+                else:
+                    setattr(self, attr, 'home')
+                continue
+
+            # If data type is datetime, then convert data to type datetime.
+            if data_type == datetime:
+                date = datetime.strptime(data[i], '%Y-%m-%d').date()
+                setattr(self, attr, date)
+                continue
+
             # Remove unwanted characters in data.
             # '*' in the player's name indicates a Pro Bowl appearance.
             # '+' in the player's name indicates a First-Team All-Pro award.
@@ -28,5 +50,7 @@ class Player(object):
             # Otherwise, we set the attribute as usual.
             if not data[i]:
                 setattr(self, type(data[i])(np.NaN), str(data[i]))
+                # setattr(self, attr, data_type(np.NaN))
             else:
                 setattr(self, attr, data_type(data[i]))
+            # setattr(self, attr, data_type(data[i]))
