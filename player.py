@@ -48,8 +48,6 @@ class Player(object):
             # Set the class attribute. If the data is empty then we will assign a NumPy NaN value to the attribute.
             # Otherwise, we set the attribute as usual.
             if not data[i]:
-                # setattr(self, type(data[i])(np.NaN), str(data[i]))
                 setattr(self, attr, np.NaN)
-                # print()
             else:
                 setattr(self, attr, data_type(data[i]))
