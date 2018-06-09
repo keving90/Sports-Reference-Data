@@ -9,19 +9,20 @@ import requests
 import bs4
 import pandas as pd
 
-# Putting '..' on sys.path because Player import was causing an error when rush_rec_scraper.py is imported from
+# Putting '..' on sys.path because Player import was causing an error when scraper.py is imported from
 # another module (such as 5_seasons_50_carries.py).
 import sys
 import os
 
 # os.path.split() splits the head and tail of the path for the file.
 # This line of code grabs the head, joins it with '..', and inserts the path into the first element of sys.path.
-sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
+# sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
 
 from player import Player
+from constants import LOG_RUSH_REC_PASS_HEADER, LOG_RUSH_REC_HEADER
 
 
-def scrape_data(url, table_id):
+def scrape_table(url, table_id):
     """
     Scrape a table from a table in pro-football-reference.com based on provided table ID.
 
@@ -112,8 +113,8 @@ def make_data_frame(player_dict_list, year, header, fantasy_settings):
 
     :param player_dict_list: List of unique Player.__dict__'s.
     :param year: NFL season's year.
-    :param header: Dictionary used to create data frame columns.
-    :param fantasy_settings: Dictionary used to calculate player's fantasy points for the season.
+    :param header: Dictionary from constants.py used to create data frame columns.
+    :param fantasy_settings: Dictionary from constants.py used to calculate player's fantasy points for the season.
     :return: Data frame of stats.
     """
     df = pd.DataFrame(data=player_dict_list)  # Create the data frame.
@@ -127,6 +128,43 @@ def make_data_frame(player_dict_list, year, header, fantasy_settings):
                             + df['receptions'] * fantasy_settings['receptions']
                             + df['rec_yards'] * fantasy_settings['rec_yards']
                             + df['rec_td'] * fantasy_settings['rec_td'])
+
+    return df
+
+
+def scrape_game_log(player_url, year):
+    """
+    Scrapes regular season stats from a player's game log for a specific year.
+
+    :param player_url: String representing player's unique URL found in the "Rushing and Receiving" table.
+    :param year: Season's year for the game log.
+    :return: Data frame where each row is the stats for a game.
+    """
+    # Remove the '.htm' part of the player's url if necessary.
+    if player_url.endswith('.htm'):
+        player_url = player_url[:-4]
+
+    # Build the URL to the player's game log page
+    url = 'https://www.pro-football-reference.com' + player_url + '/gamelog/' + str(year) + '/'
+
+    # ID used to identify the regular season stats table.
+    table_id = 'stats'
+
+    # Get the data from the game log page.
+    data = scrape_table(url, table_id)
+
+    # Use the appropriate header dictionary based on the number of elements in data list.
+    if not data[0]:
+        print('Error in game_log_scraper().')
+        print('Game log not found for ' + player_url + ' in year ' + str(year) + '.')
+        exit(1)
+    elif len(data[0]) == 33:
+        header = LOG_RUSH_REC_PASS_HEADER
+    elif len(data[0]) == 21:
+        header = LOG_RUSH_REC_HEADER
+
+    list_of_log_dicts = create_player_objects(data, header)
+    df = make_data_frame(list_of_log_dicts, year, header, FANTASY_SETTINGS_DICT)
 
     return df
 
@@ -146,7 +184,7 @@ if __name__ == '__main__':
     input_table_id = 'rushing_and_receiving'
 
     # Scrape the data to get a list of each player's web page elements.
-    elem_list = scrape_data(input_url, input_table_id)
+    elem_list = scrape_table(input_url, input_table_id)
 
     # Use the elements to create Player objects.
     player_dicts = create_player_objects(elem_list, SEASON_RUSH_REC_HEADER)

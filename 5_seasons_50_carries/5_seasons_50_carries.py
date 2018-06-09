@@ -18,8 +18,17 @@ This will only have a small affect on the point total for some of the running ba
 
 import pandas as pd
 import datetime
-import rush_rec_scraper as rrs
 
+# Putting '..' on sys.path because Player import was causing an error when scraper.py is imported from
+# another module (such as 5_seasons_50_carries.py).
+import sys
+import os
+
+# os.path.split() splits the head and tail of the path for the file.
+# This line of code grabs the head, joins it with '..', and inserts the path into the first element of sys.path.
+sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
+
+import nfl_scraper
 from constants import SEASON_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT
 
 
@@ -109,13 +118,13 @@ def main():
         table_id = 'rushing_and_receiving'
 
         # Scrape the data to get each player's web page elements.
-        player_list = rrs.scrape_data(url, table_id)
+        player_list = nfl_scraper.scrape_table(url, table_id)
 
         # Use the elements to create Player objects.
-        list_of_player_dicts = rrs.create_player_objects(player_list, SEASON_RUSH_REC_HEADER)
+        list_of_player_dicts = nfl_scraper.create_player_objects(player_list, SEASON_RUSH_REC_HEADER)
 
         # Create a data frame for the season
-        df = rrs.make_data_frame(list_of_player_dicts, year, SEASON_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT)
+        df = nfl_scraper.make_data_frame(list_of_player_dicts, year, SEASON_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT)
 
         data_frame_list.append(df)
 
