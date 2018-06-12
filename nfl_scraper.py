@@ -19,7 +19,7 @@ import os
 # sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
 
 from player import Player
-from constants import LOG_RUSH_REC_PASS_HEADER, LOG_RUSH_REC_HEADER
+from constants import LOG_RUSH_REC_PASS_HEADER, LOG_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT
 
 
 def scrape_table(url, table_id):
@@ -129,6 +129,13 @@ def make_data_frame(player_dict_list, year, header, fantasy_settings):
                             + df['rec_yards'] * fantasy_settings['rec_yards']
                             + df['rec_td'] * fantasy_settings['rec_td'])
 
+    # 'fumble_lost' is a negative value in the dict; add value instead of subtract
+    if 'fumbles' in df.columns:
+        df['fantasy_points'] += df['fumbles'] * fantasy_settings['fumble_lost']
+
+    # if 'fumbles' in df.columns:
+    #     df['fantasy_points'] -= df['fumbles'] * fantasy_settings['fumble_lost']
+
     return df
 
 
@@ -171,9 +178,6 @@ def scrape_game_log(player_url, year):
 
 if __name__ == '__main__':
     """Usage example."""
-    # Necessary imports for running sample script.
-    from constants import SEASON_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT
-
     # Set the year.
     season_year = 2017
 
