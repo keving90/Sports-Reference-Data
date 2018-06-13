@@ -8,16 +8,6 @@ creating Player objects from the data, and saving the data into a data frame.
 import requests
 import bs4
 import pandas as pd
-
-# Putting '..' on sys.path because Player import was causing an error when scraper.py is imported from
-# another module (such as 5_seasons_50_carries.py).
-import sys
-import os
-
-# os.path.split() splits the head and tail of the path for the file.
-# This line of code grabs the head, joins it with '..', and inserts the path into the first element of sys.path.
-# sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
-
 from player import Player
 from constants import LOG_RUSH_REC_PASS_HEADER, LOG_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT, SEASON_RUSH_REC_HEADER
 
@@ -128,24 +118,6 @@ def make_data_frame(player_dict_list, year, header, fantasy_settings):
         if stat in header.keys():
             df['fantasy_points'] += df[stat] * value
 
-
-
-
-
-    # # Create fantasy_points column.
-    # df['fantasy_points'] = (df['rush_yards'] * fantasy_settings['rush_yards']
-    #                         + df['rush_td'] * fantasy_settings['rush_td']
-    #                         + df['receptions'] * fantasy_settings['receptions']
-    #                         + df['rec_yards'] * fantasy_settings['rec_yards']
-    #                         + df['rec_td'] * fantasy_settings['rec_td'])
-    #
-    # # 'fumble_lost' is a negative value in the dict; add value instead of subtract
-    # if 'fumbles' in df.columns:
-    #     df['fantasy_points'] += df['fumbles'] * fantasy_settings['fumble_lost']
-
-    # if 'fumbles' in df.columns:
-    #     df['fantasy_points'] -= df['fumbles'] * fantasy_settings['fumble_lost']
-
     return df
 
 
@@ -173,7 +145,7 @@ def scrape_game_log(player_url, year):
     # Use the appropriate header dictionary based on the number of elements in data list.
     if not data[0]:
         print('Error in game_log_scraper().')
-        print('Game log not found for ' + player_url + ' in year ' + str(year) + '.')
+        print('Can only currently handle logs with rush and rec, or with rush, rec, and pass.')
         exit(1)
     elif len(data[0]) == 33:
         header = LOG_RUSH_REC_PASS_HEADER
