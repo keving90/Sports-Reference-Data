@@ -19,7 +19,7 @@ import os
 # sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
 
 from player import Player
-from constants import LOG_RUSH_REC_PASS_HEADER, LOG_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT
+from constants import LOG_RUSH_REC_PASS_HEADER, LOG_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT, SEASON_RUSH_REC_HEADER
 
 
 def scrape_table(url, table_id):
@@ -123,15 +123,25 @@ def make_data_frame(player_dict_list, year, header, fantasy_settings):
     df['year'] = year                         # Add a 'year' column.
 
     # Create fantasy_points column.
-    df['fantasy_points'] = (df['rush_yards'] * fantasy_settings['rush_yards']
-                            + df['rush_td'] * fantasy_settings['rush_td']
-                            + df['receptions'] * fantasy_settings['receptions']
-                            + df['rec_yards'] * fantasy_settings['rec_yards']
-                            + df['rec_td'] * fantasy_settings['rec_td'])
+    df['fantasy_points'] = 0
+    for stat, value in fantasy_settings.items():
+        if stat in header.keys():
+            df['fantasy_points'] += df[stat] * value
 
-    # 'fumble_lost' is a negative value in the dict; add value instead of subtract
-    if 'fumbles' in df.columns:
-        df['fantasy_points'] += df['fumbles'] * fantasy_settings['fumble_lost']
+
+
+
+
+    # # Create fantasy_points column.
+    # df['fantasy_points'] = (df['rush_yards'] * fantasy_settings['rush_yards']
+    #                         + df['rush_td'] * fantasy_settings['rush_td']
+    #                         + df['receptions'] * fantasy_settings['receptions']
+    #                         + df['rec_yards'] * fantasy_settings['rec_yards']
+    #                         + df['rec_td'] * fantasy_settings['rec_td'])
+    #
+    # # 'fumble_lost' is a negative value in the dict; add value instead of subtract
+    # if 'fumbles' in df.columns:
+    #     df['fantasy_points'] += df['fumbles'] * fantasy_settings['fumble_lost']
 
     # if 'fumbles' in df.columns:
     #     df['fantasy_points'] -= df['fumbles'] * fantasy_settings['fumble_lost']

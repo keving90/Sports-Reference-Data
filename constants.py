@@ -44,22 +44,22 @@ SEASON_RUSH_REC_HEADER = {
     'catch_percentage': float,
     'scrimmage_yards': int,
     'rush_rec_td': int,
-    'fumbles': int
+    'fumbles': int  # all fumbles
 }
 
 FANTASY_SETTINGS_DICT = {
-    'pass_yard': 1 / 25,  # 25 yards = 1 point
+    'pass_yards': 1 / 25,  # 25 yards = 1 point
     'pass_td': 4,
-    'interception': -1,
+    'interceptions': -1,
     'rush_yards': 1 / 10,  # 10 yards = 1 point
     'rush_td': 6,
     'rec_yards': 1 / 10,  # 10 yards = 1 point
     'receptions': 0,
     'rec_td': 6,
     'two_pt_conversion': 2,
-    'fumble_lost': -2,
+    'fumbles': -2,  # fumbles lost only
     'offensive_fumble_return_td': 6,
-    'return_yard': 1 / 25  # 25 yards = 1 point
+    'return_yards': 1 / 25  # 25 yards = 1 point
 }
 
 LOG_RUSH_REC_HEADER = {
