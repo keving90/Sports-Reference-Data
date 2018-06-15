@@ -4,7 +4,7 @@
 This module scrapes an individual player's game log for an NFL season.
 """
 
-from nfl_scraper import scrape_game_log
+from pro_football_ref_scraper import scrape_game_log
 
 
 if __name__ == '__main__':
