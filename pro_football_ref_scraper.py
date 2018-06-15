@@ -133,13 +133,9 @@ def get_fantasy_points(df, year, fantasy_settings=constants.FANTASY_SETTINGS_DIC
     :param fantasy_settings: Dictionary where keys are a stat and values are the point value.
     :return: New data frame with fantasy point calculation.
     """
-    fum_df = football_db_scraper.get_df(year, 'fumble')       # Get fumbles_lost data frame from footballdb.com.
-    ret_df = football_db_scraper.get_df(year, 'return')       # Get returns data frame from footballdb.com table.
-    conv_df = football_db_scraper.get_df(year, 'conversion')  # Get 2 point conversions data frame from footballdb.com.
-
-    df = df.join(fum_df, how='left')   # Join fumbles_lost to main data frame.
-    df = df.join(ret_df, how='left')   # Join returns to main data frame.
-    df = df.join(conv_df, how='left')  # Join 2 point conversions to main data frame.
+    for table_name in ['fumble', 'return', 'conversion']:
+        stat_df = football_db_scraper.get_df(year, table_name)  # Get data frame from footballdb.com based.
+        df = df.join(stat_df, how='left')                       # Join stat data frame to main data frame.
 
     # Replace NaN data with 0, otherwise fantasy calculations with have NaN results for players with missing data.
     for column in ['fumbles_lost', 'two_pt_conversions', 'return_yards', 'return_td']:
