@@ -100,7 +100,7 @@ def get_player_stats(raw_stat_list):
 
 def make_data_frame(player_dict_list, year, header, fantasy=False, fantasy_settings=constants.FANTASY_SETTINGS_DICT):
     """
-    Creates a new data frame and returns it.
+    Create a new data frame and return it.
 
     :param player_dict_list: List of unique Player.__dict__'s.
     :param year: NFL season's year.
@@ -142,10 +142,8 @@ def get_fantasy_points(df, year, fantasy_settings=constants.FANTASY_SETTINGS_DIC
     df = df.join(conv_df, how='left')  # Join 2 point conversions to main data frame.
 
     # Replace NaN data with 0, otherwise fantasy calculations with have NaN results for players with missing data.
-    df['fumbles_lost'].fillna(0, inplace=True)
-    df['two_pt_conversions'].fillna(0, inplace=True)
-    df['return_yards'].fillna(0, inplace=True)
-    df['return_td'].fillna(0, inplace=True)
+    for column in ['fumbles_lost', 'two_pt_conversions', 'return_yards', 'return_td']:
+        df[column].fillna(0, inplace=True)
 
     # Insert the fantasy_points column and calculate each player's fantasy point total.
     df['fantasy_points'] = 0
