@@ -10,7 +10,7 @@ import bs4
 import pandas as pd
 from player import Player
 import constants
-import football_db_scraper
+import football_db_scraper as fbdb
 
 
 def scrape_table(url, table_id):
@@ -134,8 +134,8 @@ def get_fantasy_points(df, year, fantasy_settings=constants.FANTASY_SETTINGS_DIC
     :return: New data frame with fantasy point calculation.
     """
     for table_name in ['fumble', 'return', 'conversion']:
-        stat_df = football_db_scraper.get_df(year, table_name)  # Get data frame from footballdb.com based.
-        df = df.join(stat_df, how='left')                       # Join stat data frame to main data frame.
+        stat_df = fbdb.get_df(year, table_name)  # Scrape table from footballdb.com and make a data frame.
+        df = df.join(stat_df, how='left')        # Join stat data frame to main data frame.
 
     # Replace NaN data with 0, otherwise fantasy calculations with have NaN results for players with missing data.
     for column in ['fumbles_lost', 'two_pt_conversions', 'return_yards', 'return_td']:
@@ -174,7 +174,7 @@ def scrape_game_log(player_url, year):
     # Use the appropriate header dictionary based on the number of elements in data list.
     if not data[0]:
         print('Error in game_log_scraper().')
-        print('Can only currently handle logs with rush and rec, or with rush, rec, and pass.')
+        print('Can only currently handle logs with rush and rec data, or with rush, rec, and pass data.')
         exit(1)
     elif len(data[0]) == 33:
         header = constants.LOG_RUSH_REC_PASS_HEADER
@@ -204,11 +204,11 @@ if __name__ == '__main__':
     # Use the elements to create Player objects.
     player_dicts = create_player_objects(elem_list, constants.SEASON_RUSH_REC_HEADER)
 
-    # Create a data frame for the season
+    # Create a data frame for the season.
     output_df = make_data_frame(player_dicts, season_year, constants.SEASON_RUSH_REC_HEADER, fantasy=True)
 
     print(output_df)
-    output_df.to_csv('results.csv')
+    # output_df.to_csv('results.csv')
 
 
 """
