@@ -112,20 +112,32 @@ def make_data_frame(player_dict_list, year, header, fantasy=False, fantasy_setti
     df_columns = list(header.keys())                              # Get header dict's keys for df's column names.
     df = pd.DataFrame(data=player_dict_list, columns=df_columns)  # Create the data frame.
     df['year'] = year                                             # Add a 'year' column.
-    # df.set_index('name', inplace=True)                            # Make 'name' the data frame's index
+    df.set_index('name', inplace=True)                            # Make 'name' the data frame's index
+
+    # Fill missing stats with 0.
+    for stat in df_columns[5:]:
+        df[stat].fillna(0, inplace=True)
 
     if fantasy:
         # Create fantasy_points column in df.
-        get_fantasy_points(df, year)
+        df = get_fantasy_points(df, year)
 
     return df
 
 
 def get_fantasy_points(df, year, fantasy_settings=constants.FANTASY_SETTINGS_DICT):
-    for table in ['fumble', 'return', 'conversion']:
-        temp_df = football_db_scraper.driver(year, table)
-        df = df.join(temp_df, on='name', how='left')
-        # print()
+    fum_df = football_db_scraper.driver(year, 'fumble')
+    ret_df = football_db_scraper.driver(year, 'return')
+    conv_df = football_db_scraper.driver(year, 'conversion')
+
+    df = df.join(fum_df, how='left')
+    df = df.join(ret_df, how='left')
+    df = df.join(conv_df, how='left')
+
+    df['fumbles_lost'].fillna(0, inplace=True)
+    df['two_pt_conversions'].fillna(0, inplace=True)
+    df['return_yards'].fillna(0, inplace=True)
+    df['return_td'].fillna(0, inplace=True)
 
     df['fantasy_points'] = 0
     for stat, value in fantasy_settings.items():

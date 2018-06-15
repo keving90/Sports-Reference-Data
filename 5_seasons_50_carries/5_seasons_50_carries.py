@@ -28,7 +28,7 @@ import os
 # This line of code grabs the head, joins it with '..', and inserts the path into the first element of sys.path.
 sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
 
-import nfl_scraper
+import pro_football_ref_scraper as proref
 from constants import SEASON_RUSH_REC_HEADER
 
 
@@ -45,9 +45,6 @@ def modify_data_frame(data_frame_list, num_years, player_url=False):
     if not player_url:
         big_df.drop('url', axis=1, inplace=True)
 
-    # The concatenation creates duplicate indexes, so we will reset the index
-    big_df.reset_index(inplace=True, drop=True)
-
     # Eliminate players with fewer than 50 rush attempts.
     big_df = big_df[big_df['rush_attempts'] >= 50]
 
@@ -62,8 +59,8 @@ def modify_data_frame(data_frame_list, num_years, player_url=False):
     # Only interested in running backs
     big_df = big_df[big_df['position'] == 'RB']
 
-    # Set the player's name and the season's year as the indexes.
-    big_df.set_index(['name', 'year'], inplace=True)
+    # Current index is player's name. Append year to have multi-index.
+    big_df.set_index('year', append=True, inplace=True)
 
     # Sort the data frame by the player's name
     big_df.sort_index(level='name', inplace=True)
@@ -118,13 +115,13 @@ def main():
         table_id = 'rushing_and_receiving'
 
         # Scrape the data to get each player's web page elements.
-        player_list = nfl_scraper.scrape_table(url, table_id)
+        player_list = proref.scrape_table(url, table_id)
 
         # Use the elements to create Player objects.
-        list_of_player_dicts = nfl_scraper.create_player_objects(player_list, SEASON_RUSH_REC_HEADER)
+        list_of_player_dicts = proref.create_player_objects(player_list, SEASON_RUSH_REC_HEADER)
 
         # Create a data frame for the season
-        df = nfl_scraper.make_data_frame(list_of_player_dicts, year, SEASON_RUSH_REC_HEADER, fantasy=False)
+        df = proref.make_data_frame(list_of_player_dicts, year, SEASON_RUSH_REC_HEADER, fantasy=False)
 
         data_frame_list.append(df)
 
