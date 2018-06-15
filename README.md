@@ -4,7 +4,7 @@ This repository contains a Python program capable of scraping data from [Pro Foo
 More programs will be added over time.
 
 ## 5 Seasons 50 Carries
-The `5_seasons_50_carries` package contains a module called `5_seasons_50_carries.py` that uses `nfl_scraper.py` to get data from Pro Football Reference's "Rushing and Receiving" data table. It then filters the data out so the only remaining players are running backs with 50 or more carries in each of the last 5 seasons. It also saves the data frame into a `csv` file. There is also a Jupyter Notebook version that shows the data set, it's shape, and other qualities.
+The `5_seasons_50_carries` package contains a module called `5_seasons_50_carries.py` which uses `pro_football_ref_scraper.py` to get data from Pro Football Reference's "Rushing and Receiving" data table. It then filters the data out so the only remaining players are running backs with 50 or more carries in each of the last 5 seasons. It also saves the data frame into a `csv` file. There is also a Jupyter Notebook version that shows the data set, it's shape, and other qualities.
 
 ## Game Log
 The `game_log` package is a work in progress where the end goal is to be able to scrape an individual player's game log for a given season based on their URL found in the "Rushing and Receiving" data table.
