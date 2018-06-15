@@ -15,7 +15,7 @@ import football_db_scraper
 
 def scrape_table(url, table_id):
     """
-    Scrape a table from a table in pro-football-reference.com based on provided table ID.
+    Scrape a table from pro-football-reference.com based on provided table ID.
 
     :param url: Websites URL.
     :param table_id: Identifier for the table. Found when used "inspect element" on web page.
@@ -114,31 +114,40 @@ def make_data_frame(player_dict_list, year, header, fantasy=False, fantasy_setti
     df['year'] = year                                             # Add a 'year' column.
     df.set_index('name', inplace=True)                            # Make 'name' the data frame's index
 
-    # Fill missing stats with 0.
     for stat in df_columns[5:]:
-        df[stat].fillna(0, inplace=True)
+        df[stat].fillna(0, inplace=True)   # Fill missing stats with 0.
 
     if fantasy:
-        # Create fantasy_points column in df.
-        df = get_fantasy_points(df, year)
+        df = get_fantasy_points(df, year)  # Create fantasy_points column in df.
 
     return df
 
 
 def get_fantasy_points(df, year, fantasy_settings=constants.FANTASY_SETTINGS_DICT):
-    fum_df = football_db_scraper.driver(year, 'fumble')
-    ret_df = football_db_scraper.driver(year, 'return')
-    conv_df = football_db_scraper.driver(year, 'conversion')
+    """
+    Inserts 'fumbles_lost', 'two_pt_conversions', 'return_yards', 'return_td', and 'fantasy_points' columns into df.
+    Calculates fantasy points based on a fantasy settings dictionary.
 
-    df = df.join(fum_df, how='left')
-    df = df.join(ret_df, how='left')
-    df = df.join(conv_df, how='left')
+    :param df: Data frame to be modified.
+    :param year: Current season.
+    :param fantasy_settings: Dictionary where keys are a stat and values are the point value.
+    :return: New data frame with fantasy point calculation.
+    """
+    fum_df = football_db_scraper.get_df(year, 'fumble')       # Get fumbles_lost data frame from footballdb.com.
+    ret_df = football_db_scraper.get_df(year, 'return')       # Get returns data frame from footballdb.com table.
+    conv_df = football_db_scraper.get_df(year, 'conversion')  # Get 2 point conversions data frame from footballdb.com.
 
+    df = df.join(fum_df, how='left')   # Join fumbles_lost to main data frame.
+    df = df.join(ret_df, how='left')   # Join returns to main data frame.
+    df = df.join(conv_df, how='left')  # Join 2 point conversions to main data frame.
+
+    # Replace NaN data with 0, otherwise fantasy calculations with have NaN results for players with missing data.
     df['fumbles_lost'].fillna(0, inplace=True)
     df['two_pt_conversions'].fillna(0, inplace=True)
     df['return_yards'].fillna(0, inplace=True)
     df['return_td'].fillna(0, inplace=True)
 
+    # Insert the fantasy_points column and calculate each player's fantasy point total.
     df['fantasy_points'] = 0
     for stat, value in fantasy_settings.items():
         if stat in df.columns:
@@ -211,320 +220,389 @@ if __name__ == '__main__':
 """
 Sample output:
 
-                   name                      url team  age position  \
-0          Le'Veon Bell  /players/B/BellLe00.htm  PIT   25       RB   
-1          LeSean McCoy  /players/M/McCoLe01.htm  BUF   29       RB   
-2         Melvin Gordon  /players/G/GordMe00.htm  LAC   24       RB   
-3           Todd Gurley  /players/G/GurlTo01.htm  LAR   23       RB   
-4         Jordan Howard  /players/H/HowaJo00.htm  CHI   23       RB   
-5           Kareem Hunt  /players/H/HuntKa00.htm  KAN   22       RB   
-6     Leonard Fournette  /players/F/FourLe00.htm  JAX   22       RB   
-7            Frank Gore  /players/G/GoreFr00.htm  IND   34       RB   
-8         C.J. Anderson  /players/A/AndeC.00.htm  DEN   26       RB   
-9       Ezekiel Elliott  /players/E/ElliEz00.htm  DAL   22       RB   
-10          Carlos Hyde  /players/H/HydeCa00.htm  SFO   26       RB   
-11         Lamar Miller  /players/M/MillLa01.htm  HOU   26       RB   
-12          Mark Ingram  /players/I/IngrMa01.htm  NOR   28       RB   
-13      Latavius Murray  /players/M/MurrLa00.htm  MIN   27       RB   
-14         Alex Collins  /players/C/CollAl00.htm  BAL   23       RB   
-15            Jay Ajayi  /players/A/AjayJa00.htm  2TM   24      NaN   
-16       Marshawn Lynch  /players/L/LyncMa00.htm  OAK   31       RB   
-17       Isaiah Crowell  /players/C/CrowIs00.htm  CLE   24       RB   
-18     Jonathan Stewart  /players/S/StewJo00.htm  CAR   30       RB   
-19      Devonta Freeman  /players/F/FreeDe00.htm  ATL   25       RB   
-20       DeMarco Murray  /players/M/MurrDe00.htm  TEN   29       RB   
-21           Dion Lewis  /players/L/LewiDi00.htm  NWE   27       RB   
-22            Joe Mixon  /players/M/MixoJo00.htm  CIN   21       rb   
-23         Bilal Powell  /players/P/PoweBi00.htm  NYJ   29       RB   
-24        Derrick Henry  /players/H/HenrDe00.htm  TEN   23       rb   
-25        Samaje Perine  /players/P/PeriSa00.htm  WAS   22       RB   
-26    LeGarrette Blount  /players/B/BlouLe00.htm  PHI   31       RB   
-27       Orleans Darkwa  /players/D/DarkOr00.htm  NYG   25       RB   
-28       Ameer Abdullah  /players/A/AbduAm00.htm  DET   24       RB   
-29        Tevin Coleman  /players/C/ColeTe01.htm  ATL   24    fb/rb   
-..                  ...                      ...  ...  ...      ...   
-286        Bronson Hill  /players/H/HillBr01.htm  ARI   24      NaN   
-287           Josh Hill  /players/H/HillJo02.htm  NOR   27       TE   
-288     Jacob Hollister  /players/H/HollJa03.htm  NWE   24       te   
-289      Adam Humphries  /players/H/HumpAd00.htm  TAM   24       wr   
-290         Chris Jones  /players/J/JoneCh02.htm  DAL   28        P   
-291         Julio Jones  /players/J/JoneJu02.htm  ATL   28       WR   
-292        Cody Kessler  /players/K/KessCo00.htm  CLE   24      NaN   
-293           John Kuhn  /players/K/KuhnJo00.htm  NOR   35       fb   
-294       Jarvis Landry  /players/L/LandJa00.htm  MIA   25       WR   
-295         Marqise Lee  /players/L/LeexMa00.htm  JAX   26       WR   
-296            Wil Lutz  /players/L/LutzWi00.htm  NOR   23        K   
-297    Rishard Matthews  /players/M/MattRi00.htm  TEN   28       WR   
-298     Darren McFadden  /players/M/McFaDa00.htm  DAL   30      NaN   
-299     Isaiah McKenzie  /players/M/McKeIs00.htm  DEN   22      NaN   
-300      Braxton Miller  /players/M/MillBr03.htm  HOU   25       wr   
-301         Jojo Natson  /players/N/NatsJo00.htm  NYJ   23      NaN   
-302         David Njoku  /players/N/NjokDa00.htm  CLE   21       te   
-303        Bobby Rainey  /players/R/RainBo00.htm  BAL   30      NaN   
-304       Kalif Raymond  /players/R/RaymKa00.htm  2TM   23      NaN   
-305       Kasey Redfern  /players/R/RedfKa00.htm  DET   26        p   
-306           John Ross  /players/R/RossJo00.htm  CIN   23       wr   
-307        Torrey Smith  /players/S/SmitTo02.htm  PHI   28       WR   
-308        Nate Sudfeld  /players/S/SudfNa00.htm  PHI   24      NaN   
-309        Adam Thielen  /players/T/ThieAd00.htm  MIN   27       WR   
-310   De'Anthony Thomas  /players/T/ThomDe05.htm  KAN   24       wr   
-311        Bryce Treggs  /players/T/TregBr00.htm  CLE   23       wr   
-312        Mike Wallace  /players/W/WallMi00.htm  BAL   31       WR   
-313          Eric Weems  /players/W/WeemEr00.htm  TEN   32      NaN   
-314  Jermaine Whitehead  /players/W/WhitJe02.htm  GNB   24      NaN   
-315       Kyle Williams  /players/W/WillKy20.htm  BUF   34  LDT/rdt   
+                                        url team  age position  games_played  \
+name                                                                           
+Aaron Jones         /players/J/JoneAa00.htm  GNB   23       rb            12   
+Aaron Ripkowski     /players/R/RipkAa00.htm  GNB   25       fb            16   
+Aaron Rodgers       /players/R/RodgAa00.htm  GNB   34       qb             7   
+Adam Humphries      /players/H/HumpAd00.htm  TAM   24       wr            16   
+Adam Thielen        /players/T/ThieAd00.htm  MIN   27       WR            16   
+Adoree' Jackson     /players/J/JackAd00.htm  TEN   22       CB            16   
+Adrian Peterson     /players/P/PeteAd01.htm  2TM   32      NaN            10   
+Akeem Hunt          /players/H/HuntAk01.htm  KAN   24      NaN            15   
+Albert Wilson       /players/W/WilsAl02.htm  KAN   25       wr            13   
+Alex Collins        /players/C/CollAl00.htm  BAL   23       RB            15   
+Alex Erickson       /players/E/EricAl01.htm  CIN   25      NaN            16   
+Alex Smith          /players/S/SmitAl03.htm  KAN   33       QB            15   
+Alfred Blue         /players/B/BlueAl00.htm  HOU   26      NaN            11   
+Alfred Morris       /players/M/MorrAl00.htm  DAL   29       rb            14   
+Alvin Kamara        /players/K/KamaAl00.htm  NOR   22    fb/rb            16   
+Amari Cooper        /players/C/CoopAm00.htm  OAK   23       WR            14   
+Ameer Abdullah      /players/A/AbduAm00.htm  DET   24       RB            14   
+Andre Ellington     /players/E/ElliAn00.htm  2TM   28      NaN            12   
+Andre Williams      /players/W/WillAn00.htm  LAC   25      NaN             8   
+Andy Dalton         /players/D/DaltAn00.htm  CIN   30       QB            16   
+Andy Janovich       /players/J/JanoAn00.htm  DEN   24       fb            16   
+Anthony Sherman     /players/S/SherAn00.htm  KAN   29       fb            16   
+ArDarius Stewart    /players/S/StewAr00.htm  NYJ   24       wr            15   
+Austin Davis        /players/D/DaviAu00.htm  SEA   28      NaN             3   
+Austin Ekeler       /players/E/EkelAu00.htm  LAC   22      NaN            16   
+Ben Roethlisberger  /players/R/RoetBe00.htm  PIT   35       QB            15   
+Benny Cunningham    /players/C/CunnBe01.htm  CHI   27      NaN            14   
+Bernard Reedy       /players/R/ReedBe01.htm  2TM   26      NaN            11   
+Bilal Powell        /players/P/PoweBi00.htm  NYJ   29       RB            15   
+Blaine Gabbert      /players/G/GabbBl00.htm  ARI   28       qb             5   
+...                                     ...  ...  ...      ...           ...   
+Terron Ward         /players/W/WardTe00.htm  ATL   25      NaN            14   
+Tevin Coleman       /players/C/ColeTe01.htm  ATL   24    fb/rb            15   
+Theo Riddick        /players/R/RiddTh00.htm  DET   26       rb            16   
+Thomas Rawls        /players/R/RawlTh00.htm  SEA   24       rb            12   
+Tion Green          /players/G/GreeTi00.htm  DET   24      NaN             5   
+Todd Gurley         /players/G/GurlTo01.htm  LAR   23       RB            15   
+Tom Brady           /players/B/BradTo00.htm  NWE   40       QB            16   
+Tom Savage          /players/S/SavaTo00.htm  HOU   27       qb             8   
+Tommy Bohanon       /players/B/BohaTo00.htm  JAX   27       FB            16   
+Tommylee Lewis      /players/L/LewiTo00.htm  NOR   25      NaN            15   
+Torrey Smith        /players/S/SmitTo02.htm  PHI   28       WR            16   
+Travaris Cadet      /players/C/CadeTr00.htm  2TM   28      NaN             9   
+Travis Benjamin     /players/B/BenjTr00.htm  LAC   28       wr            16   
+Travis Kelce        /players/K/KelcTr00.htm  KAN   28       TE            15   
+Trevor Davis        /players/D/DaviTr03.htm  GNB   24      NaN            16   
+Trevor Siemian      /players/S/SiemTr00.htm  DEN   26       QB            11   
+Trey Edmunds        /players/E/EdmuTr00.htm  NOR   23      NaN            16   
+Ty Montgomery       /players/M/MontTy01.htm  GNB   24       rb             8   
+Tyler Bray          /players/B/BrayTy00.htm  KAN   26      NaN             1   
+Tyler Ervin         /players/E/ErviTy00.htm  HOU   24      NaN             4   
+Tyler Lockett       /players/L/LockTy00.htm  SEA   25       WR            16   
+Tyreek Hill         /players/H/HillTy00.htm  KAN   23       WR            15   
+Tyrod Taylor        /players/T/TaylTy00.htm  BUF   28       QB            15   
+Vince Mayle         /players/M/MaylVi00.htm  BAL   26      NaN            16   
+Wayne Gallman       /players/G/GallWa00.htm  NYG   23       rb            13   
+Wendell Smallwood   /players/S/SmalWe00.htm  PHI   23       rb             8   
+Wil Lutz            /players/L/LutzWi00.htm  NOR   23        K            16   
+Will Fuller         /players/F/FullWi01.htm  HOU   23       WR            10   
+Zach Line           /players/L/LineZa01.htm  NOR   27       fb            12   
+Zach Zenner         /players/Z/ZennZa00.htm  DET   26      NaN             8   
 
-     games_played  games_started  rush_attempts  rush_yards  rush_td  \
-0              15             15            321        1291        9   
-1              16             16            287        1138        6   
-2              16             16            284        1105        8   
-3              15             15            279        1305       13   
-4              16             16            276        1122        9   
-5              16             16            272        1327        8   
-6              13             13            268        1040        9   
-7              16             16            261         961        3   
-8              16             16            245        1007        3   
-9              10             10            242         983        7   
-10             16             16            240         938        8   
-11             16             13            238         888        3   
-12             16             13            230        1124       12   
-13             16             11            216         842        8   
-14             15             12            212         973        6   
-15             14              8            208         873        1   
-16             15             15            207         891        7   
-17             16             16            206         853        2   
-18             15             10            198         680        6   
-19             14             14            196         865        7   
-20             15             15            184         659        6   
-21             16              8            180         896        6   
-22             14              7            178         626        4   
-23             15             10            178         772        5   
-24             16              2            176         744        5   
-25             16              8            175         603        1   
-26             16             11            173         766        2   
-27             15             11            171         751        5   
-28             14             11            165         552        4   
-29             15              3            156         628        5   
-..            ...            ...            ...         ...      ...   
-286             2              0              1          -2        0   
-287            16             11              1          -8        0   
-288            15              1              1           5        0   
-289            16              3              1           6        0   
-290            16              0              1          24        0   
-291            16             16              1          15        0   
-292             3              0              1          -1        0   
-293             2              1              1           2        0   
-294            16             16              1          -7        0   
-295            14             14              1          17        0   
-296            16              0              1           4        0   
-297            14             11              1          -3        0   
-298             1              0              1          -2        0   
-299            11              0              1           4        0   
-300            11              3              1           1        0   
-301             7              0              1          15        0   
-302            16              5              1           1        0   
-303             4              0              1           2        0   
-304             8              0              1          -1        0   
-305             1              0              1          10        0   
-306             3              1              1          12        0   
-307            16             14              1          -3        0   
-308             1              0              1          22        0   
-309            16             16              1          11        0   
-310            16              2              1           4        0   
-311             6              1              1           6        0   
-312            15             14              1           4        0   
-313            16              0              1           0        0   
-314            10              0              1           7        0   
-315            16             16              1           1        1   
+                    games_started  rush_attempts  rush_yards  rush_td  \
+name                                                                    
+Aaron Jones                     4             81         448        4   
+Aaron Ripkowski                 2              5          13        0   
+Aaron Rodgers                   7             24         126        0   
+Adam Humphries                  3              1           6        0   
+Adam Thielen                   16              1          11        0   
+Adoree' Jackson                16              5          55        0   
+Adrian Peterson                 7            156         529        2   
+Akeem Hunt                      0              8          23        0   
+Albert Wilson                   7              3           6        0   
+Alex Collins                   12            212         973        6   
+Alex Erickson                   0              5          16        0   
+Alex Smith                     15             60         355        1   
+Alfred Blue                     0             71         262        1   
+Alfred Morris                   5            115         547        1   
+Alvin Kamara                    3            120         728        8   
+Amari Cooper                   12              1           4        0   
+Ameer Abdullah                 11            165         552        4   
+Andre Ellington                 2             20          55        1   
+Andre Williams                  0              9          25        0   
+Andy Dalton                    16             38          99        0   
+Andy Janovich                   4              6          12        1   
+Anthony Sherman                 3             14          40        1   
+ArDarius Stewart                2              7          27        0   
+Austin Davis                    0              1          -1        0   
+Austin Ekeler                   0             47         260        2   
+Ben Roethlisberger             15             28          47        0   
+Benny Cunningham                0              9          29        0   
+Bernard Reedy                   0              3          17        0   
+Bilal Powell                   10            178         772        5   
+Blaine Gabbert                  5             23          82        0   
+...                           ...            ...         ...      ...   
+Terron Ward                     0             30         129        0   
+Tevin Coleman                   3            156         628        5   
+Theo Riddick                    5             84         286        3   
+Thomas Rawls                    3             58         157        0   
+Tion Green                      0             42         165        2   
+Todd Gurley                    15            279        1305       13   
+Tom Brady                      16             25          28        0   
+Tom Savage                      7              4           2        0   
+Tommy Bohanon                  10              5           5        2   
+Tommylee Lewis                  0              2          14        0   
+Torrey Smith                   14              1          -3        0   
+Travaris Cadet                  0             23          96        0   
+Travis Benjamin                 3             13          96        0   
+Travis Kelce                   15              2           7        0   
+Trevor Davis                    0              2          13        0   
+Trevor Siemian                 10             31         127        1   
+Trey Edmunds                    0              9          48        1   
+Ty Montgomery                   5             71         273        3   
+Tyler Bray                      0              1           0        0   
+Tyler Ervin                     0              4          12        0   
+Tyler Lockett                   8             10          58        0   
+Tyreek Hill                    13             17          59        0   
+Tyrod Taylor                   14             84         427        4   
+Vince Mayle                     0              2           2        1   
+Wayne Gallman                   1            111         476        0   
+Wendell Smallwood               3             47         174        1   
+Wil Lutz                        0              1           4        0   
+Will Fuller                    10              2           9        0   
+Zach Line                       4              7          28        0   
+Zach Zenner                     0             14          26        1   
 
-          ...        rec_td  longest_rec  rec_per_game  rec_yards_per_game  \
-0         ...           2.0         42.0           5.7                43.7   
-1         ...           2.0         39.0           3.7                28.0   
-2         ...           4.0         49.0           3.6                29.8   
-3         ...           6.0         80.0           4.3                52.5   
-4         ...           0.0         12.0           1.4                 7.8   
-5         ...           3.0         78.0           3.3                28.4   
-6         ...           1.0         28.0           2.8                23.2   
-7         ...           1.0         26.0           1.8                15.3   
-8         ...           1.0         25.0           1.8                14.0   
-9         ...           2.0         72.0           2.6                26.9   
-10        ...           0.0         18.0           3.7                21.9   
-11        ...           3.0         32.0           2.3                20.4   
-12        ...           0.0         54.0           3.6                26.0   
-13        ...           0.0         28.0           0.9                 6.4   
-14        ...           0.0         37.0           1.5                12.5   
-15        ...           1.0         32.0           1.7                11.3   
-16        ...           0.0         26.0           1.3                10.1   
-17        ...           0.0         38.0           1.8                11.4   
-18        ...           1.0         21.0           0.5                 3.5   
-19        ...           1.0         29.0           2.6                22.6   
-20        ...           1.0         18.0           2.6                17.7   
-21        ...           3.0         20.0           2.0                13.4   
-22        ...           0.0         67.0           2.1                20.5   
-23        ...           0.0         31.0           1.5                11.3   
-24        ...           1.0         66.0           0.7                 8.5   
-25        ...           1.0         25.0           1.4                11.4   
-26        ...           1.0         20.0           0.5                 3.1   
-27        ...           0.0         13.0           1.3                 7.7   
-28        ...           1.0         22.0           1.8                11.6   
-29        ...           3.0         39.0           1.8                19.9   
-..        ...           ...          ...           ...                 ...   
-286       ...           NaN          NaN           NaN                 NaN   
-287       ...           1.0         22.0           1.0                 7.8   
-288       ...           0.0         19.0           0.3                 2.8   
-289       ...           1.0         43.0           3.8                39.4   
-290       ...           NaN          NaN           NaN                 NaN   
-291       ...           3.0         53.0           5.5                90.3   
-292       ...           NaN          NaN           NaN                 NaN   
-293       ...           NaN          NaN           NaN                 NaN   
-294       ...           9.0         49.0           7.0                61.7   
-295       ...           3.0         45.0           4.0                50.1   
-296       ...           NaN          NaN           NaN                 NaN   
-297       ...           4.0         75.0           3.8                56.8   
-298       ...           NaN          NaN           NaN                 NaN   
-299       ...           0.0         14.0           0.4                 2.6   
-300       ...           1.0         57.0           1.7                14.7   
-301       ...           0.0         19.0           0.3                 2.6   
-302       ...           4.0         34.0           2.0                24.1   
-303       ...           0.0         12.0           1.3                 4.5   
-304       ...           0.0         12.0           0.1                 1.5   
-305       ...           NaN          NaN           NaN                 NaN   
-306       ...           0.0          0.0           0.0                 0.0   
-307       ...           2.0         59.0           2.3                26.9   
-308       ...           NaN          NaN           NaN                 NaN   
-309       ...           4.0         65.0           5.7                79.8   
-310       ...           2.0         57.0           0.9                 8.9   
-311       ...           0.0         20.0           0.8                13.2   
-312       ...           4.0         66.0           3.5                49.9   
-313       ...           0.0          5.0           0.1                 0.3   
-314       ...           NaN          NaN           NaN                 NaN   
-315       ...           NaN          NaN           NaN                 NaN   
+                    longest_run       ...        catch_percentage  \
+name                                  ...                           
+Aaron Jones                  46       ...                    50.0   
+Aaron Ripkowski               4       ...                    70.0   
+Aaron Rodgers                18       ...                     0.0   
+Adam Humphries                6       ...                    73.5   
+Adam Thielen                 11       ...                    64.1   
+Adoree' Jackson              20       ...                     0.0   
+Adrian Peterson              27       ...                    57.9   
+Akeem Hunt                   11       ...                    57.1   
+Albert Wilson                 6       ...                    67.7   
+Alex Collins                 50       ...                    63.9   
+Alex Erickson                14       ...                    75.0   
+Alex Smith                   70       ...                     0.0   
+Alfred Blue                  48       ...                    77.8   
+Alfred Morris                70       ...                    77.8   
+Alvin Kamara                 74       ...                    81.0   
+Amari Cooper                  4       ...                    50.0   
+Ameer Abdullah               34       ...                    71.4   
+Andre Ellington              14       ...                    66.1   
+Andre Williams                7       ...                     0.0   
+Andy Dalton                  25       ...                     0.0   
+Andy Janovich                 4       ...                    66.7   
+Anthony Sherman               9       ...                    75.0   
+ArDarius Stewart             11       ...                    46.2   
+Austin Davis                 -1       ...                     0.0   
+Austin Ekeler                35       ...                    77.1   
+Ben Roethlisberger           14       ...                     0.0   
+Benny Cunningham             12       ...                    76.9   
+Bernard Reedy                10       ...                   100.0   
+Bilal Powell                 75       ...                    69.7   
+Blaine Gabbert               12       ...                     0.0   
+...                         ...       ...                     ...   
+Terron Ward                  17       ...                   100.0   
+Tevin Coleman                52       ...                    69.2   
+Theo Riddick                 21       ...                    74.6   
+Thomas Rawls                 23       ...                    69.2   
+Tion Green                   33       ...                   100.0   
+Todd Gurley                  57       ...                    73.6   
+Tom Brady                     7       ...                     0.0   
+Tom Savage                    3       ...                     0.0   
+Tommy Bohanon                 3       ...                    54.5   
+Tommylee Lewis                8       ...                    71.4   
+Torrey Smith                 -3       ...                    53.7   
+Travaris Cadet               12       ...                    84.2   
+Travis Benjamin              22       ...                    54.8   
+Travis Kelce                  4       ...                    68.0   
+Trevor Davis                  9       ...                    71.4   
+Trevor Siemian               15       ...                     0.0   
+Trey Edmunds                 41       ...                     0.0   
+Ty Montgomery                37       ...                    74.2   
+Tyler Bray                    0       ...                     0.0   
+Tyler Ervin                   6       ...                    72.7   
+Tyler Lockett                22       ...                    63.4   
+Tyreek Hill                  16       ...                    71.4   
+Tyrod Taylor                 32       ...                     0.0   
+Vince Mayle                   2       ...                     0.0   
+Wayne Gallman                24       ...                    70.8   
+Wendell Smallwood            26       ...                    72.2   
+Wil Lutz                      4       ...                     0.0   
+Will Fuller                   5       ...                    56.0   
+Zach Line                     9       ...                    40.0   
+Zach Zenner                  14       ...                     0.0   
 
-     catch_percentage  scrimmage_yards  rush_rec_td  fumbles  year  \
-0                80.2             1946           11        3  2017   
-1                76.6             1586            8        3  2017   
-2                69.9             1581           12        1  2017   
-3                73.6             2093           19        5  2017   
-4                71.9             1247            9        1  2017   
-5                84.1             1782           11        1  2017   
-6                75.0             1342           10        2  2017   
-7                76.3             1206            4        3  2017   
-8                70.0             1231            4        1  2017   
-9                68.4             1252            9        1  2017   
-10               67.0             1288            8        2  2017   
-11               80.0             1215            6        1  2017   
-12               81.7             1540           12        3  2017   
-13               88.2              945            8        1  2017   
-14               63.9             1160            6        4  2017   
-15               70.6             1031            2        3  2017   
-16               64.5             1042            7        1  2017   
-17               66.7             1035            2        1  2017   
-18               53.3              732            7        3  2017   
-19               76.6             1182            8        4  2017   
-20               83.0              925            7        1  2017   
-21               91.4             1110            9        0  2017   
-22               88.2              913            4        3  2017   
-23               69.7              942            5        1  2017   
-24               64.7              880            6        1  2017   
-25               91.7              785            2        2  2017   
-26              100.0              816            3        1  2017   
-27               67.9              867            5        1  2017   
-28               71.4              714            5        2  2017   
-29               69.2              927            8        1  2017   
-..                ...              ...          ...      ...   ...   
-286               NaN               -2            0        0  2017   
-287              72.7              117            1        2  2017   
-288              36.4               47            0        0  2017   
-289              73.5              637            1        1  2017   
-290               NaN               24            0        0  2017   
-291              59.5             1459            3        0  2017   
-292               NaN               -1            0        0  2017   
-293               NaN                2            0        0  2017   
-294              69.6              980            9        4  2017   
-295              58.3              719            3        1  2017   
-296               NaN                4            0        0  2017   
-297              60.9              792            4        0  2017   
-298               NaN               -2            0        0  2017   
-299              30.8               33            0        6  2017   
-300              65.5              163            1        0  2017   
-301              40.0               33            0        1  2017   
-302              53.3              387            4        0  2017   
-303              71.4               20            0        0  2017   
-304             100.0               11            0        5  2017   
-305               NaN               10            0        1  2017   
-306               0.0               12            0        1  2017   
-307              53.7              427            2        0  2017   
-308               NaN               22            0        0  2017   
-309              64.1             1287            4        3  2017   
-310              87.5              147            2        1  2017   
-311              27.8               85            0        1  2017   
-312              56.5              752            4        0  2017   
-313              50.0                5            0        0  2017   
-314               NaN                7            0        0  2017   
-315               NaN                1            1        0  2017   
+                    scrimmage_yards  rush_rec_td  fumbles  year  fumbles_lost  \
+name                                                                            
+Aaron Jones                     470            4        0  2017           0.0   
+Aaron Ripkowski                  52            0        0  2017           0.0   
+Aaron Rodgers                   126            0        1  2017           1.0   
+Adam Humphries                  637            1        1  2017           1.0   
+Adam Thielen                   1287            4        3  2017           2.0   
+Adoree' Jackson                  55            0        1  2017           1.0   
+Adrian Peterson                 599            2        3  2017           2.0   
+Akeem Hunt                       54            0        0  2017           0.0   
+Albert Wilson                   560            3        0  2017           0.0   
+Alex Collins                   1160            6        4  2017           2.0   
+Alex Erickson                   196            1        6  2017           1.0   
+Alex Smith                      355            1        2  2017           1.0   
+Alfred Blue                     316            1        0  2017           0.0   
+Alfred Morris                   592            1        0  2017           0.0   
+Alvin Kamara                   1554           13        1  2017           1.0   
+Amari Cooper                    684            7        1  2017           0.0   
+Ameer Abdullah                  714            5        2  2017           1.0   
+Andre Ellington                 424            1        0  2017           0.0   
+Andre Williams                   25            0        0  2017           0.0   
+Andy Dalton                      99            0        4  2017           4.0   
+Andy Janovich                    47            1        0  2017           0.0   
+Anthony Sherman                  87            1        0  2017           0.0   
+ArDarius Stewart                109            0        0  2017           0.0   
+Austin Davis                     -1            0        0  2017           0.0   
+Austin Ekeler                   539            5        2  2017           2.0   
+Ben Roethlisberger               47            0        3  2017           1.0   
+Benny Cunningham                269            2        1  2017           1.0   
+Bernard Reedy                    38            0        1  2017           0.0   
+Bilal Powell                    942            5        1  2017           1.0   
+Blaine Gabbert                   82            0        7  2017           2.0   
+...                             ...          ...      ...   ...           ...   
+Terron Ward                     143            0        1  2017           1.0   
+Tevin Coleman                   927            8        1  2017           0.0   
+Theo Riddick                    730            5        1  2017           1.0   
+Thomas Rawls                    251            0        1  2017           1.0   
+Tion Green                      179            2        0  2017           0.0   
+Todd Gurley                    2093           19        5  2017           2.0   
+Tom Brady                        28            0        7  2017           3.0   
+Tom Savage                        2            0        8  2017           7.0   
+Tommy Bohanon                    48            3        0  2017           0.0   
+Tommylee Lewis                  130            1        1  2017           1.0   
+Torrey Smith                    427            2        0  2017           0.0   
+Travaris Cadet                  215            0        0  2017           0.0   
+Travis Benjamin                 663            4        2  2017           0.0   
+Travis Kelce                   1045            8        0  2017           0.0   
+Trevor Davis                     83            0        0  2017           0.0   
+Trevor Siemian                  127            1        5  2017           2.0   
+Trey Edmunds                     48            1        0  2017           0.0   
+Ty Montgomery                   446            4        0  2017           0.0   
+Tyler Bray                        0            0        1  2017           1.0   
+Tyler Ervin                      50            0        0  2017           0.0   
+Tyler Lockett                   613            2        0  2017           0.0   
+Tyreek Hill                    1242            7        2  2017           0.0   
+Tyrod Taylor                    427            4        4  2017           2.0   
+Vince Mayle                       2            1        0  2017           0.0   
+Wayne Gallman                   669            1        3  2017           1.0   
+Wendell Smallwood               277            1        0  2017           0.0   
+Wil Lutz                          4            0        0  2017           0.0   
+Will Fuller                     432            7        0  2017           0.0   
+Zach Line                        36            1        0  2017           0.0   
+Zach Zenner                      26            1        0  2017           0.0   
 
-     fantasy_points  
-0             260.6  
-1             206.6  
-2             230.1  
-3             323.3  
-4             178.7  
-5             244.2  
-6             194.2  
-7             144.6  
-8             147.1  
-9             179.2  
-10            176.8  
-11            157.5  
-12            226.0  
-13            142.5  
-14            152.0  
-15            115.1  
-16            146.2  
-17            115.5  
-18            115.2  
-19            166.2  
-20            134.5  
-21            165.0  
-22            115.3  
-23            124.2  
-24            124.0  
-25             90.5  
-26             99.6  
-27            116.7  
-28            101.4  
-29            140.7  
-..              ...  
-286             NaN  
-287            17.7  
-288             4.7  
-289            69.7  
-290             NaN  
-291           163.9  
-292             NaN  
-293             NaN  
-294           152.0  
-295            89.9  
-296             NaN  
-297           103.2  
-298             NaN  
-299             3.3  
-300            22.3  
-301             3.3  
-302            62.7  
-303             2.0  
-304             1.1  
-305             NaN  
-306             1.2  
-307            54.7  
-308             NaN  
-309           152.7  
-310            26.7  
-311             8.5  
-312            99.2  
-313             0.5  
-314             NaN  
-315             NaN  
+                    return_yards  return_td  two_pt_conversions  \
+name                                                              
+Aaron Jones                  0.0        0.0                 0.0   
+Aaron Ripkowski              0.0        0.0                 0.0   
+Aaron Rodgers                0.0        0.0                 0.0   
+Adam Humphries               0.0        0.0                 0.0   
+Adam Thielen                 0.0        0.0                 0.0   
+Adoree' Jackson            578.0        0.0                 0.0   
+Adrian Peterson              0.0        0.0                 0.0   
+Akeem Hunt                 611.0        0.0                 0.0   
+Albert Wilson               18.0        0.0                 0.0   
+Alex Collins                50.0        0.0                 0.0   
+Alex Erickson              663.0        0.0                 0.0   
+Alex Smith                   0.0        0.0                 0.0   
+Alfred Blue                  0.0        0.0                 0.0   
+Alfred Morris                0.0        0.0                 0.0   
+Alvin Kamara               347.0        1.0                 1.0   
+Amari Cooper                 0.0        0.0                 0.0   
+Ameer Abdullah             179.0        0.0                 0.0   
+Andre Ellington              0.0        0.0                 0.0   
+Andre Williams               0.0        0.0                 0.0   
+Andy Dalton                  0.0        0.0                 0.0   
+Andy Janovich               10.0        0.0                 0.0   
+Anthony Sherman              7.0        0.0                 0.0   
+ArDarius Stewart           173.0        0.0                 0.0   
+Austin Davis                 0.0        0.0                 0.0   
+Austin Ekeler               85.0        0.0                 0.0   
+Ben Roethlisberger           0.0        0.0                 0.0   
+Benny Cunningham           147.0        0.0                 0.0   
+Bernard Reedy              145.0        0.0                 0.0   
+Bilal Powell                 0.0        0.0                 0.0   
+Blaine Gabbert               0.0        0.0                 0.0   
+...                          ...        ...                 ...   
+Terron Ward                  0.0        0.0                 0.0   
+Tevin Coleman                0.0        0.0                 0.0   
+Theo Riddick                 0.0        0.0                 0.0   
+Thomas Rawls                 0.0        0.0                 0.0   
+Tion Green                   0.0        0.0                 0.0   
+Todd Gurley                  0.0        0.0                 0.0   
+Tom Brady                    0.0        0.0                 0.0   
+Tom Savage                   0.0        0.0                 0.0   
+Tommy Bohanon               14.0        0.0                 0.0   
+Tommylee Lewis             307.0        0.0                 0.0   
+Torrey Smith                 0.0        0.0                 0.0   
+Travaris Cadet               0.0        0.0                 0.0   
+Travis Benjamin              0.0        0.0                 0.0   
+Travis Kelce                 0.0        0.0                 0.0   
+Trevor Davis               707.0        0.0                 0.0   
+Trevor Siemian               0.0        0.0                 0.0   
+Trey Edmunds                65.0        0.0                 0.0   
+Ty Montgomery                0.0        0.0                 0.0   
+Tyler Bray                   0.0        0.0                 0.0   
+Tyler Ervin                 93.0        0.0                 0.0   
+Tyler Lockett              949.0        1.0                 0.0   
+Tyreek Hill                  0.0        0.0                 0.0   
+Tyrod Taylor                 0.0        0.0                 0.0   
+Vince Mayle                 43.0        0.0                 0.0   
+Wayne Gallman                0.0        0.0                 0.0   
+Wendell Smallwood           93.0        0.0                 0.0   
+Wil Lutz                     0.0        0.0                 0.0   
+Will Fuller                  0.0        0.0                 0.0   
+Zach Line                    0.0        0.0                 0.0   
+Zach Zenner                 62.0        0.0                 0.0   
 
-[316 rows x 28 columns]
+                    fantasy_points  
+name                                
+Aaron Jones                  71.00  
+Aaron Ripkowski               5.20  
+Aaron Rodgers                10.60  
+Adam Humphries               67.70  
+Adam Thielen                148.70  
+Adoree' Jackson              26.62  
+Adrian Peterson              67.90  
+Akeem Hunt                   29.84  
+Albert Wilson                74.72  
+Alex Collins                150.00  
+Alex Erickson                50.12  
+Alex Smith                   39.50  
+Alfred Blue                  37.60  
+Alfred Morris                65.20  
+Alvin Kamara                253.28  
+Amari Cooper                110.40  
+Ameer Abdullah              106.56  
+Andre Ellington              48.40  
+Andre Williams                2.50  
+Andy Dalton                   1.90  
+Andy Janovich                11.10  
+Anthony Sherman              14.98  
+ArDarius Stewart             17.82  
+Austin Davis                 -0.10  
+Austin Ekeler                83.30  
+Ben Roethlisberger            2.70  
+Benny Cunningham             42.78  
+Bernard Reedy                 9.60  
+Bilal Powell                122.20  
+Blaine Gabbert                4.20  
+...                            ...  
+Terron Ward                  12.30  
+Tevin Coleman               140.70  
+Theo Riddick                101.00  
+Thomas Rawls                 23.10  
+Tion Green                   29.90  
+Todd Gurley                 319.30  
+Tom Brady                    -3.20  
+Tom Savage                  -13.80  
+Tommy Bohanon                23.36  
+Tommylee Lewis               29.28  
+Torrey Smith                 54.70  
+Travaris Cadet               21.50  
+Travis Benjamin              90.30  
+Travis Kelce                152.50  
+Trevor Davis                 36.58  
+Trevor Siemian               14.70  
+Trey Edmunds                 13.40  
+Ty Montgomery                68.60  
+Tyler Bray                   -2.00  
+Tyler Ervin                   8.72  
+Tyler Lockett               117.26  
+Tyreek Hill                 166.20  
+Tyrod Taylor                 62.70  
+Vince Mayle                   7.92  
+Wayne Gallman                70.90  
+Wendell Smallwood            37.42  
+Wil Lutz                      0.40  
+Will Fuller                  85.20  
+Zach Line                     9.60  
+Zach Zenner                  11.08  
+
+[317 rows x 31 columns]
 """
