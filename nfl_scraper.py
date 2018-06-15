@@ -9,7 +9,8 @@ import requests
 import bs4
 import pandas as pd
 from player import Player
-from constants import LOG_RUSH_REC_PASS_HEADER, LOG_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT, SEASON_RUSH_REC_HEADER
+import constants
+import football_db_scraper
 
 
 def scrape_table(url, table_id):
@@ -97,25 +98,38 @@ def get_player_stats(raw_stat_list):
     return clean_player_stats
 
 
-def make_data_frame(player_dict_list, year, header, fantasy_settings):
+def make_data_frame(player_dict_list, year, header, fantasy=False, fantasy_settings=constants.FANTASY_SETTINGS_DICT):
     """
     Creates a new data frame and returns it.
 
     :param player_dict_list: List of unique Player.__dict__'s.
     :param year: NFL season's year.
     :param header: Dictionary from constants.py used to create data frame columns.
-    :param fantasy_settings: Dictionary from constants.py used to calculate player's fantasy points for the season.
+    :param fantasy: When true, add a column for player's total fantasy points for the season.
+    :param fantasy_settings: Dictionary used to calculate player's fantasy points for the season.
     :return: Data frame of stats.
     """
-    df = pd.DataFrame(data=player_dict_list)  # Create the data frame.
-    header_list = list(header.keys())         # Get header dict's keys for df's column names.
-    df = df[header_list]                      # Add column headers.
-    df['year'] = year                         # Add a 'year' column.
+    df_columns = list(header.keys())                              # Get header dict's keys for df's column names.
+    df = pd.DataFrame(data=player_dict_list, columns=df_columns)  # Create the data frame.
+    df['year'] = year                                             # Add a 'year' column.
+    # df.set_index('name', inplace=True)                            # Make 'name' the data frame's index
 
-    # Create fantasy_points column.
+    if fantasy:
+        # Create fantasy_points column in df.
+        get_fantasy_points(df, year)
+
+    return df
+
+
+def get_fantasy_points(df, year, fantasy_settings=constants.FANTASY_SETTINGS_DICT):
+    for table in ['fumble', 'return', 'conversion']:
+        temp_df = football_db_scraper.driver(year, table)
+        df = df.join(temp_df, on='name', how='left')
+        # print()
+
     df['fantasy_points'] = 0
     for stat, value in fantasy_settings.items():
-        if stat in header.keys():
+        if stat in df.columns:
             df['fantasy_points'] += df[stat] * value
 
     return df
@@ -148,12 +162,12 @@ def scrape_game_log(player_url, year):
         print('Can only currently handle logs with rush and rec, or with rush, rec, and pass.')
         exit(1)
     elif len(data[0]) == 33:
-        header = LOG_RUSH_REC_PASS_HEADER
+        header = constants.LOG_RUSH_REC_PASS_HEADER
     elif len(data[0]) == 21:
-        header = LOG_RUSH_REC_HEADER
+        header = constants.LOG_RUSH_REC_HEADER
 
     list_of_log_dicts = create_player_objects(data, header)
-    df = make_data_frame(list_of_log_dicts, year, header, FANTASY_SETTINGS_DICT)
+    df = make_data_frame(list_of_log_dicts, year, header, constants.FANTASY_SETTINGS_DICT)
 
     return df
 
@@ -173,12 +187,13 @@ if __name__ == '__main__':
     elem_list = scrape_table(input_url, input_table_id)
 
     # Use the elements to create Player objects.
-    player_dicts = create_player_objects(elem_list, SEASON_RUSH_REC_HEADER)
+    player_dicts = create_player_objects(elem_list, constants.SEASON_RUSH_REC_HEADER)
 
     # Create a data frame for the season
-    output_df = make_data_frame(player_dicts, season_year, SEASON_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT)
+    output_df = make_data_frame(player_dicts, season_year, constants.SEASON_RUSH_REC_HEADER, fantasy=True)
 
     print(output_df)
+    output_df.to_csv('results.csv')
 
 
 """

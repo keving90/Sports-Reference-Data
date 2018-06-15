@@ -29,7 +29,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
 
 import nfl_scraper
-from constants import SEASON_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT
+from constants import SEASON_RUSH_REC_HEADER
 
 
 def modify_data_frame(data_frame_list, num_years, player_url=False):
@@ -63,7 +63,7 @@ def modify_data_frame(data_frame_list, num_years, player_url=False):
     big_df = big_df[big_df['position'] == 'RB']
 
     # Set the player's name and the season's year as the indexes.
-    big_df = big_df.set_index(['name', 'year'])
+    big_df.set_index(['name', 'year'], inplace=True)
 
     # Sort the data frame by the player's name
     big_df.sort_index(level='name', inplace=True)
@@ -124,7 +124,7 @@ def main():
         list_of_player_dicts = nfl_scraper.create_player_objects(player_list, SEASON_RUSH_REC_HEADER)
 
         # Create a data frame for the season
-        df = nfl_scraper.make_data_frame(list_of_player_dicts, year, SEASON_RUSH_REC_HEADER, FANTASY_SETTINGS_DICT)
+        df = nfl_scraper.make_data_frame(list_of_player_dicts, year, SEASON_RUSH_REC_HEADER, fantasy=False)
 
         data_frame_list.append(df)
 

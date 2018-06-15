@@ -50,4 +50,8 @@ class Player(object):
             if not data[i]:
                 setattr(self, attr, np.NaN)
             else:
-                setattr(self, attr, data_type(data[i]))
+                if ',' in data[i]:
+                    no_comma = ''.join(data[i].split(','))
+                    setattr(self, attr, data_type(no_comma))
+                else:
+                    setattr(self, attr, data_type(data[i]))

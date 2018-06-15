@@ -56,10 +56,11 @@ FANTASY_SETTINGS_DICT = {
     'rec_yards': 1 / 10,  # 10 yards = 1 point
     'receptions': 0,
     'rec_td': 6,
-    'two_pt_conversion': 2,
-    'fumbles': -2,  # fumbles lost only
+    'two_pt_conversions': 2,
+    'fumbles_lost': -2,
     'offensive_fumble_return_td': 6,
-    'return_yards': 1 / 25  # 25 yards = 1 point
+    'return_yards': 1 / 25,  # 25 yards = 1 point
+    'return_td': 6
 }
 
 LOG_RUSH_REC_HEADER = {
