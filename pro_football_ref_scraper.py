@@ -19,6 +19,7 @@ def scrape_table(url, table_id):
 
     :param url: Websites URL.
     :param table_id: Identifier for the table. Found when used "inspect element" on web page.
+
     :return: List of BeautifulSoup4 element ResultSets. Each item in list is a row in the table.
     """
     # Send a GET request to Pro Football Reference's Rushing & Receiving page to gather the data.
@@ -50,6 +51,7 @@ def create_player_objects(player_list, header):
 
     :param player_list: List of BeautifulSoup4 element ResultSets. Each item in list is a row in the table.
     :param header: Dictionary where keys are the name of the stat and values are the data type.
+
     :return: List of dictionary representations of Player objects (object.__dict__).
     """
     # This list holds a dictionary of each object's attributes.
@@ -82,6 +84,7 @@ def get_player_stats(raw_stat_list):
     Also gets a URL to the player's personal career stat page.
 
     :param raw_stat_list: List of BeautifulSoup4 element ResultSets. Inside of each ResultSet is a stat.
+
     :return: List of the player's stats in text form.
     """
     clean_player_stats = []
@@ -98,7 +101,7 @@ def get_player_stats(raw_stat_list):
     return clean_player_stats
 
 
-def make_data_frame(player_dict_list, year, header, fantasy=False, fantasy_settings=constants.FANTASY_SETTINGS_DICT):
+def make_data_frame(player_dict_list, year, header, fantasy=False):
     """
     Create a new data frame and return it.
 
@@ -106,7 +109,7 @@ def make_data_frame(player_dict_list, year, header, fantasy=False, fantasy_setti
     :param year: NFL season's year.
     :param header: Dictionary from constants.py used to create data frame columns.
     :param fantasy: When true, add a column for player's total fantasy points for the season.
-    :param fantasy_settings: Dictionary used to calculate player's fantasy points for the season.
+
     :return: Data frame of stats.
     """
     df_columns = list(header.keys())                              # Get header dict's keys for df's column names.
@@ -131,15 +134,24 @@ def get_fantasy_points(df, year, fantasy_settings=constants.FANTASY_SETTINGS_DIC
     :param df: Data frame to be modified.
     :param year: Current season.
     :param fantasy_settings: Dictionary where keys are a stat and values are the point value.
+
     :return: New data frame with fantasy point calculation.
     """
-    for table_name in ['fumble', 'return', 'conversion']:
+    for table_name in ['fumble', 'kick return', 'punt return', 'conversion']:
         stat_df = fbdb.get_df(year, table_name)  # Scrape table from footballdb.com and make a data frame.
         df = df.join(stat_df, how='left')        # Join stat data frame to main data frame.
 
     # Replace NaN data with 0, otherwise fantasy calculations with have NaN results for players with missing data.
-    for column in ['fumbles_lost', 'two_pt_conversions', 'return_yards', 'return_td']:
-        df[column].fillna(0, inplace=True)
+    stat_list = ['fumbles_lost', 'two_pt_conversions', 'kick_return_yards', 'kick_return_td', 'punt_return_yards',
+                 'punt_return_td']
+    [df[column].fillna(0, inplace=True) for column in stat_list]
+
+    df['return_yards'] = df['kick_return_yards'] + df['punt_return_yards']  # Calculate total return yards.
+    df['return_td'] = df['kick_return_td'] + df['punt_return_td']           # Calculate total return touchdowns.
+
+    # Drop individual return yards and touchdown stats.
+    dropped_stats = ['kick_return_yards', 'punt_return_yards', 'kick_return_td', 'punt_return_td']
+    [df.drop(stat, axis=1, inplace=True) for stat in dropped_stats]
 
     # Insert the fantasy_points column and calculate each player's fantasy point total.
     df['fantasy_points'] = 0
@@ -156,6 +168,7 @@ def scrape_game_log(player_url, year):
 
     :param player_url: String representing player's unique URL found in the "Rushing and Receiving" table.
     :param year: Season's year for the game log.
+
     :return: Data frame where each row is the stats for a game.
     """
     # Remove the '.htm' part of the player's url if necessary.
@@ -470,83 +483,83 @@ Will Fuller                     432            7        0  2017           0.0
 Zach Line                        36            1        0  2017           0.0   
 Zach Zenner                      26            1        0  2017           0.0   
 
-                    return_yards  return_td  two_pt_conversions  \
+                    two_pt_conversions  return_yards  return_td  \
 name                                                              
-Aaron Jones                  0.0        0.0                 0.0   
-Aaron Ripkowski              0.0        0.0                 0.0   
-Aaron Rodgers                0.0        0.0                 0.0   
-Adam Humphries               0.0        0.0                 0.0   
-Adam Thielen                 0.0        0.0                 0.0   
-Adoree' Jackson            578.0        0.0                 0.0   
-Adrian Peterson              0.0        0.0                 0.0   
-Akeem Hunt                 611.0        0.0                 0.0   
-Albert Wilson               18.0        0.0                 0.0   
-Alex Collins                50.0        0.0                 0.0   
-Alex Erickson              663.0        0.0                 0.0   
-Alex Smith                   0.0        0.0                 0.0   
-Alfred Blue                  0.0        0.0                 0.0   
-Alfred Morris                0.0        0.0                 0.0   
-Alvin Kamara               347.0        1.0                 1.0   
-Amari Cooper                 0.0        0.0                 0.0   
-Ameer Abdullah             179.0        0.0                 0.0   
-Andre Ellington              0.0        0.0                 0.0   
-Andre Williams               0.0        0.0                 0.0   
-Andy Dalton                  0.0        0.0                 0.0   
-Andy Janovich               10.0        0.0                 0.0   
-Anthony Sherman              7.0        0.0                 0.0   
-ArDarius Stewart           173.0        0.0                 0.0   
-Austin Davis                 0.0        0.0                 0.0   
-Austin Ekeler               85.0        0.0                 0.0   
-Ben Roethlisberger           0.0        0.0                 0.0   
-Benny Cunningham           147.0        0.0                 0.0   
-Bernard Reedy              145.0        0.0                 0.0   
-Bilal Powell                 0.0        0.0                 0.0   
-Blaine Gabbert               0.0        0.0                 0.0   
-...                          ...        ...                 ...   
-Terron Ward                  0.0        0.0                 0.0   
-Tevin Coleman                0.0        0.0                 0.0   
-Theo Riddick                 0.0        0.0                 0.0   
-Thomas Rawls                 0.0        0.0                 0.0   
-Tion Green                   0.0        0.0                 0.0   
-Todd Gurley                  0.0        0.0                 0.0   
-Tom Brady                    0.0        0.0                 0.0   
-Tom Savage                   0.0        0.0                 0.0   
-Tommy Bohanon               14.0        0.0                 0.0   
-Tommylee Lewis             307.0        0.0                 0.0   
-Torrey Smith                 0.0        0.0                 0.0   
-Travaris Cadet               0.0        0.0                 0.0   
-Travis Benjamin              0.0        0.0                 0.0   
-Travis Kelce                 0.0        0.0                 0.0   
-Trevor Davis               707.0        0.0                 0.0   
-Trevor Siemian               0.0        0.0                 0.0   
-Trey Edmunds                65.0        0.0                 0.0   
-Ty Montgomery                0.0        0.0                 0.0   
-Tyler Bray                   0.0        0.0                 0.0   
-Tyler Ervin                 93.0        0.0                 0.0   
-Tyler Lockett              949.0        1.0                 0.0   
-Tyreek Hill                  0.0        0.0                 0.0   
-Tyrod Taylor                 0.0        0.0                 0.0   
-Vince Mayle                 43.0        0.0                 0.0   
-Wayne Gallman                0.0        0.0                 0.0   
-Wendell Smallwood           93.0        0.0                 0.0   
-Wil Lutz                     0.0        0.0                 0.0   
-Will Fuller                  0.0        0.0                 0.0   
-Zach Line                    0.0        0.0                 0.0   
-Zach Zenner                 62.0        0.0                 0.0   
+Aaron Jones                        0.0           0.0        0.0   
+Aaron Ripkowski                    0.0           0.0        0.0   
+Aaron Rodgers                      0.0           0.0        0.0   
+Adam Humphries                     0.0          49.0        0.0   
+Adam Thielen                       0.0           0.0        0.0   
+Adoree' Jackson                    0.0         868.0        0.0   
+Adrian Peterson                    0.0           0.0        0.0   
+Akeem Hunt                         0.0         611.0        0.0   
+Albert Wilson                      0.0          18.0        0.0   
+Alex Collins                       0.0          50.0        0.0   
+Alex Erickson                      0.0         941.0        0.0   
+Alex Smith                         0.0           0.0        0.0   
+Alfred Blue                        0.0           0.0        0.0   
+Alfred Morris                      0.0           0.0        0.0   
+Alvin Kamara                       1.0         347.0        1.0   
+Amari Cooper                       0.0           0.0        0.0   
+Ameer Abdullah                     0.0         179.0        0.0   
+Andre Ellington                    0.0           0.0        0.0   
+Andre Williams                     0.0           0.0        0.0   
+Andy Dalton                        0.0           0.0        0.0   
+Andy Janovich                      0.0          10.0        0.0   
+Anthony Sherman                    0.0           7.0        0.0   
+ArDarius Stewart                   0.0         173.0        0.0   
+Austin Davis                       0.0           0.0        0.0   
+Austin Ekeler                      0.0          85.0        0.0   
+Ben Roethlisberger                 0.0           0.0        0.0   
+Benny Cunningham                   0.0         147.0        0.0   
+Bernard Reedy                      0.0         320.0        0.0   
+Bilal Powell                       0.0           0.0        0.0   
+Blaine Gabbert                     0.0           0.0        0.0   
+...                                ...           ...        ...   
+Terron Ward                        0.0           0.0        0.0   
+Tevin Coleman                      0.0           0.0        0.0   
+Theo Riddick                       0.0           0.0        0.0   
+Thomas Rawls                       0.0           0.0        0.0   
+Tion Green                         0.0           0.0        0.0   
+Todd Gurley                        0.0           0.0        0.0   
+Tom Brady                          0.0           0.0        0.0   
+Tom Savage                         0.0           0.0        0.0   
+Tommy Bohanon                      0.0          14.0        0.0   
+Tommylee Lewis                     0.0         422.0        0.0   
+Torrey Smith                       0.0           9.0        0.0   
+Travaris Cadet                     0.0           0.0        0.0   
+Travis Benjamin                    0.0         257.0        1.0   
+Travis Kelce                       0.0           0.0        0.0   
+Trevor Davis                       0.0         996.0        0.0   
+Trevor Siemian                     0.0           0.0        0.0   
+Trey Edmunds                       0.0          65.0        0.0   
+Ty Montgomery                      0.0           0.0        0.0   
+Tyler Bray                         0.0           0.0        0.0   
+Tyler Ervin                        0.0         153.0        0.0   
+Tyler Lockett                      0.0        1186.0        1.0   
+Tyreek Hill                        0.0         204.0        1.0   
+Tyrod Taylor                       0.0           0.0        0.0   
+Vince Mayle                        0.0          43.0        0.0   
+Wayne Gallman                      0.0           0.0        0.0   
+Wendell Smallwood                  0.0          93.0        0.0   
+Wil Lutz                           0.0           0.0        0.0   
+Will Fuller                        0.0         135.0        0.0   
+Zach Line                          0.0           0.0        0.0   
+Zach Zenner                        0.0          62.0        0.0   
 
                     fantasy_points  
 name                                
 Aaron Jones                  71.00  
 Aaron Ripkowski               5.20  
 Aaron Rodgers                10.60  
-Adam Humphries               67.70  
+Adam Humphries               69.66  
 Adam Thielen                148.70  
-Adoree' Jackson              26.62  
+Adoree' Jackson              38.22  
 Adrian Peterson              67.90  
 Akeem Hunt                   29.84  
 Albert Wilson                74.72  
 Alex Collins                150.00  
-Alex Erickson                50.12  
+Alex Erickson                61.24  
 Alex Smith                   39.50  
 Alfred Blue                  37.60  
 Alfred Morris                65.20  
@@ -563,7 +576,7 @@ Austin Davis                 -0.10
 Austin Ekeler                83.30  
 Ben Roethlisberger            2.70  
 Benny Cunningham             42.78  
-Bernard Reedy                 9.60  
+Bernard Reedy                16.60  
 Bilal Powell                122.20  
 Blaine Gabbert                4.20  
 ...                            ...  
@@ -576,25 +589,25 @@ Todd Gurley                 319.30
 Tom Brady                    -3.20  
 Tom Savage                  -13.80  
 Tommy Bohanon                23.36  
-Tommylee Lewis               29.28  
-Torrey Smith                 54.70  
+Tommylee Lewis               33.88  
+Torrey Smith                 55.06  
 Travaris Cadet               21.50  
-Travis Benjamin              90.30  
+Travis Benjamin             106.58  
 Travis Kelce                152.50  
-Trevor Davis                 36.58  
+Trevor Davis                 48.14  
 Trevor Siemian               14.70  
 Trey Edmunds                 13.40  
 Ty Montgomery                68.60  
 Tyler Bray                   -2.00  
-Tyler Ervin                   8.72  
-Tyler Lockett               117.26  
-Tyreek Hill                 166.20  
+Tyler Ervin                  11.12  
+Tyler Lockett               126.74  
+Tyreek Hill                 180.36  
 Tyrod Taylor                 62.70  
 Vince Mayle                   7.92  
 Wayne Gallman                70.90  
 Wendell Smallwood            37.42  
 Wil Lutz                      0.40  
-Will Fuller                  85.20  
+Will Fuller                  90.60  
 Zach Line                     9.60  
 Zach Zenner                  11.08  
 
