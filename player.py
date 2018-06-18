@@ -10,16 +10,15 @@ from datetime import datetime
 
 class Player(object):
     """
-    This class is used to represent a record in the data set. It uses a header dictionary to assign attributes and
-    give them appropriate data types.
+
+    Represent a record in the data set. Uses a dictionary to assign attributes and give them appropriate data
+    types. The dictionary's keys will be class attributes. The dictionary's value will be attribute data types.
+
     """
     def __init__(self, data, header):
-        """
-        Initialize the Player object. Uses the keys and values in HEADER to assign attributes and data types for
-        the attributes.
-        """
         # Loop through the header dictionary keys and values. An enumeration is used to grab data from a specific
-        # column in the row.
+        # column in the row. Use the keys and values in header to assign attributes and data types for
+        # the attributes.
         for i, (attr, data_type) in enumerate(header.items()):
             # In a player's game log table, if '@' is in the row, then it was an away game.
             # Otherwise, it was a home game.
