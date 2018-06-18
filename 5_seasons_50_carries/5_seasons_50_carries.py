@@ -28,9 +28,14 @@ import pro_football_ref_scraper as pfbr
 
 def modify_data_frame(data_frame_list, num_years, player_url=False):
     """
-    This function takes a list of data frames as input. It concatenates the data frames together
-    to create one large data frame. It then modifies the data to get the running backs with 50 or
-    more carries in each of the past num_years season. The modified data frame is returned.
+    Concatenate each data frame in data_frame_list together to create one large data frame. Then modify the data frame
+    to get the running backs with 50 or more carries in each of the past num_years seasons and return it.
+
+    :param data_frame_list: List of data frames.
+    :param num_years: Number of seasons of data.
+    :param player_url: If false, drop the player_url column in the concatenated data frame.
+
+    :return: Data frame of running backs with 50 or more carries in each of the last 5 seasons.
     """
     # Concatenate the data frames to create one large data frame that has data for each season.
     big_df = pd.concat(data_frame_list)
@@ -106,6 +111,8 @@ def main():
     for year in range(start_year, end_year, -1):
         df = fb_ref.get_rushing_receiving_data(year, fantasy=True)
         data_frame_list.append(df)
+
+    # Now, we can modify the data.
 
     # Concatenate the data frames and clean the data.
     big_df = modify_data_frame(data_frame_list, num_years, False)
