@@ -6,14 +6,9 @@ it into a data frame (sample table: https://www.pro-football-reference.com/years
 the `Requests` and `Beautiful Soup 4` modules to gather the web page data. A `Player` class is used to create objects
 representing a single player. The program loops through the 5 most recent NFL seasons and gathers data for each season.
 A column for the player's fantasy points for the season is added to each data frame. The points total is based on a
-standard Yahoo! league (0 PPR). The scoring can be changed in the `FANTASY_SETTINGS_DICT` dictionary. A data frame for
-each season is placed in a list, and this list is concatenated into one big data frame. Then, various manipulations are
-made to the data frame to find all running backs who have had 50 or more rushing attempts in each of the last 5 years.
-The final data frame is saved as a `.csv` file.
-
-Note: This data set does not include 2 point conversions. This will affect the fantasy point total for some players.
-Luckily, few running backs get many 2 point conversions. Only 9 RB's in 2017 had 1 conversion, while the rest had 0.
-This will only have a small affect on the point total for some of the running backs.
+standard Yahoo! league (0 PPR). A data frame for each season is placed in a list, and this list is concatenated into
+one big data frame. Then, various manipulations are made to the data frame to find all running backs who have had 50 or
+more rushing attempts in each of the last 5 years. The final data frame is saved as a `.csv` file.
 """
 
 import pandas as pd
@@ -28,8 +23,7 @@ import os
 # This line of code grabs the head, joins it with '..', and inserts the path into the first element of sys.path.
 sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
 
-import pro_football_ref_scraper as proref
-from constants import SEASON_RUSH_REC_HEADER
+import pro_football_ref_scraper as pfbr
 
 
 def modify_data_frame(data_frame_list, num_years, player_url=False):
@@ -72,7 +66,7 @@ def modify_data_frame(data_frame_list, num_years, player_url=False):
     # drop them from the data set.
     for name in names:
         if len(big_df.loc[name]) != num_years:
-            big_df.drop(name, inplace=True)
+            big_df.drop(name, level=0, inplace=True)
 
     return big_df
 
@@ -106,23 +100,11 @@ def main():
     # Each data frame has data for a single season.
     data_frame_list = []
 
+    fb_ref = pfbr.ProFbRefScraper()
+
     # Iterate through each year of data and create a data frame for each one.
     for year in range(start_year, end_year, -1):
-        # Create url for given season.
-        url = 'https://www.pro-football-reference.com/years/' + str(year) + '/rushing.htm'
-
-        # Identify the table ID to get scrape from the correct table.
-        table_id = 'rushing_and_receiving'
-
-        # Scrape the data to get each player's web page elements.
-        player_list = proref.scrape_table(url, table_id)
-
-        # Use the elements to create Player objects.
-        list_of_player_dicts = proref.create_player_objects(player_list, SEASON_RUSH_REC_HEADER)
-
-        # Create a data frame for the season
-        df = proref.make_data_frame(list_of_player_dicts, year, SEASON_RUSH_REC_HEADER, fantasy=False)
-
+        df = fb_ref.get_rushing_receiving_data(year, fantasy=True)
         data_frame_list.append(df)
 
     # Concatenate the data frames and clean the data.
