@@ -1,227 +1,381 @@
 #!/usr/bin/env python3
 
-"""
-This module contains functions for scraping data from pro-football-reference.com tables based on a given table ID,
-creating Player objects from the data, and saving the data into a data frame.
-"""
-
 import requests
 import bs4
 import pandas as pd
-from player import Player
-import constants
 import football_db_scraper as fbdb
+from player import Player
+# import constants
+from datetime import datetime
 
 
-def scrape_table(url, table_id):
-    """
-    Scrape a table from pro-football-reference.com based on provided table ID.
+class ProFbRefScraper(object):
+    def __init__(self):
+        self._season_rush_rec_header = {
+            'name': str,
+            'url': str,
+            'team': str,
+            'age': int,
+            'position': str,
+            'games_played': int,
+            'games_started': int,
+            'rush_attempts': int,
+            'rush_yards': int,
+            'rush_td': int,
+            'longest_run': int,
+            'yards_per_rush': float,
+            'yards_per_game': float,
+            'attempts_per_game': float,
+            'targets': int,
+            'receptions': int,
+            'rec_yards': int,
+            'yards_per_rec': float,
+            'rec_td': int,
+            'longest_rec': int,
+            'rec_per_game': float,
+            'rec_yards_per_game': float,
+            'catch_percentage': float,
+            'scrimmage_yards': int,
+            'rush_rec_td': int,
+            'fumbles': int  # all fumbles
+        }
 
-    :param url: Websites URL.
-    :param table_id: Identifier for the table. Found when used "inspect element" on web page.
+        self._fantasy_settings_dict = {
+            'pass_yards': 1 / 25,  # 25 yards = 1 point
+            'pass_td': 4,
+            'interceptions': -1,
+            'rush_yards': 1 / 10,  # 10 yards = 1 point
+            'rush_td': 6,
+            'rec_yards': 1 / 10,  # 10 yards = 1 point
+            'receptions': 0,
+            'rec_td': 6,
+            'two_pt_conversions': 2,
+            'fumbles_lost': -2,
+            'offensive_fumble_return_td': 6,
+            'return_yards': 1 / 25,  # 25 yards = 1 point
+            'return_td': 6
+        }
 
-    :return: List of BeautifulSoup4 element ResultSets. Each item in list is a row in the table.
-    """
-    # Send a GET request to Pro Football Reference's Rushing & Receiving page to gather the data.
-    r = requests.get(url)
-    r.raise_for_status()
+        self._valid_fantasy_keys = self._fantasy_settings_dict.keys()
 
-    # Create a BeautifulSoup object.
-    soup = bs4.BeautifulSoup(r.text, 'lxml')
+        self._log_rush_rec_header = {
+            'date': datetime,
+            'game_number': int,
+            'age': float,
+            'team': str,
+            'location': str,
+            'opponent': str,
+            'result': str,
+            'rush_attempts': int,
+            'rush_yards': int,
+            'yards_per_rush': float,
+            'rush_td': int,
+            'targets': int,
+            'receptions': int,
+            'rec_yards': int,
+            'yards_per_rec': float,
+            'rec_td': int,
+            'catch_percentage': float,
+            'yards_per_target': float,
+            'total_td': int,
+            'total_points': int
+        }
 
-    # Find the first table with tag 'table' and id 'rushing_and_receiving
-    table = soup.find('table', id=table_id)
+        self._log_rush_rec_pass_header = {
+            'date': datetime,
+            'game_number': int,
+            'age': float,
+            'team': str,
+            'location': str,
+            'opponent': str,
+            'result': str,
+            'rush_attempts': int,
+            'rush_yards': int,
+            'yards_per_rush': float,
+            'rush_td': int,
+            'targets': int,
+            'receptions': int,
+            'rec_yards': int,
+            'yards_per_rec': float,
+            'rec_td': int,
+            'catch_percentage': float,
+            'yards_per_target': float,
+            'pass_completions': int,
+            'pass_attempts': int,
+            'completion_percentage': float,
+            'pass_yards': int,
+            'pass_td': int,
+            'interceptions': int,
+            'qb_rating': float,
+            'times_sacked': int,
+            'yards_lost_to_sacks': int,
+            'yards_per_pass_attempt': float,
+            'adjusted_yards_per_pass_attempt': float,
+            'pass_2_point_conversions': int,
+            'total_td': int,
+            'total_points': int
+        }
 
-    # tbody is the table's body
-    # Get the body of the table
-    body = table.find('tbody')
+    @property
+    def fantasy_settings(self):
+        return self._fantasy_settings_dict
 
-    # tr refers to a table row
-    # Each row in player_list has data for a single player
-    # This will also collect descriptions of each column found in the web page's table, which
-    # is filtered out in create_player_objects().
-    player_list = body.find_all('tr')
+    # Let users use their own fantasy settings. Must be a valid dictionary.
+    @fantasy_settings.setter
+    def fantasy_settings(self, settings_dict):
+        # Fantasy settings must be a dictionary.
+        if not isinstance(settings_dict, dict):
+            raise ValueError("Fantasy settings must be a dictionary.")
 
-    return player_list
+        # Check for valid number of keys in new fantasy settings dictionary.
+        dict_len = len(self._valid_fantasy_keys)
+        if len(settings_dict) > dict_len:
+            raise KeyError("Too many keys in new fantasy settings dict. "
+                           + str(dict_len) + " keys required.")
+        elif len(settings_dict) < dict_len:
+            raise KeyError("Too few keys in new fantasy settings dict. "
+                           + str(dict_len) + " keys required.")
 
+        # Check for valid keys and value types in new fantasy settings dictionary.
+        for key, value in settings_dict.items():
+            if key not in self._valid_fantasy_keys:
+                raise KeyError("Invalid key in new fantasy settings dict. "
+                               + "Valid keys include: " + str(list(self._valid_fantasy_keys)))
+            if type(value) != int and type(value) != float:
+                raise ValueError("Invalid value in new fantasy settings dict. Must be type int or float.")
 
-def create_player_objects(player_list, header):
-    """
-    Create an object for each player using the player_list created by scrape_data().
+        self._fantasy_settings_dict = settings_dict
 
-    :param player_list: List of BeautifulSoup4 element ResultSets. Each item in list is a row in the table.
-    :param header: Dictionary where keys are the name of the stat and values are the data type.
+    def get_rushing_receiving_data(self, year, fantasy=False, fantasy_settings=None):
+        if not fantasy_settings:
+            fantasy_settings = self._fantasy_settings_dict
 
-    :return: List of dictionary representations of Player objects (object.__dict__).
-    """
-    # This list holds a dictionary of each object's attributes.
-    # Each dictionary is made from the object's __dict__ attribute.
-    list_of_player_dicts = []
+        # Create url for given season.
+        input_url = 'https://www.pro-football-reference.com/years/' + str(year) + '/rushing.htm'
 
-    # Get each player's stats, create a Player object, and append the object
-    # and the instance's __dict__ to their own list
-    for player in player_list:
-        # The <td> tag defines a standard cell in an HTML table.
-        # Get a list of cells. This raw web page data represents one player.
-        raw_stat_list = player.find_all('td')
+        # Identify the table ID to get scrape from the correct table.
+        input_table_id = 'rushing_and_receiving'
 
-        # If info_list has data, then we will extract the desired information from the elements.
-        # info_list will be empty if the current 'player' in the player_list is actually other
-        # irrelevant information we're not interested in (such as a column description).
-        if raw_stat_list:
-            player_stats = get_player_stats(raw_stat_list)
-            # Create a Player object and append the __dict__ attribute to a list.
-            # This list is used for the data in our data frame.
-            obj = Player(player_stats, header)
-            list_of_player_dicts.append(obj.__dict__)
+        # Scrape the data to get a list of each player's web page elements.
+        elem_list = self.__scrape_table(input_url, input_table_id)
 
-    return list_of_player_dicts
+        # Use the elements to create Player objects.
+        player_dicts = self.__create_player_objects(elem_list, self._season_rush_rec_header)
 
+        # Create a data frame for the season.
+        df = self.__make_data_frame(player_dicts, year, self._season_rush_rec_header, fantasy)
 
-def get_player_stats(raw_stat_list):
-    """
-    Used in create_player_objects() to get text data from from a BeautifulSoup4 element tag.
-    Also gets a URL to the player's personal career stat page.
+        return df
 
-    :param raw_stat_list: List of BeautifulSoup4 element ResultSets. Inside of each ResultSet is a stat.
+    def __scrape_table(self, url, table_id):
+        """
+        Scrape a table from pro-football-reference.com based on provided table ID.
 
-    :return: List of the player's stats in text form.
-    """
-    clean_player_stats = []
-    for stat in raw_stat_list:
-        clean_player_stats.append(stat.text)  # Grab the text representing the given stat.
-        if stat['data-stat'] == 'player':
-            # Every tag has an attribute.
-            # If the tag's data-stat attribute is 'player', then we get the player's URL.
-            # get_player_url(stat, player_info)
-            href = stat.find_all('a', href=True)  # Get href, which specifies the URL of the page the link goes to
-            url = href[0]['href']  # Get the URL string
-            clean_player_stats.append(url)
+        :param url: Websites URL.
+        :param table_id: Identifier for the table. Found when used "inspect element" on web page.
 
-    return clean_player_stats
+        :return: List of BeautifulSoup4 element ResultSets. Each item in list is a row in the table.
+        """
+        # Send a GET request to Pro Football Reference's Rushing & Receiving page to gather the data.
+        r = requests.get(url)
+        r.raise_for_status()
 
+        # Create a BeautifulSoup object.
+        soup = bs4.BeautifulSoup(r.text, 'lxml')
 
-def make_data_frame(player_dict_list, year, header, fantasy=False):
-    """
-    Create a new data frame and return it.
+        # Find the first table with tag 'table' and id 'rushing_and_receiving
+        table = soup.find('table', id=table_id)
 
-    :param player_dict_list: List of unique Player.__dict__'s.
-    :param year: NFL season's year.
-    :param header: Dictionary from constants.py used to create data frame columns.
-    :param fantasy: When true, add a column for player's total fantasy points for the season.
+        # tbody is the table's body
+        # Get the body of the table
+        body = table.find('tbody')
 
-    :return: Data frame of stats.
-    """
-    df_columns = list(header.keys())                              # Get header dict's keys for df's column names.
-    df = pd.DataFrame(data=player_dict_list, columns=df_columns)  # Create the data frame.
-    df['year'] = year                                             # Add a 'year' column.
-    df.set_index('name', inplace=True)                            # Make 'name' the data frame's index
+        # tr refers to a table row
+        # Each row in player_list has data for a single player
+        # This will also collect descriptions of each column found in the web page's table, which
+        # is filtered out in create_player_objects().
+        player_list = body.find_all('tr')
 
-    for stat in df_columns[5:]:
-        df[stat].fillna(0, inplace=True)   # Fill missing stats with 0.
+        return player_list
 
-    if fantasy:
-        df = get_fantasy_points(df, year)  # Create fantasy_points column in df.
+    def __create_player_objects(self, player_list, header):
+        """
+        Create an object for each player using the player_list created by scrape_data().
 
-    return df
+        :param player_list: List of BeautifulSoup4 element ResultSets. Each item in list is a row in the table.
+        :param header: Dictionary where keys are the name of the stat and values are the data type.
 
+        :return: List of dictionary representations of Player objects (object.__dict__).
+        """
+        # This list holds a dictionary of each object's attributes.
+        # Each dictionary is made from the object's __dict__ attribute.
+        list_of_player_dicts = []
 
-def get_fantasy_points(df, year, fantasy_settings=constants.FANTASY_SETTINGS_DICT):
-    """
-    Inserts 'fumbles_lost', 'two_pt_conversions', 'return_yards', 'return_td', and 'fantasy_points' columns into df.
-    Calculates fantasy points based on a fantasy settings dictionary.
+        # Get each player's stats, create a Player object, and append the object
+        # and the instance's __dict__ to their own list
+        for player in player_list:
+            # The <td> tag defines a standard cell in an HTML table.
+            # Get a list of cells. This raw web page data represents one player.
+            raw_stat_list = player.find_all('td')
 
-    :param df: Data frame to be modified.
-    :param year: Current season.
-    :param fantasy_settings: Dictionary where keys are a stat and values are the point value.
+            # If info_list has data, then we will extract the desired information from the elements.
+            # info_list will be empty if the current 'player' in the player_list is actually other
+            # irrelevant information we're not interested in (such as a column description).
+            if raw_stat_list:
+                player_stats = self.__get_player_stats(raw_stat_list)
+                # Create a Player object and append the __dict__ attribute to a list.
+                # This list is used for the data in our data frame.
+                obj = Player(player_stats, header)
+                list_of_player_dicts.append(obj.__dict__)
 
-    :return: New data frame with fantasy point calculation.
-    """
-    for table_name in ['fumble', 'kick return', 'punt return', 'conversion']:
-        stat_df = fbdb.get_df(year, table_name)  # Scrape table from footballdb.com and make a data frame.
-        df = df.join(stat_df, how='left')        # Join stat data frame to main data frame.
+        return list_of_player_dicts
 
-    # Replace NaN data with 0, otherwise fantasy calculations with have NaN results for players with missing data.
-    stat_list = ['fumbles_lost', 'two_pt_conversions', 'kick_return_yards', 'kick_return_td', 'punt_return_yards',
-                 'punt_return_td']
-    [df[column].fillna(0, inplace=True) for column in stat_list]
+    def __get_player_stats(self, raw_stat_list):
+        """
+        Used in create_player_objects() to get text data from from a BeautifulSoup4 element tag.
+        Also gets a URL to the player's personal career stat page.
 
-    df['return_yards'] = df['kick_return_yards'] + df['punt_return_yards']  # Calculate total return yards.
-    df['return_td'] = df['kick_return_td'] + df['punt_return_td']           # Calculate total return touchdowns.
+        :param raw_stat_list: List of BeautifulSoup4 element ResultSets. Inside of each ResultSet is a stat.
 
-    # Drop individual return yards and touchdown stats.
-    dropped_stats = ['kick_return_yards', 'punt_return_yards', 'kick_return_td', 'punt_return_td']
-    [df.drop(stat, axis=1, inplace=True) for stat in dropped_stats]
+        :return: List of the player's stats in text form.
+        """
+        clean_player_stats = []
+        for stat in raw_stat_list:
+            clean_player_stats.append(stat.text)  # Grab the text representing the given stat.
+            if stat['data-stat'] == 'player':
+                # Every tag has an attribute.
+                # If the tag's data-stat attribute is 'player', then we get the player's URL.
+                # get_player_url(stat, player_info)
+                href = stat.find_all('a', href=True)  # Get href, which specifies the URL of the page the link goes to
+                url = href[0]['href']  # Get the URL string
+                clean_player_stats.append(url)
 
-    # Insert the fantasy_points column and calculate each player's fantasy point total.
-    df['fantasy_points'] = 0
-    for stat, value in fantasy_settings.items():
-        if stat in df.columns:
-            df['fantasy_points'] += df[stat] * value
+        return clean_player_stats
 
-    return df
+    def __make_data_frame(self, player_dict_list, year, header, fantasy=False):
+        """
+        Create a new data frame and return it.
 
+        :param player_dict_list: List of unique Player.__dict__'s.
+        :param year: NFL season's year.
+        :param header: Dictionary from constants.py used to create data frame columns.
+        :param fantasy: When true, add a column for player's total fantasy points for the season.
 
-def scrape_game_log(player_url, year):
-    """
-    Scrapes regular season stats from a player's game log for a specific year.
+        :return: Data frame of stats.
+        """
+        df_columns = list(header.keys())  # Get header dict's keys for df's column names.
+        df = pd.DataFrame(data=player_dict_list, columns=df_columns)  # Create the data frame.
+        df['year'] = year  # Add a 'year' column.
+        df.set_index('name', inplace=True)  # Make 'name' the data frame's index
 
-    :param player_url: String representing player's unique URL found in the "Rushing and Receiving" table.
-    :param year: Season's year for the game log.
+        for stat in df_columns[5:]:
+            df[stat].fillna(0, inplace=True)  # Fill missing stats with 0.
 
-    :return: Data frame where each row is the stats for a game.
-    """
-    # Remove the '.htm' part of the player's url if necessary.
-    if player_url.endswith('.htm'):
-        player_url = player_url[:-4]
+        if fantasy:
+            df = self.__get_fantasy_points(df, year)  # Create fantasy_points column in df.
 
-    # Build the URL to the player's game log page
-    url = 'https://www.pro-football-reference.com' + player_url + '/gamelog/' + str(year) + '/'
+        return df
 
-    # ID used to identify the regular season stats table.
-    table_id = 'stats'
+    def __get_fantasy_points(self, df, year):
+        """
+        Inserts 'fumbles_lost', 'two_pt_conversions', 'return_yards', 'return_td', and 'fantasy_points' columns into df.
+        Calculates fantasy points based on a fantasy settings dictionary.
 
-    # Get the data from the game log page.
-    data = scrape_table(url, table_id)
+        :param df: Data frame to be modified.
+        :param year: Current season.
+        :param fantasy_settings: Dictionary where keys are a stat and values are the point value.
 
-    # Use the appropriate header dictionary based on the number of elements in data list.
-    if not data[0]:
-        print('Error in game_log_scraper().')
-        print('Can only currently handle logs with rush and rec data, or with rush, rec, and pass data.')
-        exit(1)
-    elif len(data[0]) == 33:
-        header = constants.LOG_RUSH_REC_PASS_HEADER
-    elif len(data[0]) == 21:
-        header = constants.LOG_RUSH_REC_HEADER
+        :return: New data frame with fantasy point calculation.
+        """
+        for table_name in ['fumble', 'kick return', 'punt return', 'conversion']:
+            stat_df = fbdb.get_df(year, table_name)  # Scrape table from footballdb.com and make a data frame.
+            df = df.join(stat_df, how='left')        # Join stat data frame to main data frame.
 
-    list_of_log_dicts = create_player_objects(data, header)
-    df = make_data_frame(list_of_log_dicts, year, header, constants.FANTASY_SETTINGS_DICT)
+        # Replace NaN data with 0, otherwise fantasy calculations with have NaN results for players with missing data.
+        stat_list = ['fumbles_lost', 'two_pt_conversions', 'kick_return_yards', 'kick_return_td',
+                     'punt_return_yards', 'punt_return_td']
+        for column in stat_list:
+            df[column].fillna(0, inplace=True)
 
-    return df
+        df['return_yards'] = df['kick_return_yards'] + df['punt_return_yards']  # Calculate total return yards.
+        df['return_td'] = df['kick_return_td'] + df['punt_return_td']           # Calculate total return touchdowns.
+
+        # Drop individual return yards and touchdown stats.
+        for stat in ['kick_return_yards', 'punt_return_yards', 'kick_return_td', 'punt_return_td']:
+            df.drop(stat, axis=1, inplace=True)
+
+        # Insert the fantasy_points column and calculate each player's fantasy point total.
+        df['fantasy_points'] = 0
+        for stat, value in self._fantasy_settings_dict.items():
+            if stat in df.columns:
+                df['fantasy_points'] += df[stat] * value
+
+        return df
+
+    def scrape_game_log(self, player_url, year):
+        """
+        Scrapes regular season stats from a player's game log for a specific year.
+
+        :param player_url: String representing player's unique URL found in the "Rushing and Receiving" table.
+        :param year: Season's year for the game log.
+
+        :return: Data frame where each row is the stats for a game.
+        """
+        # Remove the '.htm' part of the player's url if necessary.
+        if player_url.endswith('.htm'):
+            player_url = player_url[:-4]
+
+        # Build the URL to the player's game log page
+        url = 'https://www.pro-football-reference.com' + player_url + '/gamelog/' + str(year) + '/'
+
+        # ID used to identify the regular season stats table.
+        table_id = 'stats'
+
+        # Get the data from the game log page.
+        data = self.__scrape_table(url, table_id)
+
+        # Use the appropriate header dictionary based on the number of elements in data list.
+        if not data[0]:
+            print('Error in game_log_scraper().')
+            print('Can only currently handle logs with rush and rec data, or with rush, rec, and pass data.')
+            exit(1)
+        elif len(data[0]) == 33:
+            header = self.LOG_RUSH_REC_PASS_HEADER
+        elif len(data[0]) == 21:
+            header = self.LOG_RUSH_REC_HEADER
+
+        list_of_log_dicts = self.__create_player_objects(data, header)
+        df = self.__make_data_frame(list_of_log_dicts, year, header, self.FANTASY_SETTINGS_DICT)
+
+        return df
 
 
 if __name__ == '__main__':
     """Usage example."""
-    # Set the year.
-    season_year = 2017
+    FbRef = ProFbRefScraper()
 
-    # Create url for given season.
-    input_url = 'https://www.pro-football-reference.com/years/' + str(season_year) + '/rushing.htm'
+    # Use custom fantasy settings.
+    # Changes: 'receptions' = 0 -> receptions = 1.
+    new_fantasy_settings_dict = {
+        'rush_td': 6,
+        'pass_yards': 1 / 25,  # 25 yards = 1 point
+        'pass_td': 4,
+        'rec_td': 6,
+        'interceptions': -1,
+        'receptions': 1,
+        'two_pt_conversions': 2,
+        'fumbles_lost': -2,
+        'offensive_fumble_return_td': 6,
+        'rec_yards': 1 / 10,  # 10 yards = 1 point
+        'return_yards': 1 / 25,  # 25 yards = 1 point
+        'return_td': 6,
+        'rush_yards': 1 / 10  # 10 yards = 1 point
+    }
 
-    # Identify the table ID to get scrape from the correct table.
-    input_table_id = 'rushing_and_receiving'
-
-    # Scrape the data to get a list of each player's web page elements.
-    elem_list = scrape_table(input_url, input_table_id)
-
-    # Use the elements to create Player objects.
-    player_dicts = create_player_objects(elem_list, constants.SEASON_RUSH_REC_HEADER)
-
-    # Create a data frame for the season.
-    output_df = make_data_frame(player_dicts, season_year, constants.SEASON_RUSH_REC_HEADER, fantasy=True)
-
-    print(output_df)
-    # output_df.to_csv('results.csv')
+    FbRef.fantasy_settings = new_fantasy_settings_dict
+    rush_rec_df = FbRef.get_rushing_receiving_data(2017, fantasy=True)
+    print(rush_rec_df)
+    # rush_rec_df.to_csv('oop_results.csv')
 
 
 """
@@ -549,66 +703,66 @@ Zach Zenner                        0.0          62.0        0.0
 
                     fantasy_points  
 name                                
-Aaron Jones                  71.00  
-Aaron Ripkowski               5.20  
+Aaron Jones                  80.00  
+Aaron Ripkowski              12.20  
 Aaron Rodgers                10.60  
-Adam Humphries               69.66  
-Adam Thielen                148.70  
+Adam Humphries              130.66  
+Adam Thielen                239.70  
 Adoree' Jackson              38.22  
-Adrian Peterson              67.90  
-Akeem Hunt                   29.84  
-Albert Wilson                74.72  
-Alex Collins                150.00  
-Alex Erickson                61.24  
+Adrian Peterson              78.90  
+Akeem Hunt                   33.84  
+Albert Wilson               116.72  
+Alex Collins                173.00  
+Alex Erickson                73.24  
 Alex Smith                   39.50  
-Alfred Blue                  37.60  
-Alfred Morris                65.20  
-Alvin Kamara                253.28  
-Amari Cooper                110.40  
-Ameer Abdullah              106.56  
-Andre Ellington              48.40  
+Alfred Blue                  44.60  
+Alfred Morris                72.20  
+Alvin Kamara                334.28  
+Amari Cooper                158.40  
+Ameer Abdullah              131.56  
+Andre Ellington              87.40  
 Andre Williams                2.50  
 Andy Dalton                   1.90  
-Andy Janovich                11.10  
-Anthony Sherman              14.98  
-ArDarius Stewart             17.82  
+Andy Janovich                15.10  
+Anthony Sherman              20.98  
+ArDarius Stewart             23.82  
 Austin Davis                 -0.10  
-Austin Ekeler                83.30  
+Austin Ekeler               110.30  
 Ben Roethlisberger            2.70  
-Benny Cunningham             42.78  
-Bernard Reedy                16.60  
-Bilal Powell                122.20  
+Benny Cunningham             62.78  
+Bernard Reedy                18.60  
+Bilal Powell                145.20  
 Blaine Gabbert                4.20  
 ...                            ...  
-Terron Ward                  12.30  
-Tevin Coleman               140.70  
-Theo Riddick                101.00  
-Thomas Rawls                 23.10  
-Tion Green                   29.90  
-Todd Gurley                 319.30  
+Terron Ward                  15.30  
+Tevin Coleman               167.70  
+Theo Riddick                154.00  
+Thomas Rawls                 32.10  
+Tion Green                   31.90  
+Todd Gurley                 383.30  
 Tom Brady                    -3.20  
 Tom Savage                  -13.80  
-Tommy Bohanon                23.36  
-Tommylee Lewis               33.88  
-Torrey Smith                 55.06  
-Travaris Cadet               21.50  
-Travis Benjamin             106.58  
-Travis Kelce                152.50  
-Trevor Davis                 48.14  
+Tommy Bohanon                29.36  
+Tommylee Lewis               43.88  
+Torrey Smith                 91.06  
+Travaris Cadet               37.50  
+Travis Benjamin             140.58  
+Travis Kelce                235.50  
+Trevor Davis                 53.14  
 Trevor Siemian               14.70  
 Trey Edmunds                 13.40  
-Ty Montgomery                68.60  
+Ty Montgomery                91.60  
 Tyler Bray                   -2.00  
-Tyler Ervin                  11.12  
-Tyler Lockett               126.74  
-Tyreek Hill                 180.36  
+Tyler Ervin                  19.12  
+Tyler Lockett               171.74  
+Tyreek Hill                 255.36  
 Tyrod Taylor                 62.70  
 Vince Mayle                   7.92  
-Wayne Gallman                70.90  
-Wendell Smallwood            37.42  
+Wayne Gallman               104.90  
+Wendell Smallwood            50.42  
 Wil Lutz                      0.40  
-Will Fuller                  90.60  
-Zach Line                     9.60  
+Will Fuller                 118.60  
+Zach Line                    11.60  
 Zach Zenner                  11.08  
 
 [317 rows x 31 columns]
