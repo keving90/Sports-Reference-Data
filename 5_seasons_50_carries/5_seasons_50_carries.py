@@ -101,18 +101,14 @@ def main():
 
     # First, we need to scrape the data from Pro-Football Reference.
 
-    # Holds each data frame scraped from Pro-Football Reference.
-    # Each data frame has data for a single season.
-    data_frame_list = []
-
     fb_ref = pfbr.ProFbRefScraper()
 
-    # Iterate through each year of data and create a data frame for each one.
-    for year in range(start_year, end_year, -1):
-        df = fb_ref.get_rushing_receiving_data(year, fantasy=True)
-        data_frame_list.append(df)
+    # data_frame_list holds each data frame scraped from Pro-Football Reference. Each data frame has data for a single
+    # season. Iterate through each year of data and create a data frame for each one.
+    data_frame_list = [fb_ref.get_rushing_receiving_data(year, fantasy=True)
+                       for year in range(start_year, end_year, -1)]
 
-    # Now, we can modify the data.
+    # Now we can modify the data.
 
     # Concatenate the data frames and clean the data.
     big_df = modify_data_frame(data_frame_list, num_years, False)
