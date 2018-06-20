@@ -293,6 +293,28 @@ class ProFbRefScraper(object):
 
         return list_of_player_dicts
 
+    def __get_player_stats(self, raw_stat_list):
+        """
+        Get text data from from a BeautifulSoup4 element tag. Also gets a URL to the player's personal career stat
+        page. Used in create_player_objects().
+
+        :param raw_stat_list: List of BeautifulSoup4 element ResultSets. Inside of each ResultSet is a stat.
+
+        :return: List of the player's stats in text form.
+        """
+        clean_player_stats = []
+        for stat in raw_stat_list:
+            clean_player_stats.append(stat.text)  # Grab the text representing the given stat.
+            if stat['data-stat'] == 'player':
+                # Every tag has an attribute.
+                # If the tag's data-stat attribute is 'player', then we get the player's URL.
+                # get_player_url(stat, player_info)
+                href = stat.find_all('a', href=True)  # Get href, which specifies the URL of the page the link goes to
+                url = href[0]['href']  # Get the URL string
+                clean_player_stats.append(url)
+
+        return clean_player_stats
+
     def __make_data_frame(self, player_dict_list, year, fantasy=False):
         """
         Create a new data frame and return it.
@@ -316,28 +338,6 @@ class ProFbRefScraper(object):
 
         return df
 
-    def __get_player_stats(self, raw_stat_list):
-        """
-        Get text data from from a BeautifulSoup4 element tag. Also gets a URL to the player's personal career stat
-        page. Used in create_player_objects().
-
-        :param raw_stat_list: List of BeautifulSoup4 element ResultSets. Inside of each ResultSet is a stat.
-
-        :return: List of the player's stats in text form.
-        """
-        clean_player_stats = []
-        for stat in raw_stat_list:
-            clean_player_stats.append(stat.text)  # Grab the text representing the given stat.
-            if stat['data-stat'] == 'player':
-                # Every tag has an attribute.
-                # If the tag's data-stat attribute is 'player', then we get the player's URL.
-                # get_player_url(stat, player_info)
-                href = stat.find_all('a', href=True)  # Get href, which specifies the URL of the page the link goes to
-                url = href[0]['href']  # Get the URL string
-                clean_player_stats.append(url)
-
-        return clean_player_stats
-
     def __get_fantasy_points(self, df, year):
         """
         Insert 'fumbles_lost', 'two_pt_conversions', 'return_yards', 'return_td', and 'fantasy_points' columns into df.
@@ -358,10 +358,10 @@ class ProFbRefScraper(object):
                      'punt_return_yards', 'punt_return_td']
         [df[column].fillna(0, inplace=True) for column in stat_list]
 
-        df['return_yards'] = df['kick_return_yards'] + df['punt_return_yards']  # Calculate total return yards.
-        df['return_td'] = df['kick_return_td'] + df['punt_return_td']           # Calculate total return touchdowns.
+        df['return_yards'] = df['kick_return_yards'] + df['punt_return_yards']  # Consolidate punt/kick return yards.
+        df['return_td'] = df['kick_return_td'] + df['punt_return_td']           # Consolidate punt/kick return TDs.
 
-        # Drop individual return yards and touchdown stats.
+        # Drop individual punt/kick return yards and touchdown stats.
         dropped_stats = ['kick_return_yards', 'punt_return_yards', 'kick_return_td', 'punt_return_td']
         [df.drop(stat, axis=1, inplace=True) for stat in dropped_stats]
 
