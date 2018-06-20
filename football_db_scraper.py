@@ -92,16 +92,15 @@ def scrape_football_db(year, table_type):
     """
     # Currently only scrapes from three different tables.
     if table_type.lower() not in url_dict.keys():
-        print("Error in scrape_football_db(). Make sure to specify table_type.")
-        print("Can only currently handle 'fumble', 'return', and 'conversion'.")
-        exit(1)
+        raise KeyError("Error, make sure to specify table_type. "
+                       + "Can only currently handle 'fumble', 'return', and 'conversion")
 
     url = make_url(year, table_type)
 
     # Required for successful request. 403 error when not provided.
     # Taken from: https://stackoverflow.com/questions/38489386/python-requests-403-forbidden.
     req_header = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36'
-                             + '(KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+                                + '(KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
 
     # Send a GET request to Pro Football Reference's Rushing & Receiving page to gather the data.
     r = requests.get(url, headers=req_header)
@@ -166,9 +165,8 @@ def get_stats(player_list, table_type):
         elif table_type.lower() == 'conversion':
             stats, attr_dict, stop = get_two_pt_conversions(raw_stat_list)
         else:
-            print("Error in scrape_football_db(). Make sure to specify table_type.")
-            print("Can only currently handle 'fumble', 'return', and 'conversion'.")
-            exit(1)
+            raise KeyError("Error, make sure to specify table_type. "
+                           + "Can only currently handle 'fumble', 'return', and 'conversion")
 
         # Stop is True when remaining data in a table doesn't need to be scraped.
         # Examples of this situation include when a table is sorted by fumbles lost or two point conversions.
