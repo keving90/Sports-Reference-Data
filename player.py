@@ -47,9 +47,17 @@ class Player(object):
             # Set the class attribute. If the data is empty then we will assign a NumPy NaN value to the attribute.
             # Otherwise, we set the attribute as usual.
             if not data[i]:
-                setattr(self, attr, np.NaN)
+                # Row's cell has missing data.
+                if data_type == str:
+                    # Data type is string; leave blank.
+                    setattr(self, attr, '')
+                else:
+                    # Data type is not string; use NaN.
+                    setattr(self, attr, np.NaN)
             else:
+                # Row has no missing data. Use header dict's value as data type.
                 if ',' in data[i]:
+                    # Get rid of the comma in the row's cell.
                     no_comma = ''.join(data[i].split(','))
                     setattr(self, attr, data_type(no_comma))
                 else:
