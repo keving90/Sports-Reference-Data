@@ -105,13 +105,12 @@ def main():
 
     # data_frame_list holds each data frame scraped from Pro-Football Reference. Each data frame has data for a single
     # season. Iterate through each year of data and create a data frame for each one.
-    data_frame_list = [fb_ref.get_rushing_receiving_data(year, fantasy=True)
-                       for year in range(start_year, end_year, -1)]
+    df_list = [fb_ref.get_rushing_receiving_data(year, fantasy=True) for year in range(start_year, end_year, -1)]
 
     # Now we can modify the data.
 
     # Concatenate the data frames and clean the data.
-    big_df = modify_data_frame(data_frame_list, num_years, False)
+    big_df = modify_data_frame(df_list, num_years, False)
 
     # Write the data frame to a csv file and save it in the current working directory.
     big_df.to_csv('5_seasons_50_carries.csv')
