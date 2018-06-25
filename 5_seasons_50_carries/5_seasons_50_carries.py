@@ -23,63 +23,48 @@ import os
 # This line of code grabs the head, joins it with '..', and inserts the path into the first element of sys.path.
 sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
 
-import pro_football_ref_scraper as pfbr
+from football_db_scraper import FbDbScraper
 
 
-def modify_data_frame(data_frame_list, num_years, player_url=False):
+def modify_data_frame(data_frame_list, num_years):
     """
     Concatenate each data frame in data_frame_list together to create one large data frame. Then modify the data frame
     to get the running backs with 50 or more carries in each of the past num_years seasons and return it.
 
     :param data_frame_list: List of data frames.
     :param num_years: Number of seasons of data.
-    :param player_url: If false, drop the player_url column in the concatenated data frame.
 
     :return: Data frame of running backs with 50 or more carries in each of the last 5 seasons.
     """
     # Concatenate the data frames to create one large data frame that has data for each season.
     big_df = pd.concat(data_frame_list)
 
-    # Keep the player_url column in the data frame when player_url=True
-    if not player_url:
-        big_df.drop('url', axis=1, inplace=True)
-
     # Eliminate players with fewer than 50 rush attempts.
     big_df = big_df[big_df['rush_attempts'] >= 50]
-
-    # Some players have a NaN value their position. Any player with 50 or more rush attempts,
-    # but no position is likely a running back.
-    big_df['position'] = big_df['position'].fillna('RB')
-
-    # Some running backs have their position description in lowercase letters.
-    # Use a lambda function to fix this inconsistency.
-    big_df['position'] = big_df['position'].apply(lambda x: 'RB' if 'rb' in x else x)
 
     # Only interested in running backs
     big_df = big_df[big_df['position'] == 'RB']
 
-    # Current index is player's name. Append year to have multi-index.
+    # Current index is player's unique URL.
+    # Make first index the player's name, and the second index the season's year.
+    big_df.set_index('name', inplace=True)
     big_df.set_index('year', append=True, inplace=True)
 
-    # Sort the data frame by the player's name
+    # Sort the data frame by the player's name.
     big_df.sort_index(level='name', inplace=True)
 
-    # Get each player's name
+    # Get each player's name.
     names = big_df.index.get_level_values('name').unique()
 
-    # Loop through each player. If they don't have num_years season's worth of data, then we
-    # drop them from the data set.
-    for name in names:
-        if len(big_df.loc[name]) != num_years:
-            big_df.drop(name, level=0, inplace=True)
+    # Loop through each player.
+    # If they don't have num_years season's worth of data, then we drop them from the data set.
+    [big_df.drop(name, level=0, inplace=True) for name in names if len(big_df.loc[name]) != num_years]
 
     return big_df
 
 
 def main():
-    """
-    The main function.
-    """
+    """The main function."""
     # Get the current date to help figure out which year to start gathering data from.
     now = datetime.datetime.now()
 
@@ -101,16 +86,19 @@ def main():
 
     # First, we need to scrape the data from Pro-Football Reference.
 
-    fb_ref = pfbr.ProFbRefScraper()
+    # fb_ref = pfbr.ProFbRefScraper()
+    fb_db = FbDbScraper()
 
     # data_frame_list holds each data frame scraped from Pro-Football Reference. Each data frame has data for a single
     # season. Iterate through each year of data and create a data frame for each one.
-    df_list = [fb_ref.get_rushing_receiving_data(year, fantasy=True) for year in range(start_year, end_year, -1)]
+    # df_list = [fb_ref.get_rushing_receiving_data(year, fantasy=True) for year in range(start_year, end_year, -1)]
+
+    df_list = [fb_db.get_fantasy_df(year) for year in range(start_year, end_year, -1)]
 
     # Now we can modify the data.
 
     # Concatenate the data frames and clean the data.
-    big_df = modify_data_frame(df_list, num_years, False)
+    big_df = modify_data_frame(df_list, num_years)
 
     # Write the data frame to a csv file and save it in the current working directory.
     big_df.to_csv('5_seasons_50_carries.csv')
