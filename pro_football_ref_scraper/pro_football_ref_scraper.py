@@ -3,7 +3,7 @@
 import requests
 import bs4
 import pandas as pd
-import football_db_scraper as fbdb
+import pro_football_ref_scraper.football_db_utility_scraper as fbdb
 from player import Player
 from datetime import datetime
 
