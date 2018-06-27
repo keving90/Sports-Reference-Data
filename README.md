@@ -3,8 +3,6 @@ This repository contains Python programs capable of scraping data from [The Foot
 
 ## football_db_scraper.py
 Scrapes data from footballdb.com. It can create a comprehensive data set containing players of all positions and calculate their fantasy point total for the season. It can also scrape an individual stat table (rushing only, receiving only, etc.) It is more accurate than the `pro_football_ref_scraper` package.
-<<<<<<< HEAD
-=======
 
 The `FbDbScraper` class will scrape the data. Just create an object.
 
@@ -36,58 +34,16 @@ custom_settings = {
     '40-49_made': 4,
     '50+_made': 5,
 }
->>>>>>> 91b2ce4662e7b21dc6620d176b78dc42b80c18ae
 
 # Use custom fantasy settings.
 # Skipping this step uses default settings from class.
 fb_db.fantasy_settings = custom_settings
 
-<<<<<<< HEAD
-```python
-	from football_db_scraper import FbDbScraperfb
-	
-	# Create object.
-	fb_db = FbDbScraper()
-	
-	# Create custom fantasy settings dictionary (optional).
-	custom_settings = {
-	    'pass_yards': 1 / 25,
-	    'pass_td': 4,
-	    'interceptions': -1,
-	    'rush_yards': 1 / 10,
-	    'rush_td': 6,
-	    'rec_yards': 1 / 10,
-	    'receptions': 1,  # receptions: 0 -> receptions: 1
-	    'rec_td': 6,
-	    'two_pt_conversions': 2,
-	    'fumbles_lost': -2,
-	    'offensive_fumble_return_td': 6,
-	    'return_yards': 1 / 25,
-	    'return_td': 6,
-	    'pat_made': 1,
-	    '0-19_made': 3,
-	    '20-29_made': 3,
-	    '30-39_made': 3,
-	    '40-49_made': 4,
-	    '50+_made': 5,
-	}
-	
-	# Use custom fantasy settings.
-	# Skipping this step uses default settings from class.
-	fb_db.fantasy_settings = custom_settings
-	
-	# Get fantasy data frame.
-	fantasy_df = fb_db.get_fantasy_df(2017)
-	
-	# Get a data frame of a single table
-	passing_df = fb_db.get_single_df(2017, 'passing')
-=======
 # Get fantasy data frame.
 fantasy_df = fb_db.get_fantasy_df(2017)
 
 # Get a data frame of a single table
 passing_df = fb_db.get_single_df(2017, 'passing')
->>>>>>> 91b2ce4662e7b21dc6620d176b78dc42b80c18ae
 ```
 
 ## rb_carries package
