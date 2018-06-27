@@ -27,11 +27,27 @@ class FbDbScraper(object):
     point total using the get_fantasy_df() method. Each method returns a data frame. The data frames are created using
     the __dict__ form of Player objects.
 
+    The methods will scrape data from different tables based on the table_type variable.
+
+    Valid table_type values include:
+
+    'all_purpose': All purpose yardage data. Has data for all NFL players.
+    'passing': Passing data.
+    'rushing': Rushing data.
+    'receiving': Receiving data.
+    'scoring': Scoring data.
+    'fumbles': Fumble data.
+    'kick_returns': Kick return data.
+    'punt_returns': Punt return data.
+    'kicking': Field goal and point after touchdown data.
+    'fantasy_offense': QB, RB, WR, and TE data with www.footballdb.com's custom fantasy settings data.
+
     Attributes:
         _fbdb_tables_dict (dict): Dictionary whose keys are the type of table to scrape from. The value is
             another dictionary. The nested dictionary contains keys whose values are used for building the URL to the
             table. Another key within the nested dict has a dict as values to store the column names and their data
-            type.
+            type. The values for the 'fantasy_offense' key has a unique layout because its URL is different from other
+            tables.
 
             Example:
                 ex = {
@@ -44,11 +60,17 @@ class FbDbScraper(object):
                     }
                 }
 
-        _fantasy_settings_dict (dict): Dictionary stores the name of the fantasy stat as keys and their point value as
+        _fantasy_settings_dict (dict): Dictionary stores the name each fantasy stat as keys and their point value as
             values. A property allows setting custom fantasy settings using a valid dictionary. Originally represents a
             standard Yahoo! 0PPR league.
 
-            Example of valid dict:
+            Users can calculate fantasy points with a custom fantasy settings dictionary:
+
+            fb_db_obj.fantasy_settings = a_dictionary
+
+            A valid dictionary must be used.
+
+            Example of valid dict (these are the default fantasy settings):
                 default_settings = {
                     'pass_yards': 1 / 25,  # 25 yards = 1 point
                     'pass_td': 4,
@@ -62,7 +84,13 @@ class FbDbScraper(object):
                     'fumbles_lost': -2,
                     'offensive_fumble_return_td': 6,
                     'return_yards': 1 / 25,  # 25 yards = 1 point
-                    'return_td': 6
+                    'return_td': 6,
+                    'pat_made': 1,
+                    '0-19_made': 3,
+                    '20-29_made': 3,
+                    '30-39_made': 3,
+                    '40-49_made': 4,
+                    '50+_made': 5,
                 }
 
         _valid_fantasy_keys (dict_keys): Dictionary view object records initial keys in _fantasy_settings_dict to check
@@ -165,9 +193,9 @@ class FbDbScraper(object):
                     'blocked_fg_td': int,
                     'blocked_punt_td': int,
                     'missed_fg_td': int,
-                    'point_after_td': str,
+                    'pat': str,
                     'field_goals': str,
-                    'two_pt_conversions': int,
+                    'rush_rec_2pt': int,
                     'safeties': int
                 }
             },
@@ -225,7 +253,7 @@ class FbDbScraper(object):
                     'name': str,
                     'player_url': str,
                     'team': str,
-                    'point_after_td': str,
+                    'pat': str,
                     'fg_pct': str,
                     '0-19': str,
                     '20-29': str,
@@ -234,6 +262,32 @@ class FbDbScraper(object):
                     '50+': str,
                     'longest_fg': int,
                     'fg_points': int
+                }
+            },
+            'fantasy_offense': {
+                'url1': 'https://www.footballdb.com/fantasy-football/index.html?pos=QB%2CRB%2CWR%2CTE&yr=',
+                'url2': '&wk=all&rules=1&sort=passconv',
+                'all_columns': {
+                    'name': str,
+                    'player_url': str,
+                    'bye': int,
+                    'fantasy_points': float,
+                    'pass_attempts': int,
+                    'pass_completions': int,
+                    'pass_yards': int,
+                    'pass_td': int,
+                    'interceptions': int,
+                    'pass_2pt': int,
+                    'rush_attempts': int,
+                    'rush_yards': int,
+                    'rush_td': int,
+                    'rush_2pt': int,
+                    'receptions': int,
+                    'receiving_yards': int,
+                    'rec_td': int,
+                    'rec_2pt': int,
+                    'fumbles_lost': int,
+                    'fumble_return_td': int
                 }
             }
         }
@@ -251,7 +305,13 @@ class FbDbScraper(object):
             'fumbles_lost': -2,
             'offensive_fumble_return_td': 6,
             'return_yards': 1 / 25,  # 25 yards = 1 point
-            'return_td': 6
+            'return_td': 6,
+            'pat_made': 1,
+            '0-19_made': 3,
+            '20-29_made': 3,
+            '30-39_made': 3,
+            '40-49_made': 4,
+            '50+_made': 5,
         }
 
         self._valid_fantasy_keys = self._fantasy_settings_dict.keys()
@@ -295,7 +355,8 @@ class FbDbScraper(object):
 
     def get_fantasy_df(self, year):
         """
-        Return a large data frame containing comprehensive players stats and their fantasy point total.
+        Return a large data frame containing comprehensive players stats and their fantasy points total. Filters data
+        frame so only quarterbacks, wide receivers, running backs, tight ends, and kickers remain.
 
         :param year: Season's year.
 
@@ -305,15 +366,11 @@ class FbDbScraper(object):
         # dictionary is an OrderedDict, so the 'all_purpose' key (for the All Purpose Yardage table) will always come
         # first. This data frame is used as the "main data frame" because it has the highest number of NFL players.
         for table in self._fbdb_tables_dict.keys():
-            # Data set will not include kickers.
-            if table == 'kicking':
-                continue
-
             # Scrape a given table from footballdb.com and create a data frame.
             df = self.get_single_df(year, table, add_year_col=False)
 
             if table == 'all_purpose':
-                # The 'all_purpose' table will act as the "main data frame".
+                # The 'all_purpose' table will act as the "main data frame" since it has players of all positions.
                 main_df = df
                 main_df['year'] = year
             else:
@@ -326,14 +383,23 @@ class FbDbScraper(object):
                 main_df = main_df.join(df, how='left')
 
         # Rearrange column order and calculate each player's fantasy point total.
-        main_df = self._prepare_for_fantasy_points(main_df)
-        main_df = self._insert_fantasy_points_column(main_df)
+        main_df = self._prepare_for_fantasy_calc(main_df)
+        main_df = self._calculate_fantasy_points(main_df)
+
+        # Only interested in offense positions.
+        main_df = main_df[(main_df['position'] == 'QB')
+                          | (main_df['position'] == 'WR')
+                          | (main_df['position'] == 'RB')
+                          | (main_df['position'] == 'TE')
+                          | (main_df['position'] == 'K')]
 
         return main_df
 
     def get_single_df(self, year, table_type, add_year_col=True):
         """
-        Scrape a table from footballdb.com based on the table_type and put it into a data frame.
+        Scrape a table from www.footballdb.com based on the table_type and put it into a data frame.
+
+        See documentation under FbDbScraper class for valid table types and their descriptions.
 
         :param year: Season's year.
         :param table_type: String representing the type of table to be scraped.
@@ -356,6 +422,11 @@ class FbDbScraper(object):
         if add_year_col:
             df['year'] = year
 
+        # The 'scoring' and 'kicking' tables have field goal stats as a 'made/attempts' string.
+        # Split these stats into two integer columns.
+        if table_type in ['scoring', 'kicking']:
+            df = self._handle_field_goals(df, table_type)
+
         return df
 
     def _make_url(self, year, table_type):
@@ -368,12 +439,18 @@ class FbDbScraper(object):
         :return: URL string used to send GET request.
         """
         # Build the URL.
-        url = ('https://www.footballdb.com/stats/stats.html?lg=NFL&yr='
-               + str(year)
-               + '&type=reg&mode='
-               + self._fbdb_tables_dict[table_type]['mode']
-               + '&conf=&limit=all&sort='
-               + self._fbdb_tables_dict[table_type]['sort'])
+        # The 'fantasy_offense' table has a different URL than all other tables.
+        if table_type == 'fantasy_offense':
+            url = (self._fbdb_tables_dict[table_type]['url1']
+                   + str(year)
+                   + self._fbdb_tables_dict[table_type]['url2'])
+        else:
+            url = ('https://www.footballdb.com/stats/stats.html?lg=NFL&yr='
+                   + str(year)
+                   + '&type=reg&mode='
+                   + self._fbdb_tables_dict[table_type]['mode']
+                   + '&conf=&limit=all&sort='
+                   + self._fbdb_tables_dict[table_type]['sort'])
 
         return url
 
@@ -465,11 +542,47 @@ class FbDbScraper(object):
         # Get dict's keys for df's column names.
         df_columns = list(self._fbdb_tables_dict[table_type]['all_columns'].keys())
         df = pd.DataFrame(data=player_dicts, columns=df_columns)  # Create the data frame.
-        df.set_index('player_url', inplace=True)                        # Make 'name' the data frame's index
+        df.set_index('player_url', inplace=True)                  # Make 'name' the data frame's index
 
         return df
 
-    def _prepare_for_fantasy_points(self, df):
+    def _handle_field_goals(self, df, table_type):
+        """
+        Split 'made/attempts' string, create separate made and attempts integer columns, and drop original columns.
+        Handle point after touchdown and field goals of all ranges in 'scoring' and 'kicking' tables.
+
+        Example 'scoring' table whose PAT and FG columns would be modified (similar for 'kicking' table):
+        https://www.footballdb.com/stats/stats.html?lg=NFL&yr=2017&type=reg&mode=S&conf=&limit=all
+
+        :param df: Data frame to be modified.
+        :param table_type: Type of table to be modified. Columns to modify vary based on table type.
+
+        :return: Modified data frame.
+        """
+        # Handle different columns based on table type.
+        if table_type == 'scoring':
+            kicking_cols = ['pat', 'field_goals']
+        elif table_type == 'kicking':
+            kicking_cols = ['fg_pct', 'pat', '0-19', '20-29', '30-39', '40-49', '50+']
+
+        # Split 'made/attempts' string column into two different integer columns.
+        for col in kicking_cols:
+            # Rename new integer columns based on stat.
+            if col == 'fg_pct':
+                col_names = ('fg_made', 'fg_att')
+            else:
+                col_names = (col + '_made', col + '_att')
+
+            # Add new integer columns.
+            df[col_names[0]] = df[col].apply(lambda x: int(x.split('/')[0]))
+            df[col_names[1]] = df[col].apply(lambda x: int(x.split('/')[1]))
+
+        # Drop the original 'made/attempts' string columns.
+        [df.drop(col, axis=1, inplace=True) for col in kicking_cols]
+
+        return df
+
+    def _prepare_for_fantasy_calc(self, df):
         """
         Grab only the relevant columns in df and rearrange their order. Replace all numpy.NaN values with 0. Insert
         'return_yards' and 'return_td' columns for fantasy points calculation.
@@ -478,24 +591,29 @@ class FbDbScraper(object):
 
         :return: A data frame prepared for fantasy point calculation.
         """
+        # Replace all numpy.NaN values with 0.
+        [df[column].fillna(0, inplace=True) for column in df[3:]]
+
+        # Add 'return_yards' and 'return_td' columns for fantasy points calculation.
+        df['return_yards'] = df['punt_return_yards'] + df['kick_return_yards']
+        df['return_td'] = df['kick_return_td'] + df['punt_return_td']
+        df['two_pt_conversions'] = df['rush_rec_2pt'] + df['pass_2pt']
+
+        # Desired columns and their order.
         col_order = ['name', 'team', 'position', 'year', 'rush_attempts', 'rush_yards', 'yards_per_rush',
                      'rush_td', 'targets', 'receptions', 'rec_yards', 'rec_td', 'pass_attempts', 'pass_completions',
-                     'completion_pct', 'pass_yards', 'pass_td', 'interceptions', 'sacked', 'kick_return_yards',
-                     'kick_return_td', 'punt_return_yards', 'punt_return_td', 'two_pt_conversions', 'fumbles_lost']
+                     'completion_pct', 'pass_yards', 'pass_td', 'interceptions', 'sacked', 'return_yards', 'return_td',
+                     'two_pt_conversions', 'fumbles_lost', 'pat_made', 'pat_att', '0-19_made', '0-19_att',
+                     '20-29_made', '20-29_att', '30-39_made', '30-39_att', '40-49_made', '40-49_att', '50+_made',
+                     '50+_att']
 
+        # Reorder the columns, and drop the unnecessary ones.
         # Need to create a deep copy in order to prevent a SettingWithCopy warning.
         reordered_df = df[col_order].copy()
 
-        # Replace all numpy.NaN values with 0.
-        [reordered_df[column].fillna(0, inplace=True) for column in col_order[4:]]
-
-        # Add 'return_yards' and 'return_td' columns for fantasy points calculation.
-        reordered_df['return_yards'] = reordered_df['punt_return_yards'] + reordered_df['kick_return_yards']
-        reordered_df['return_td'] = reordered_df['kick_return_td'] + reordered_df['punt_return_td']
-
         return reordered_df
 
-    def _insert_fantasy_points_column(self, df):
+    def _calculate_fantasy_points(self, df):
         """
         Insert the fantasy_points column and calculate each player's fantasy point total.
 
@@ -512,8 +630,9 @@ class FbDbScraper(object):
 
 
 if __name__ == '__main__':
-    # Usage example. Gets all NFL players from footballdb.com's "All Purpose Yards" and their data.
-    # Also scrapes other tables to get each player's total fantasy points for the season.
+    # Usage example.
+
+    # Get comprehensive NFL data and calculate fantasy points.
     fb_db = FbDbScraper()
     fantasy_df = fb_db.get_fantasy_df(2017)
     print(fantasy_df)
@@ -555,36 +674,36 @@ player_url
 /players/devonta-freeman-freemde01          Devonta Freeman  ATL       RB   
 /players/juju-smithschuster-smithju03   JuJu Smith-Schuster  PIT       WR   
 ...                                                     ...  ...      ...   
-/players/brent-qvale-qvalebr01                  Brent Qvale  NYJ       OT   
-/players/derron-smith-smithde12                Derron Smith  CIN       DB   
+/players/shane-smith-smithsh10                  Shane Smith  NYG       RB   
+/players/cj-spiller-spillcj02                  C.J. Spiller   KC       RB   
+/players/caleb-sturgis-sturgca01              Caleb Sturgis  PHI        K   
+/players/ryan-succop-succory01                  Ryan Succop  TEN        K   
+/players/giorgio-tavecchio-tavecgi01      Giorgio Tavecchio  OAK        K   
+/players/justin-tucker-tuckeju01              Justin Tucker  BAL        K   
+/players/jason-vander-laan-vandeja03      Jason Vander Laan  IND       TE   
+/players/adam-vinatieri-vinatad01            Adam Vinatieri  IND        K   
+/players/blair-walsh-walshbl01                  Blair Walsh  SEA        K   
+/players/isaac-whitney-whitnis01              Isaac Whitney  OAK       WR   
+/players/marquez-williams-willima26        Marquez Williams  CLE       RB   
+/players/greg-zuerlein-zuerlgr01              Greg Zuerlein   LA        K   
+/players/austin-davis-davisau01                Austin Davis  SEA       QB   
+/players/cody-kessler-kesslco01                Cody Kessler  CLE       QB   
+/players/derek-anderson-anderde01            Derek Anderson  CAR       QB   
+/players/chase-daniel-daniech01                Chase Daniel   NO       QB   
+/players/bronson-hill-hillbr02                 Bronson Hill  ARI       RB   
+/players/sean-mannion-mannise02                Sean Mannion   LA       QB   
+/players/darren-mcfadden-mcfadda01          Darren McFadden  DAL       RB   
 /players/sam-bradford-bradfsa01                Sam Bradford  MIN       QB   
 /players/teddy-bridgewater-bridgte01      Teddy Bridgewater  MIN       QB   
-/players/chris-jones-jonesch15                  Chris Jones   KC       DT   
 /players/ryan-mallett-mallery01                Ryan Mallett  BAL       QB   
 /players/tyler-bray-brayty01                     Tyler Bray   KC       QB   
-/players/brian-mihalik-mihalbr01              Brian Mihalik  DET       DE   
-/players/mike-pouncey-pouncmi01                Mike Pouncey  MIA        C   
-/players/kevin-zeitler-zeitlke01              Kevin Zeitler  CLE       OG   
 /players/kellen-clemens-clemeke01            Kellen Clemens  LAC       QB   
 /players/nick-foles-folesni01                    Nick Foles  PHI       QB   
 /players/chad-henne-hennech01                    Chad Henne  JAX       QB   
 /players/brian-hoyer-hoyerbr01                  Brian Hoyer   NE       QB   
-/players/matt-paradis-paradma01                Matt Paradis  DEN        C   
-/players/josh-harris-harrijo12                  Josh Harris  ATL       LB   
-/players/corey-linsley-linslco01              Corey Linsley   GB        C   
 /players/philip-rivers-riverph01              Philip Rivers  LAC       QB   
-/players/rodney-hudson-hudsoro01              Rodney Hudson  OAK        C   
 /players/krishawn-hogan-hogankr01            Krishawn Hogan  IND       WR   
-/players/zach-fulton-fultoza01                  Zach Fulton   KC       OG   
-/players/evan-smith-dietrev01                    Evan Smith   TB       OG   
 /players/landry-jones-jonesla06                Landry Jones  PIT       QB   
-/players/jordan-devey-deveyjo01                Jordan Devey   KC       OT   
-/players/ryan-jensen-jensery01                  Ryan Jensen  BAL       OT   
-/players/marquette-king-kingma02             Marquette King  OAK        P   
-/players/jc-tretter-trettjc01                  J.C. Tretter  CLE       OT   
-/players/max-unger-ungerma01                      Max Unger   NO        C   
-/players/spencer-pulley-pullesp01            Spencer Pulley  LAC        C   
-/players/chris-hubbard-hubbach01              Chris Hubbard  PIT       OG   
 
                                         year  rush_attempts  rush_yards  \
 player_url                                                                
@@ -619,36 +738,36 @@ player_url
 /players/devonta-freeman-freemde01      2017          196.0         865   
 /players/juju-smithschuster-smithju03   2017            0.0           0   
 ...                                      ...            ...         ...   
-/players/brent-qvale-qvalebr01          2017            0.0           0   
-/players/derron-smith-smithde12         2017            0.0           0   
+/players/shane-smith-smithsh10          2017            0.0           0   
+/players/cj-spiller-spillcj02           2017            2.0           0   
+/players/caleb-sturgis-sturgca01        2017            0.0           0   
+/players/ryan-succop-succory01          2017            0.0           0   
+/players/giorgio-tavecchio-tavecgi01    2017            0.0           0   
+/players/justin-tucker-tuckeju01        2017            0.0           0   
+/players/jason-vander-laan-vandeja03    2017            0.0           0   
+/players/adam-vinatieri-vinatad01       2017            0.0           0   
+/players/blair-walsh-walshbl01          2017            0.0           0   
+/players/isaac-whitney-whitnis01        2017            0.0           0   
+/players/marquez-williams-willima26     2017            0.0           0   
+/players/greg-zuerlein-zuerlgr01        2017            0.0           0   
+/players/austin-davis-davisau01         2017            1.0          -1   
+/players/cody-kessler-kesslco01         2017            1.0          -1   
+/players/derek-anderson-anderde01       2017            2.0          -2   
+/players/chase-daniel-daniech01         2017            3.0          -2   
+/players/bronson-hill-hillbr02          2017            1.0          -2   
+/players/sean-mannion-mannise02         2017            9.0          -2   
+/players/darren-mcfadden-mcfadda01      2017            1.0          -2   
 /players/sam-bradford-bradfsa01         2017            2.0          -3   
 /players/teddy-bridgewater-bridgte01    2017            3.0          -3   
-/players/chris-jones-jonesch15          2017            0.0           0   
 /players/ryan-mallett-mallery01         2017            4.0          -3   
 /players/tyler-bray-brayty01            2017            1.0           0   
-/players/brian-mihalik-mihalbr01        2017            0.0           0   
-/players/mike-pouncey-pouncmi01         2017            0.0           0   
-/players/kevin-zeitler-zeitlke01        2017            0.0           0   
 /players/kellen-clemens-clemeke01       2017            5.0          -5   
 /players/nick-foles-folesni01           2017           11.0           3   
 /players/chad-henne-hennech01           2017            5.0          -5   
 /players/brian-hoyer-hoyerbr01          2017            9.0           4   
-/players/matt-paradis-paradma01         2017            0.0           0   
-/players/josh-harris-harrijo12          2017            0.0           0   
-/players/corey-linsley-linslco01        2017            0.0           0   
 /players/philip-rivers-riverph01        2017           18.0          -2   
-/players/rodney-hudson-hudsoro01        2017            0.0           0   
 /players/krishawn-hogan-hogankr01       2017            0.0           0   
-/players/zach-fulton-fultoza01          2017            0.0           0   
-/players/evan-smith-dietrev01           2017            0.0           0   
 /players/landry-jones-jonesla06         2017            8.0         -10   
-/players/jordan-devey-deveyjo01         2017            0.0           0   
-/players/ryan-jensen-jensery01          2017            0.0           0   
-/players/marquette-king-kingma02        2017            2.0         -14   
-/players/jc-tretter-trettjc01           2017            0.0           0   
-/players/max-unger-ungerma01            2017            0.0           0   
-/players/spencer-pulley-pullesp01       2017            0.0           0   
-/players/chris-hubbard-hubbach01        2017            0.0           0   
 
                                         yards_per_rush  rush_td  targets  \
 player_url                                                                 
@@ -683,420 +802,292 @@ player_url
 /players/devonta-freeman-freemde01                4.41      7.0     47.0   
 /players/juju-smithschuster-smithju03             0.00      0.0     79.0   
 ...                                                ...      ...      ...   
-/players/brent-qvale-qvalebr01                    0.00      0.0      0.0   
-/players/derron-smith-smithde12                   0.00      0.0      0.0   
+/players/shane-smith-smithsh10                    0.00      0.0      0.0   
+/players/cj-spiller-spillcj02                     0.00      0.0      2.0   
+/players/caleb-sturgis-sturgca01                  0.00      0.0      0.0   
+/players/ryan-succop-succory01                    0.00      0.0      0.0   
+/players/giorgio-tavecchio-tavecgi01              0.00      0.0      0.0   
+/players/justin-tucker-tuckeju01                  0.00      0.0      0.0   
+/players/jason-vander-laan-vandeja03              0.00      0.0      0.0   
+/players/adam-vinatieri-vinatad01                 0.00      0.0      0.0   
+/players/blair-walsh-walshbl01                    0.00      0.0      0.0   
+/players/isaac-whitney-whitnis01                  0.00      0.0      1.0   
+/players/marquez-williams-willima26               0.00      0.0      1.0   
+/players/greg-zuerlein-zuerlgr01                  0.00      0.0      0.0   
+/players/austin-davis-davisau01                  -1.00      0.0      0.0   
+/players/cody-kessler-kesslco01                  -1.00      0.0      0.0   
+/players/derek-anderson-anderde01                -1.00      0.0      0.0   
+/players/chase-daniel-daniech01                  -0.67      0.0      0.0   
+/players/bronson-hill-hillbr02                   -2.00      0.0      0.0   
+/players/sean-mannion-mannise02                  -0.22      0.0      0.0   
+/players/darren-mcfadden-mcfadda01               -2.00      0.0      0.0   
 /players/sam-bradford-bradfsa01                  -1.50      0.0      0.0   
 /players/teddy-bridgewater-bridgte01             -1.00      0.0      0.0   
-/players/chris-jones-jonesch15                    0.00      0.0      0.0   
 /players/ryan-mallett-mallery01                  -0.75      0.0      0.0   
 /players/tyler-bray-brayty01                      0.00      0.0      0.0   
-/players/brian-mihalik-mihalbr01                  0.00      0.0      1.0   
-/players/mike-pouncey-pouncmi01                   0.00      0.0      0.0   
-/players/kevin-zeitler-zeitlke01                  0.00      0.0      1.0   
 /players/kellen-clemens-clemeke01                -1.00      0.0      0.0   
 /players/nick-foles-folesni01                     0.27      0.0      0.0   
 /players/chad-henne-hennech01                    -1.00      0.0      0.0   
 /players/brian-hoyer-hoyerbr01                    0.44      1.0      0.0   
-/players/matt-paradis-paradma01                   0.00      0.0      0.0   
-/players/josh-harris-harrijo12                    0.00      0.0      0.0   
-/players/corey-linsley-linslco01                  0.00      0.0      0.0   
 /players/philip-rivers-riverph01                 -0.11      0.0      0.0   
-/players/rodney-hudson-hudsoro01                  0.00      0.0      0.0   
 /players/krishawn-hogan-hogankr01                 0.00      0.0      0.0   
-/players/zach-fulton-fultoza01                    0.00      0.0      0.0   
-/players/evan-smith-dietrev01                     0.00      0.0      0.0   
 /players/landry-jones-jonesla06                  -1.25      0.0      0.0   
-/players/jordan-devey-deveyjo01                   0.00      0.0      0.0   
-/players/ryan-jensen-jensery01                    0.00      0.0      0.0   
-/players/marquette-king-kingma02                 -7.00      0.0      0.0   
-/players/jc-tretter-trettjc01                     0.00      0.0      0.0   
-/players/max-unger-ungerma01                      0.00      0.0      0.0   
-/players/spencer-pulley-pullesp01                 0.00      0.0      0.0   
-/players/chris-hubbard-hubbach01                  0.00      0.0      0.0   
 
-                                        receptions       ...        sacked  \
-player_url                                               ...                 
-/players/todd-gurley-gurleto02                64.0       ...           0.0   
-/players/leveon-bell-bellle02                 85.0       ...           0.0   
-/players/alvin-kamara-kamaral01               81.0       ...           0.0   
-/players/tyler-lockett-lockety01              45.0       ...           0.0   
-/players/kareem-hunt-huntka01                 53.0       ...           0.0   
-/players/dion-lewis-lewisdi01                 32.0       ...           0.0   
-/players/antonio-brown-brownan05             101.0       ...           0.0   
-/players/lesean-mccoy-mccoyle02               59.0       ...           0.0   
-/players/melvin-gordon-gordome01              58.0       ...           0.0   
-/players/tarik-cohen-cohenta01                53.0       ...           0.0   
-/players/mark-ingram-ingrama02                58.0       ...           0.0   
-/players/keenan-allen-allenke03              102.0       ...           0.0   
-/players/julio-jones-jonesju05                88.0       ...           0.0   
-/players/tyreek-hill-hillty02                 75.0       ...           0.0   
-/players/pharoh-cooper-coopeph01              11.0       ...           0.0   
-/players/deandre-hopkins-hopkide01            96.0       ...           0.0   
-/players/leonard-fournette-fournle01          36.0       ...           0.0   
-/players/christian-mccaffrey-mccafch01        80.0       ...           0.0   
-/players/jerick-mckinnon-mckinje02            51.0       ...           0.0   
-/players/carlos-hyde-hydeca01                 59.0       ...           0.0   
-/players/adam-thielen-thielad01               91.0       ...           0.0   
-/players/ezekiel-elliott-ellioez01            26.0       ...           0.0   
-/players/jordan-howard-howarjo02              23.0       ...           0.0   
-/players/michael-thomas-thomami05            104.0       ...           0.0   
-/players/cj-anderson-andercj01                28.0       ...           0.0   
-/players/lamar-miller-millela03               36.0       ...           0.0   
-/players/alex-collins-collial01               23.0       ...           0.0   
-/players/frank-gore-gorefr01                  29.0       ...           0.0   
-/players/devonta-freeman-freemde01            36.0       ...           0.0   
-/players/juju-smithschuster-smithju03         58.0       ...           0.0   
-...                                            ...       ...           ...   
-/players/brent-qvale-qvalebr01                 0.0       ...           0.0   
-/players/derron-smith-smithde12                0.0       ...           0.0   
-/players/sam-bradford-bradfsa01                0.0       ...           5.0   
-/players/teddy-bridgewater-bridgte01           0.0       ...           0.0   
-/players/chris-jones-jonesch15                 0.0       ...           0.0   
-/players/ryan-mallett-mallery01                0.0       ...           0.0   
-/players/tyler-bray-brayty01                   0.0       ...           0.0   
-/players/brian-mihalik-mihalbr01               1.0       ...           0.0   
-/players/mike-pouncey-pouncmi01                0.0       ...           0.0   
-/players/kevin-zeitler-zeitlke01               1.0       ...           0.0   
-/players/kellen-clemens-clemeke01              0.0       ...           0.0   
-/players/nick-foles-folesni01                  0.0       ...           5.0   
-/players/chad-henne-hennech01                  0.0       ...           0.0   
-/players/brian-hoyer-hoyerbr01                 0.0       ...          16.0   
-/players/matt-paradis-paradma01                0.0       ...           0.0   
-/players/josh-harris-harrijo12                 0.0       ...           0.0   
-/players/corey-linsley-linslco01               0.0       ...           0.0   
-/players/philip-rivers-riverph01               0.0       ...          18.0   
-/players/rodney-hudson-hudsoro01               0.0       ...           0.0   
-/players/krishawn-hogan-hogankr01              0.0       ...           0.0   
-/players/zach-fulton-fultoza01                 0.0       ...           0.0   
-/players/evan-smith-dietrev01                  0.0       ...           0.0   
-/players/landry-jones-jonesla06                0.0       ...           3.0   
-/players/jordan-devey-deveyjo01                0.0       ...           0.0   
-/players/ryan-jensen-jensery01                 0.0       ...           0.0   
-/players/marquette-king-kingma02               0.0       ...           0.0   
-/players/jc-tretter-trettjc01                  0.0       ...           0.0   
-/players/max-unger-ungerma01                   0.0       ...           0.0   
-/players/spencer-pulley-pullesp01              0.0       ...           0.0   
-/players/chris-hubbard-hubbach01               0.0       ...           0.0   
+                                        receptions       ...        0-19_att  \
+player_url                                               ...                   
+/players/todd-gurley-gurleto02                64.0       ...             0.0   
+/players/leveon-bell-bellle02                 85.0       ...             0.0   
+/players/alvin-kamara-kamaral01               81.0       ...             0.0   
+/players/tyler-lockett-lockety01              45.0       ...             0.0   
+/players/kareem-hunt-huntka01                 53.0       ...             0.0   
+/players/dion-lewis-lewisdi01                 32.0       ...             0.0   
+/players/antonio-brown-brownan05             101.0       ...             0.0   
+/players/lesean-mccoy-mccoyle02               59.0       ...             0.0   
+/players/melvin-gordon-gordome01              58.0       ...             0.0   
+/players/tarik-cohen-cohenta01                53.0       ...             0.0   
+/players/mark-ingram-ingrama02                58.0       ...             0.0   
+/players/keenan-allen-allenke03              102.0       ...             0.0   
+/players/julio-jones-jonesju05                88.0       ...             0.0   
+/players/tyreek-hill-hillty02                 75.0       ...             0.0   
+/players/pharoh-cooper-coopeph01              11.0       ...             0.0   
+/players/deandre-hopkins-hopkide01            96.0       ...             0.0   
+/players/leonard-fournette-fournle01          36.0       ...             0.0   
+/players/christian-mccaffrey-mccafch01        80.0       ...             0.0   
+/players/jerick-mckinnon-mckinje02            51.0       ...             0.0   
+/players/carlos-hyde-hydeca01                 59.0       ...             0.0   
+/players/adam-thielen-thielad01               91.0       ...             0.0   
+/players/ezekiel-elliott-ellioez01            26.0       ...             0.0   
+/players/jordan-howard-howarjo02              23.0       ...             0.0   
+/players/michael-thomas-thomami05            104.0       ...             0.0   
+/players/cj-anderson-andercj01                28.0       ...             0.0   
+/players/lamar-miller-millela03               36.0       ...             0.0   
+/players/alex-collins-collial01               23.0       ...             0.0   
+/players/frank-gore-gorefr01                  29.0       ...             0.0   
+/players/devonta-freeman-freemde01            36.0       ...             0.0   
+/players/juju-smithschuster-smithju03         58.0       ...             0.0   
+...                                            ...       ...             ...   
+/players/shane-smith-smithsh10                 0.0       ...             0.0   
+/players/cj-spiller-spillcj02                  0.0       ...             0.0   
+/players/caleb-sturgis-sturgca01               0.0       ...             0.0   
+/players/ryan-succop-succory01                 0.0       ...             0.0   
+/players/giorgio-tavecchio-tavecgi01           0.0       ...             0.0   
+/players/justin-tucker-tuckeju01               0.0       ...             0.0   
+/players/jason-vander-laan-vandeja03           0.0       ...             0.0   
+/players/adam-vinatieri-vinatad01              0.0       ...             0.0   
+/players/blair-walsh-walshbl01                 0.0       ...             0.0   
+/players/isaac-whitney-whitnis01               0.0       ...             0.0   
+/players/marquez-williams-willima26            0.0       ...             0.0   
+/players/greg-zuerlein-zuerlgr01               0.0       ...             1.0   
+/players/austin-davis-davisau01                0.0       ...             0.0   
+/players/cody-kessler-kesslco01                0.0       ...             0.0   
+/players/derek-anderson-anderde01              0.0       ...             0.0   
+/players/chase-daniel-daniech01                0.0       ...             0.0   
+/players/bronson-hill-hillbr02                 0.0       ...             0.0   
+/players/sean-mannion-mannise02                0.0       ...             0.0   
+/players/darren-mcfadden-mcfadda01             0.0       ...             0.0   
+/players/sam-bradford-bradfsa01                0.0       ...             0.0   
+/players/teddy-bridgewater-bridgte01           0.0       ...             0.0   
+/players/ryan-mallett-mallery01                0.0       ...             0.0   
+/players/tyler-bray-brayty01                   0.0       ...             0.0   
+/players/kellen-clemens-clemeke01              0.0       ...             0.0   
+/players/nick-foles-folesni01                  0.0       ...             0.0   
+/players/chad-henne-hennech01                  0.0       ...             0.0   
+/players/brian-hoyer-hoyerbr01                 0.0       ...             0.0   
+/players/philip-rivers-riverph01               0.0       ...             0.0   
+/players/krishawn-hogan-hogankr01              0.0       ...             0.0   
+/players/landry-jones-jonesla06                0.0       ...             0.0   
 
-                                        kick_return_yards  kick_return_td  \
+                                        20-29_made  20-29_att  30-39_made  \
 player_url                                                                  
-/players/todd-gurley-gurleto02                          0             0.0   
-/players/leveon-bell-bellle02                           0             0.0   
-/players/alvin-kamara-kamaral01                       347             1.0   
-/players/tyler-lockett-lockety01                      949             1.0   
-/players/kareem-hunt-huntka01                           0             0.0   
-/players/dion-lewis-lewisdi01                         570             1.0   
-/players/antonio-brown-brownan05                        0             0.0   
-/players/lesean-mccoy-mccoyle02                         0             0.0   
-/players/melvin-gordon-gordome01                        0             0.0   
-/players/tarik-cohen-cohenta01                        583             0.0   
-/players/mark-ingram-ingrama02                          0             0.0   
-/players/keenan-allen-allenke03                         0             0.0   
-/players/julio-jones-jonesju05                          0             0.0   
-/players/tyreek-hill-hillty02                           0             0.0   
-/players/pharoh-cooper-coopeph01                      932             1.0   
-/players/deandre-hopkins-hopkide01                      0             0.0   
-/players/leonard-fournette-fournle01                    0             0.0   
-/players/christian-mccaffrey-mccafch01                 58             0.0   
-/players/jerick-mckinnon-mckinje02                    312             0.0   
-/players/carlos-hyde-hydeca01                           0             0.0   
-/players/adam-thielen-thielad01                         0             0.0   
-/players/ezekiel-elliott-ellioez01                      0             0.0   
-/players/jordan-howard-howarjo02                        0             0.0   
-/players/michael-thomas-thomami05                       0             0.0   
-/players/cj-anderson-andercj01                          0             0.0   
-/players/lamar-miller-millela03                         0             0.0   
-/players/alex-collins-collial01                        50             0.0   
-/players/frank-gore-gorefr01                            0             0.0   
-/players/devonta-freeman-freemde01                      0             0.0   
-/players/juju-smithschuster-smithju03                 240             1.0   
-...                                                   ...             ...   
-/players/brent-qvale-qvalebr01                          0             0.0   
-/players/derron-smith-smithde12                         0             0.0   
-/players/sam-bradford-bradfsa01                         0             0.0   
-/players/teddy-bridgewater-bridgte01                    0             0.0   
-/players/chris-jones-jonesch15                          0             0.0   
-/players/ryan-mallett-mallery01                         0             0.0   
-/players/tyler-bray-brayty01                            0             0.0   
-/players/brian-mihalik-mihalbr01                        0             0.0   
-/players/mike-pouncey-pouncmi01                         0             0.0   
-/players/kevin-zeitler-zeitlke01                        0             0.0   
-/players/kellen-clemens-clemeke01                       0             0.0   
-/players/nick-foles-folesni01                           0             0.0   
-/players/chad-henne-hennech01                           0             0.0   
-/players/brian-hoyer-hoyerbr01                          0             0.0   
-/players/matt-paradis-paradma01                         0             0.0   
-/players/josh-harris-harrijo12                          0             0.0   
-/players/corey-linsley-linslco01                        0             0.0   
-/players/philip-rivers-riverph01                        0             0.0   
-/players/rodney-hudson-hudsoro01                        0             0.0   
-/players/krishawn-hogan-hogankr01                       0             0.0   
-/players/zach-fulton-fultoza01                          0             0.0   
-/players/evan-smith-dietrev01                           0             0.0   
-/players/landry-jones-jonesla06                         0             0.0   
-/players/jordan-devey-deveyjo01                         0             0.0   
-/players/ryan-jensen-jensery01                          0             0.0   
-/players/marquette-king-kingma02                        0             0.0   
-/players/jc-tretter-trettjc01                           0             0.0   
-/players/max-unger-ungerma01                            0             0.0   
-/players/spencer-pulley-pullesp01                       0             0.0   
-/players/chris-hubbard-hubbach01                        0             0.0   
+/players/todd-gurley-gurleto02                 0.0        0.0         0.0   
+/players/leveon-bell-bellle02                  0.0        0.0         0.0   
+/players/alvin-kamara-kamaral01                0.0        0.0         0.0   
+/players/tyler-lockett-lockety01               0.0        0.0         0.0   
+/players/kareem-hunt-huntka01                  0.0        0.0         0.0   
+/players/dion-lewis-lewisdi01                  0.0        0.0         0.0   
+/players/antonio-brown-brownan05               0.0        0.0         0.0   
+/players/lesean-mccoy-mccoyle02                0.0        0.0         0.0   
+/players/melvin-gordon-gordome01               0.0        0.0         0.0   
+/players/tarik-cohen-cohenta01                 0.0        0.0         0.0   
+/players/mark-ingram-ingrama02                 0.0        0.0         0.0   
+/players/keenan-allen-allenke03                0.0        0.0         0.0   
+/players/julio-jones-jonesju05                 0.0        0.0         0.0   
+/players/tyreek-hill-hillty02                  0.0        0.0         0.0   
+/players/pharoh-cooper-coopeph01               0.0        0.0         0.0   
+/players/deandre-hopkins-hopkide01             0.0        0.0         0.0   
+/players/leonard-fournette-fournle01           0.0        0.0         0.0   
+/players/christian-mccaffrey-mccafch01         0.0        0.0         0.0   
+/players/jerick-mckinnon-mckinje02             0.0        0.0         0.0   
+/players/carlos-hyde-hydeca01                  0.0        0.0         0.0   
+/players/adam-thielen-thielad01                0.0        0.0         0.0   
+/players/ezekiel-elliott-ellioez01             0.0        0.0         0.0   
+/players/jordan-howard-howarjo02               0.0        0.0         0.0   
+/players/michael-thomas-thomami05              0.0        0.0         0.0   
+/players/cj-anderson-andercj01                 0.0        0.0         0.0   
+/players/lamar-miller-millela03                0.0        0.0         0.0   
+/players/alex-collins-collial01                0.0        0.0         0.0   
+/players/frank-gore-gorefr01                   0.0        0.0         0.0   
+/players/devonta-freeman-freemde01             0.0        0.0         0.0   
+/players/juju-smithschuster-smithju03          0.0        0.0         0.0   
+...                                            ...        ...         ...   
+/players/shane-smith-smithsh10                 0.0        0.0         0.0   
+/players/cj-spiller-spillcj02                  0.0        0.0         0.0   
+/players/caleb-sturgis-sturgca01               0.0        0.0         1.0   
+/players/ryan-succop-succory01                10.0       10.0         7.0   
+/players/giorgio-tavecchio-tavecgi01           5.0        5.0         5.0   
+/players/justin-tucker-tuckeju01               7.0        7.0        11.0   
+/players/jason-vander-laan-vandeja03           0.0        0.0         0.0   
+/players/adam-vinatieri-vinatad01             11.0       11.0         7.0   
+/players/blair-walsh-walshbl01                 6.0        6.0         7.0   
+/players/isaac-whitney-whitnis01               0.0        0.0         0.0   
+/players/marquez-williams-willima26            0.0        0.0         0.0   
+/players/greg-zuerlein-zuerlgr01               8.0        8.0        11.0   
+/players/austin-davis-davisau01                0.0        0.0         0.0   
+/players/cody-kessler-kesslco01                0.0        0.0         0.0   
+/players/derek-anderson-anderde01              0.0        0.0         0.0   
+/players/chase-daniel-daniech01                0.0        0.0         0.0   
+/players/bronson-hill-hillbr02                 0.0        0.0         0.0   
+/players/sean-mannion-mannise02                0.0        0.0         0.0   
+/players/darren-mcfadden-mcfadda01             0.0        0.0         0.0   
+/players/sam-bradford-bradfsa01                0.0        0.0         0.0   
+/players/teddy-bridgewater-bridgte01           0.0        0.0         0.0   
+/players/ryan-mallett-mallery01                0.0        0.0         0.0   
+/players/tyler-bray-brayty01                   0.0        0.0         0.0   
+/players/kellen-clemens-clemeke01              0.0        0.0         0.0   
+/players/nick-foles-folesni01                  0.0        0.0         0.0   
+/players/chad-henne-hennech01                  0.0        0.0         0.0   
+/players/brian-hoyer-hoyerbr01                 0.0        0.0         0.0   
+/players/philip-rivers-riverph01               0.0        0.0         0.0   
+/players/krishawn-hogan-hogankr01              0.0        0.0         0.0   
+/players/landry-jones-jonesla06                0.0        0.0         0.0   
 
-                                        punt_return_yards  punt_return_td  \
-player_url                                                                  
-/players/todd-gurley-gurleto02                          0             0.0   
-/players/leveon-bell-bellle02                           0             0.0   
-/players/alvin-kamara-kamaral01                         0             0.0   
-/players/tyler-lockett-lockety01                      237             0.0   
-/players/kareem-hunt-huntka01                           0             0.0   
-/players/dion-lewis-lewisdi01                           0             0.0   
-/players/antonio-brown-brownan05                       61             0.0   
-/players/lesean-mccoy-mccoyle02                         0             0.0   
-/players/melvin-gordon-gordome01                        0             0.0   
-/players/tarik-cohen-cohenta01                        272             1.0   
-/players/mark-ingram-ingrama02                          0             0.0   
-/players/keenan-allen-allenke03                         0             0.0   
-/players/julio-jones-jonesju05                          0             0.0   
-/players/tyreek-hill-hillty02                         204             1.0   
-/players/pharoh-cooper-coopeph01                      399             0.0   
-/players/deandre-hopkins-hopkide01                      0             0.0   
-/players/leonard-fournette-fournle01                    0             0.0   
-/players/christian-mccaffrey-mccafch01                162             0.0   
-/players/jerick-mckinnon-mckinje02                      0             0.0   
-/players/carlos-hyde-hydeca01                           0             0.0   
-/players/adam-thielen-thielad01                         0             0.0   
-/players/ezekiel-elliott-ellioez01                      0             0.0   
-/players/jordan-howard-howarjo02                        0             0.0   
-/players/michael-thomas-thomami05                       0             0.0   
-/players/cj-anderson-andercj01                          0             0.0   
-/players/lamar-miller-millela03                         0             0.0   
-/players/alex-collins-collial01                         0             0.0   
-/players/frank-gore-gorefr01                            0             0.0   
-/players/devonta-freeman-freemde01                      0             0.0   
-/players/juju-smithschuster-smithju03                   0             0.0   
-...                                                   ...             ...   
-/players/brent-qvale-qvalebr01                          0             0.0   
-/players/derron-smith-smithde12                         0             0.0   
-/players/sam-bradford-bradfsa01                         0             0.0   
-/players/teddy-bridgewater-bridgte01                    0             0.0   
-/players/chris-jones-jonesch15                          0             0.0   
-/players/ryan-mallett-mallery01                         0             0.0   
-/players/tyler-bray-brayty01                            0             0.0   
-/players/brian-mihalik-mihalbr01                        0             0.0   
-/players/mike-pouncey-pouncmi01                         0             0.0   
-/players/kevin-zeitler-zeitlke01                        0             0.0   
-/players/kellen-clemens-clemeke01                       0             0.0   
-/players/nick-foles-folesni01                           0             0.0   
-/players/chad-henne-hennech01                           0             0.0   
-/players/brian-hoyer-hoyerbr01                          0             0.0   
-/players/matt-paradis-paradma01                         0             0.0   
-/players/josh-harris-harrijo12                          0             0.0   
-/players/corey-linsley-linslco01                        0             0.0   
-/players/philip-rivers-riverph01                        0             0.0   
-/players/rodney-hudson-hudsoro01                        0             0.0   
-/players/krishawn-hogan-hogankr01                      -8             0.0   
-/players/zach-fulton-fultoza01                          0             0.0   
-/players/evan-smith-dietrev01                           0             0.0   
-/players/landry-jones-jonesla06                         0             0.0   
-/players/jordan-devey-deveyjo01                         0             0.0   
-/players/ryan-jensen-jensery01                          0             0.0   
-/players/marquette-king-kingma02                        0             0.0   
-/players/jc-tretter-trettjc01                           0             0.0   
-/players/max-unger-ungerma01                            0             0.0   
-/players/spencer-pulley-pullesp01                       0             0.0   
-/players/chris-hubbard-hubbach01                        0             0.0   
-
-                                        two_pt_conversions  fumbles_lost  \
+                                        30-39_att  40-49_made  40-49_att  \
 player_url                                                                 
-/players/todd-gurley-gurleto02                         0.0           2.0   
-/players/leveon-bell-bellle02                          0.0           2.0   
-/players/alvin-kamara-kamaral01                        1.0           1.0   
-/players/tyler-lockett-lockety01                       0.0           0.0   
-/players/kareem-hunt-huntka01                          0.0           1.0   
-/players/dion-lewis-lewisdi01                          0.0           0.0   
-/players/antonio-brown-brownan05                       1.0           0.0   
-/players/lesean-mccoy-mccoyle02                        0.0           1.0   
-/players/melvin-gordon-gordome01                       0.0           0.0   
-/players/tarik-cohen-cohenta01                         0.0           2.0   
-/players/mark-ingram-ingrama02                         0.0           3.0   
-/players/keenan-allen-allenke03                        0.0           0.0   
-/players/julio-jones-jonesju05                         0.0           0.0   
-/players/tyreek-hill-hillty02                          0.0           0.0   
-/players/pharoh-cooper-coopeph01                       0.0           1.0   
-/players/deandre-hopkins-hopkide01                     0.0           1.0   
-/players/leonard-fournette-fournle01                   0.0           0.0   
-/players/christian-mccaffrey-mccafch01                 0.0           1.0   
-/players/jerick-mckinnon-mckinje02                     1.0           2.0   
-/players/carlos-hyde-hydeca01                          0.0           1.0   
-/players/adam-thielen-thielad01                        0.0           2.0   
-/players/ezekiel-elliott-ellioez01                     0.0           1.0   
-/players/jordan-howard-howarjo02                       0.0           1.0   
-/players/michael-thomas-thomami05                      0.0           0.0   
-/players/cj-anderson-andercj01                         1.0           1.0   
-/players/lamar-miller-millela03                        0.0           0.0   
-/players/alex-collins-collial01                        0.0           2.0   
-/players/frank-gore-gorefr01                           0.0           0.0   
-/players/devonta-freeman-freemde01                     0.0           1.0   
-/players/juju-smithschuster-smithju03                  0.0           0.0   
-...                                                    ...           ...   
-/players/brent-qvale-qvalebr01                         0.0           0.0   
-/players/derron-smith-smithde12                        0.0           0.0   
-/players/sam-bradford-bradfsa01                        0.0           0.0   
-/players/teddy-bridgewater-bridgte01                   0.0           0.0   
-/players/chris-jones-jonesch15                         0.0           0.0   
-/players/ryan-mallett-mallery01                        0.0           0.0   
-/players/tyler-bray-brayty01                           0.0           1.0   
-/players/brian-mihalik-mihalbr01                       0.0           0.0   
-/players/mike-pouncey-pouncmi01                        0.0           0.0   
-/players/kevin-zeitler-zeitlke01                       0.0           0.0   
-/players/kellen-clemens-clemeke01                      0.0           0.0   
-/players/nick-foles-folesni01                          0.0           2.0   
-/players/chad-henne-hennech01                          0.0           0.0   
-/players/brian-hoyer-hoyerbr01                         0.0           1.0   
-/players/matt-paradis-paradma01                        0.0           0.0   
-/players/josh-harris-harrijo12                         0.0           0.0   
-/players/corey-linsley-linslco01                       0.0           0.0   
-/players/philip-rivers-riverph01                       0.0           1.0   
-/players/rodney-hudson-hudsoro01                       0.0           0.0   
-/players/krishawn-hogan-hogankr01                      0.0           0.0   
-/players/zach-fulton-fultoza01                         0.0           0.0   
-/players/evan-smith-dietrev01                          0.0           0.0   
-/players/landry-jones-jonesla06                        0.0           1.0   
-/players/jordan-devey-deveyjo01                        0.0           0.0   
-/players/ryan-jensen-jensery01                         0.0           0.0   
-/players/marquette-king-kingma02                       0.0           0.0   
-/players/jc-tretter-trettjc01                          0.0           0.0   
-/players/max-unger-ungerma01                           0.0           0.0   
-/players/spencer-pulley-pullesp01                      0.0           0.0   
-/players/chris-hubbard-hubbach01                       0.0           0.0   
+/players/todd-gurley-gurleto02                0.0         0.0        0.0   
+/players/leveon-bell-bellle02                 0.0         0.0        0.0   
+/players/alvin-kamara-kamaral01               0.0         0.0        0.0   
+/players/tyler-lockett-lockety01              0.0         0.0        0.0   
+/players/kareem-hunt-huntka01                 0.0         0.0        0.0   
+/players/dion-lewis-lewisdi01                 0.0         0.0        0.0   
+/players/antonio-brown-brownan05              0.0         0.0        0.0   
+/players/lesean-mccoy-mccoyle02               0.0         0.0        0.0   
+/players/melvin-gordon-gordome01              0.0         0.0        0.0   
+/players/tarik-cohen-cohenta01                0.0         0.0        0.0   
+/players/mark-ingram-ingrama02                0.0         0.0        0.0   
+/players/keenan-allen-allenke03               0.0         0.0        0.0   
+/players/julio-jones-jonesju05                0.0         0.0        0.0   
+/players/tyreek-hill-hillty02                 0.0         0.0        0.0   
+/players/pharoh-cooper-coopeph01              0.0         0.0        0.0   
+/players/deandre-hopkins-hopkide01            0.0         0.0        0.0   
+/players/leonard-fournette-fournle01          0.0         0.0        0.0   
+/players/christian-mccaffrey-mccafch01        0.0         0.0        0.0   
+/players/jerick-mckinnon-mckinje02            0.0         0.0        0.0   
+/players/carlos-hyde-hydeca01                 0.0         0.0        0.0   
+/players/adam-thielen-thielad01               0.0         0.0        0.0   
+/players/ezekiel-elliott-ellioez01            0.0         0.0        0.0   
+/players/jordan-howard-howarjo02              0.0         0.0        0.0   
+/players/michael-thomas-thomami05             0.0         0.0        0.0   
+/players/cj-anderson-andercj01                0.0         0.0        0.0   
+/players/lamar-miller-millela03               0.0         0.0        0.0   
+/players/alex-collins-collial01               0.0         0.0        0.0   
+/players/frank-gore-gorefr01                  0.0         0.0        0.0   
+/players/devonta-freeman-freemde01            0.0         0.0        0.0   
+/players/juju-smithschuster-smithju03         0.0         0.0        0.0   
+...                                           ...         ...        ...   
+/players/shane-smith-smithsh10                0.0         0.0        0.0   
+/players/cj-spiller-spillcj02                 0.0         0.0        0.0   
+/players/caleb-sturgis-sturgca01              1.0         1.0        1.0   
+/players/ryan-succop-succory01                7.0        16.0       20.0   
+/players/giorgio-tavecchio-tavecgi01          7.0         3.0        5.0   
+/players/justin-tucker-tuckeju01             11.0        11.0       12.0   
+/players/jason-vander-laan-vandeja03          0.0         0.0        0.0   
+/players/adam-vinatieri-vinatad01            10.0         6.0        7.0   
+/players/blair-walsh-walshbl01               10.0         8.0       12.0   
+/players/isaac-whitney-whitnis01              0.0         0.0        0.0   
+/players/marquez-williams-willima26           0.0         0.0        0.0   
+/players/greg-zuerlein-zuerlgr01             12.0        12.0       12.0   
+/players/austin-davis-davisau01               0.0         0.0        0.0   
+/players/cody-kessler-kesslco01               0.0         0.0        0.0   
+/players/derek-anderson-anderde01             0.0         0.0        0.0   
+/players/chase-daniel-daniech01               0.0         0.0        0.0   
+/players/bronson-hill-hillbr02                0.0         0.0        0.0   
+/players/sean-mannion-mannise02               0.0         0.0        0.0   
+/players/darren-mcfadden-mcfadda01            0.0         0.0        0.0   
+/players/sam-bradford-bradfsa01               0.0         0.0        0.0   
+/players/teddy-bridgewater-bridgte01          0.0         0.0        0.0   
+/players/ryan-mallett-mallery01               0.0         0.0        0.0   
+/players/tyler-bray-brayty01                  0.0         0.0        0.0   
+/players/kellen-clemens-clemeke01             0.0         0.0        0.0   
+/players/nick-foles-folesni01                 0.0         0.0        0.0   
+/players/chad-henne-hennech01                 0.0         0.0        0.0   
+/players/brian-hoyer-hoyerbr01                0.0         0.0        0.0   
+/players/philip-rivers-riverph01              0.0         0.0        0.0   
+/players/krishawn-hogan-hogankr01             0.0         0.0        0.0   
+/players/landry-jones-jonesla06               0.0         0.0        0.0   
 
-                                        return_yards  return_td  \
-player_url                                                        
-/players/todd-gurley-gurleto02                     0        0.0   
-/players/leveon-bell-bellle02                      0        0.0   
-/players/alvin-kamara-kamaral01                  347        1.0   
-/players/tyler-lockett-lockety01                1186        1.0   
-/players/kareem-hunt-huntka01                      0        0.0   
-/players/dion-lewis-lewisdi01                    570        1.0   
-/players/antonio-brown-brownan05                  61        0.0   
-/players/lesean-mccoy-mccoyle02                    0        0.0   
-/players/melvin-gordon-gordome01                   0        0.0   
-/players/tarik-cohen-cohenta01                   855        1.0   
-/players/mark-ingram-ingrama02                     0        0.0   
-/players/keenan-allen-allenke03                    0        0.0   
-/players/julio-jones-jonesju05                     0        0.0   
-/players/tyreek-hill-hillty02                    204        1.0   
-/players/pharoh-cooper-coopeph01                1331        1.0   
-/players/deandre-hopkins-hopkide01                 0        0.0   
-/players/leonard-fournette-fournle01               0        0.0   
-/players/christian-mccaffrey-mccafch01           220        0.0   
-/players/jerick-mckinnon-mckinje02               312        0.0   
-/players/carlos-hyde-hydeca01                      0        0.0   
-/players/adam-thielen-thielad01                    0        0.0   
-/players/ezekiel-elliott-ellioez01                 0        0.0   
-/players/jordan-howard-howarjo02                   0        0.0   
-/players/michael-thomas-thomami05                  0        0.0   
-/players/cj-anderson-andercj01                     0        0.0   
-/players/lamar-miller-millela03                    0        0.0   
-/players/alex-collins-collial01                   50        0.0   
-/players/frank-gore-gorefr01                       0        0.0   
-/players/devonta-freeman-freemde01                 0        0.0   
-/players/juju-smithschuster-smithju03            240        1.0   
-...                                              ...        ...   
-/players/brent-qvale-qvalebr01                     0        0.0   
-/players/derron-smith-smithde12                    0        0.0   
-/players/sam-bradford-bradfsa01                    0        0.0   
-/players/teddy-bridgewater-bridgte01               0        0.0   
-/players/chris-jones-jonesch15                     0        0.0   
-/players/ryan-mallett-mallery01                    0        0.0   
-/players/tyler-bray-brayty01                       0        0.0   
-/players/brian-mihalik-mihalbr01                   0        0.0   
-/players/mike-pouncey-pouncmi01                    0        0.0   
-/players/kevin-zeitler-zeitlke01                   0        0.0   
-/players/kellen-clemens-clemeke01                  0        0.0   
-/players/nick-foles-folesni01                      0        0.0   
-/players/chad-henne-hennech01                      0        0.0   
-/players/brian-hoyer-hoyerbr01                     0        0.0   
-/players/matt-paradis-paradma01                    0        0.0   
-/players/josh-harris-harrijo12                     0        0.0   
-/players/corey-linsley-linslco01                   0        0.0   
-/players/philip-rivers-riverph01                   0        0.0   
-/players/rodney-hudson-hudsoro01                   0        0.0   
-/players/krishawn-hogan-hogankr01                 -8        0.0   
-/players/zach-fulton-fultoza01                     0        0.0   
-/players/evan-smith-dietrev01                      0        0.0   
-/players/landry-jones-jonesla06                    0        0.0   
-/players/jordan-devey-deveyjo01                    0        0.0   
-/players/ryan-jensen-jensery01                     0        0.0   
-/players/marquette-king-kingma02                   0        0.0   
-/players/jc-tretter-trettjc01                      0        0.0   
-/players/max-unger-ungerma01                       0        0.0   
-/players/spencer-pulley-pullesp01                  0        0.0   
-/players/chris-hubbard-hubbach01                   0        0.0   
+                                        50+_made  50+_att  fantasy_points  
+player_url                                                                 
+/players/todd-gurley-gurleto02               0.0      0.0          319.30  
+/players/leveon-bell-bellle02                0.0      0.0          256.60  
+/players/alvin-kamara-kamaral01              0.0      0.0          253.28  
+/players/tyler-lockett-lockety01             0.0      0.0          126.74  
+/players/kareem-hunt-huntka01                0.0      0.0          242.20  
+/players/dion-lewis-lewisdi01                0.0      0.0          193.80  
+/players/antonio-brown-brownan05             0.0      0.0          211.74  
+/players/lesean-mccoy-mccoyle02              0.0      0.0          204.60  
+/players/melvin-gordon-gordome01             0.0      0.0          230.10  
+/players/tarik-cohen-cohenta01               0.0      0.0          131.34  
+/players/mark-ingram-ingrama02               0.0      0.0          220.00  
+/players/keenan-allen-allenke03              0.0      0.0          176.20  
+/players/julio-jones-jonesju05               0.0      0.0          163.90  
+/players/tyreek-hill-hillty02                0.0      0.0          179.36  
+/players/pharoh-cooper-coopeph01             0.0      0.0           66.24  
+/players/deandre-hopkins-hopkide01           0.0      0.0          213.80  
+/players/leonard-fournette-fournle01         0.0      0.0          194.20  
+/players/christian-mccaffrey-mccafch01       0.0      0.0          157.40  
+/players/jerick-mckinnon-mckinje02           0.0      0.0          139.58  
+/players/carlos-hyde-hydeca01                0.0      0.0          174.80  
+/players/adam-thielen-thielad01              0.0      0.0          148.70  
+/players/ezekiel-elliott-ellioez01           0.0      0.0          177.20  
+/players/jordan-howard-howarjo02             0.0      0.0          176.70  
+/players/michael-thomas-thomami05            0.0      0.0          154.50  
+/players/cj-anderson-andercj01               0.0      0.0          147.10  
+/players/lamar-miller-millela03              0.0      0.0          157.50  
+/players/alex-collins-collial01              0.0      0.0          150.00  
+/players/frank-gore-gorefr01                 0.0      0.0          144.60  
+/players/devonta-freeman-freemde01           0.0      0.0          164.20  
+/players/juju-smithschuster-smithju03        0.0      0.0          149.30  
+...                                          ...      ...             ...  
+/players/shane-smith-smithsh10               0.0      0.0            0.00  
+/players/cj-spiller-spillcj02                0.0      0.0            0.00  
+/players/caleb-sturgis-sturgca01             1.0      1.0           13.00  
+/players/ryan-succop-succory01               2.0      5.0          156.00  
+/players/giorgio-tavecchio-tavecgi01         3.0      4.0           90.00  
+/players/justin-tucker-tuckeju01             5.0      7.0          162.00  
+/players/jason-vander-laan-vandeja03         0.0      0.0            0.00  
+/players/adam-vinatieri-vinatad01            5.0      6.0          125.00  
+/players/blair-walsh-walshbl01               0.0      1.0          108.00  
+/players/isaac-whitney-whitnis01             0.0      0.0            0.00  
+/players/marquez-williams-willima26          0.0      0.0            0.00  
+/players/greg-zuerlein-zuerlgr01             6.0      7.0          182.00  
+/players/austin-davis-davisau01              0.0      0.0           -0.10  
+/players/cody-kessler-kesslco01              0.0      0.0            3.94  
+/players/derek-anderson-anderde01            0.0      0.0            0.48  
+/players/chase-daniel-daniech01              0.0      0.0           -0.20  
+/players/bronson-hill-hillbr02               0.0      0.0           -0.20  
+/players/sean-mannion-mannise02              0.0      0.0            5.20  
+/players/darren-mcfadden-mcfadda01           0.0      0.0           -0.20  
+/players/sam-bradford-bradfsa01              0.0      0.0           26.98  
+/players/teddy-bridgewater-bridgte01         0.0      0.0           -1.30  
+/players/ryan-mallett-mallery01              0.0      0.0            9.94  
+/players/tyler-bray-brayty01                 0.0      0.0           -2.00  
+/players/kellen-clemens-clemeke01            0.0      0.0           -0.06  
+/players/nick-foles-folesni01                0.0      0.0           35.78  
+/players/chad-henne-hennech01                0.0      0.0           -0.50  
+/players/brian-hoyer-hoyerbr01               0.0      0.0           67.88  
+/players/philip-rivers-riverph01             0.0      0.0          280.40  
+/players/krishawn-hogan-hogankr01            0.0      0.0           -0.32  
+/players/landry-jones-jonesla06              0.0      0.0            9.56  
 
-                                        fantasy_points  
-player_url                                              
-/players/todd-gurley-gurleto02                  319.30  
-/players/leveon-bell-bellle02                   256.60  
-/players/alvin-kamara-kamaral01                 253.28  
-/players/tyler-lockett-lockety01                126.74  
-/players/kareem-hunt-huntka01                   242.20  
-/players/dion-lewis-lewisdi01                   193.80  
-/players/antonio-brown-brownan05                211.74  
-/players/lesean-mccoy-mccoyle02                 204.60  
-/players/melvin-gordon-gordome01                230.10  
-/players/tarik-cohen-cohenta01                  131.34  
-/players/mark-ingram-ingrama02                  220.00  
-/players/keenan-allen-allenke03                 176.20  
-/players/julio-jones-jonesju05                  163.90  
-/players/tyreek-hill-hillty02                   179.36  
-/players/pharoh-cooper-coopeph01                 66.24  
-/players/deandre-hopkins-hopkide01              213.80  
-/players/leonard-fournette-fournle01            194.20  
-/players/christian-mccaffrey-mccafch01          157.40  
-/players/jerick-mckinnon-mckinje02              139.58  
-/players/carlos-hyde-hydeca01                   174.80  
-/players/adam-thielen-thielad01                 148.70  
-/players/ezekiel-elliott-ellioez01              177.20  
-/players/jordan-howard-howarjo02                176.70  
-/players/michael-thomas-thomami05               154.50  
-/players/cj-anderson-andercj01                  147.10  
-/players/lamar-miller-millela03                 157.50  
-/players/alex-collins-collial01                 150.00  
-/players/frank-gore-gorefr01                    144.60  
-/players/devonta-freeman-freemde01              164.20  
-/players/juju-smithschuster-smithju03           149.30  
-...                                                ...  
-/players/brent-qvale-qvalebr01                   -0.20  
-/players/derron-smith-smithde12                   0.00  
-/players/sam-bradford-bradfsa01                  26.98  
-/players/teddy-bridgewater-bridgte01             -1.30  
-/players/chris-jones-jonesch15                    0.00  
-/players/ryan-mallett-mallery01                   9.94  
-/players/tyler-bray-brayty01                     -2.00  
-/players/brian-mihalik-mihalbr01                 -0.40  
-/players/mike-pouncey-pouncmi01                   0.00  
-/players/kevin-zeitler-zeitlke01                 -0.40  
-/players/kellen-clemens-clemeke01                -0.06  
-/players/nick-foles-folesni01                    35.78  
-/players/chad-henne-hennech01                    -0.50  
-/players/brian-hoyer-hoyerbr01                   67.88  
-/players/matt-paradis-paradma01                   0.00  
-/players/josh-harris-harrijo12                    0.00  
-/players/corey-linsley-linslco01                  0.00  
-/players/philip-rivers-riverph01                280.40  
-/players/rodney-hudson-hudsoro01                  0.00  
-/players/krishawn-hogan-hogankr01                -0.32  
-/players/zach-fulton-fultoza01                    0.00  
-/players/evan-smith-dietrev01                     0.00  
-/players/landry-jones-jonesla06                   9.56  
-/players/jordan-devey-deveyjo01                   0.00  
-/players/ryan-jensen-jensery01                    0.00  
-/players/marquette-king-kingma02                 -1.40  
-/players/jc-tretter-trettjc01                     0.00  
-/players/max-unger-ungerma01                      0.00  
-/players/spencer-pulley-pullesp01                 0.00  
-/players/chris-hubbard-hubbach01                  0.00  
-
-[1745 rows x 28 columns]
+[613 rows x 36 columns]
 """
