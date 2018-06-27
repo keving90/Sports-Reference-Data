@@ -1,8 +1,8 @@
 # NFL-Data-Python
 This repository contains a Python program capable of scraping data from [The Football Database](https://www.footballdb.com/) and [Pro Football Reference](https://www.pro-football-reference.com/).
 
-## 5 Seasons 50 Carries
-The `5_seasons_50_carries` package contains a module called `5_seasons_50_carries.py` which uses `football_db_scraper.py` to get data from www.footballdb.com. It then filters the data out so the only remaining players are running backs with 50 or more carries in each of the last 5 seasons. It also saves the data frame into a `csv` file. There is also a Jupyter Notebook version that shows the data set, its characteristics, visualizations, and analysis.
+## rb_carries
+The `rb_carries` package contains a module called `rb_carries.py` which uses `football_db_scraper.py` to get data from www.footballdb.com. It then filters the data out so the only remaining players are running backs with 50 or more carries in each of the last 5 seasons. It also saves the data frame into a `csv` file. There is also a Jupyter Notebook version that shows the data set, its characteristics, visualizations, and analysis.
 
 ## football_db_scraper.py
 Scrapes data from footballdb.com. It can create a comprehensive data set containing players of all positions and calculate their fantasy point total for the season. It can also scrape an individual stat table (rushing only, receiving only, etc.) It is more accurate than the `pro_football_ref_scraper` package.
