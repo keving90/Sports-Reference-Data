@@ -316,42 +316,42 @@ class FbDbScraper(object):
 
         self._valid_fantasy_keys = self._fantasy_settings_dict.keys()
 
-        @property
-        def fantasy_settings(self):
-            """
-            getter: Return the current fantasy settings dictionary.
+    @property
+    def fantasy_settings(self):
+        """
+        getter: Return the current fantasy settings dictionary.
 
-            setter: Set _fantasy_settings_dict to a custom fantasy settings dictionary.
-            """
-            return self._fantasy_settings_dict
+        setter: Set _fantasy_settings_dict to a custom fantasy settings dictionary.
+        """
+        return self._fantasy_settings_dict
 
-        @fantasy_settings.setter
-        def fantasy_settings(self, settings_dict):
-            """
-            _fantasy_settings_dict can only be set to a dictionary with the same keys as original attribute.
-            """
-            # Fantasy settings must be a dictionary.
-            if not isinstance(settings_dict, dict):
-                raise ValueError("Fantasy settings must be a dictionary.")
+    @fantasy_settings.setter
+    def fantasy_settings(self, settings_dict):
+        """
+        _fantasy_settings_dict can only be set to a dictionary with the same keys as original attribute.
+        """
+        # Fantasy settings must be a dictionary.
+        if not isinstance(settings_dict, dict):
+            raise ValueError("Fantasy settings must be a dictionary.")
 
-            # Check for valid number of keys in new fantasy settings dictionary.
-            dict_len = len(self._valid_fantasy_keys)
-            if len(settings_dict) > dict_len:
-                raise KeyError("Too many keys in new fantasy settings dict. "
-                               + str(dict_len) + " keys required.")
-            elif len(settings_dict) < dict_len:
-                raise KeyError("Too few keys in new fantasy settings dict. "
-                               + str(dict_len) + " keys required.")
+        # Check for valid number of keys in new fantasy settings dictionary.
+        dict_len = len(self._valid_fantasy_keys)
+        if len(settings_dict) > dict_len:
+            raise KeyError("Too many keys in new fantasy settings dict. "
+                           + str(dict_len) + " keys required.")
+        elif len(settings_dict) < dict_len:
+            raise KeyError("Too few keys in new fantasy settings dict. "
+                           + str(dict_len) + " keys required.")
 
-            # Check for valid keys and value types in new fantasy settings dictionary.
-            for key, value in settings_dict.items():
-                if key not in self._valid_fantasy_keys:
-                    raise KeyError("Invalid key in new fantasy settings dict. "
-                                   + "Valid keys include: " + str(list(self._valid_fantasy_keys)))
-                if type(value) not in [float, int]:
-                    raise ValueError("Invalid value in new fantasy settings dict. Must be type int or float.")
+        # Check for valid keys and value types in new fantasy settings dictionary.
+        for key, value in settings_dict.items():
+            if key not in self._valid_fantasy_keys:
+                raise KeyError("Invalid key in new fantasy settings dict. "
+                               + "Valid keys include: " + str(list(self._valid_fantasy_keys)))
+            if type(value) not in [float, int]:
+                raise ValueError("Invalid value in new fantasy settings dict. Must be type int or float.")
 
-            self._fantasy_settings_dict = settings_dict
+        self._fantasy_settings_dict = settings_dict
 
     def get_fantasy_df(self, year):
         """
@@ -632,10 +632,39 @@ class FbDbScraper(object):
 if __name__ == '__main__':
     # Usage example.
 
-    # Get comprehensive NFL data and calculate fantasy points.
+    # Create object.
     fb_db = FbDbScraper()
+
+    # Create custom fantasy settings dictionary.
+    custom_settings = {
+        'pass_yards': 1 / 25,
+        'pass_td': 4,
+        'interceptions': -1,
+        'rush_yards': 1 / 10,
+        'rush_td': 6,
+        'rec_yards': 1 / 10,
+        'receptions': 1,  # receptions: 0 -> receptions: 1
+        'rec_td': 6,
+        'two_pt_conversions': 2,
+        'fumbles_lost': -2,
+        'offensive_fumble_return_td': 6,
+        'return_yards': 1 / 25,
+        'return_td': 6,
+        'pat_made': 1,
+        '0-19_made': 3,
+        '20-29_made': 3,
+        '30-39_made': 3,
+        '40-49_made': 4,
+        '50+_made': 5,
+    }
+
+    # Use custom fantasy settings
+    fb_db.fantasy_settings = custom_settings
+
     fantasy_df = fb_db.get_fantasy_df(2017)
+
     print(fantasy_df)
+
     fantasy_df.to_csv('fbdb_fantasy.csv')
 
 """
@@ -1027,36 +1056,36 @@ player_url
 
                                         50+_made  50+_att  fantasy_points  
 player_url                                                                 
-/players/todd-gurley-gurleto02               0.0      0.0          319.30  
-/players/leveon-bell-bellle02                0.0      0.0          256.60  
-/players/alvin-kamara-kamaral01              0.0      0.0          253.28  
-/players/tyler-lockett-lockety01             0.0      0.0          126.74  
-/players/kareem-hunt-huntka01                0.0      0.0          242.20  
-/players/dion-lewis-lewisdi01                0.0      0.0          193.80  
-/players/antonio-brown-brownan05             0.0      0.0          211.74  
-/players/lesean-mccoy-mccoyle02              0.0      0.0          204.60  
-/players/melvin-gordon-gordome01             0.0      0.0          230.10  
-/players/tarik-cohen-cohenta01               0.0      0.0          131.34  
-/players/mark-ingram-ingrama02               0.0      0.0          220.00  
-/players/keenan-allen-allenke03              0.0      0.0          176.20  
-/players/julio-jones-jonesju05               0.0      0.0          163.90  
-/players/tyreek-hill-hillty02                0.0      0.0          179.36  
-/players/pharoh-cooper-coopeph01             0.0      0.0           66.24  
-/players/deandre-hopkins-hopkide01           0.0      0.0          213.80  
-/players/leonard-fournette-fournle01         0.0      0.0          194.20  
-/players/christian-mccaffrey-mccafch01       0.0      0.0          157.40  
-/players/jerick-mckinnon-mckinje02           0.0      0.0          139.58  
-/players/carlos-hyde-hydeca01                0.0      0.0          174.80  
-/players/adam-thielen-thielad01              0.0      0.0          148.70  
-/players/ezekiel-elliott-ellioez01           0.0      0.0          177.20  
-/players/jordan-howard-howarjo02             0.0      0.0          176.70  
-/players/michael-thomas-thomami05            0.0      0.0          154.50  
-/players/cj-anderson-andercj01               0.0      0.0          147.10  
-/players/lamar-miller-millela03              0.0      0.0          157.50  
-/players/alex-collins-collial01              0.0      0.0          150.00  
-/players/frank-gore-gorefr01                 0.0      0.0          144.60  
-/players/devonta-freeman-freemde01           0.0      0.0          164.20  
-/players/juju-smithschuster-smithju03        0.0      0.0          149.30  
+/players/todd-gurley-gurleto02               0.0      0.0          383.30  
+/players/leveon-bell-bellle02                0.0      0.0          341.60  
+/players/alvin-kamara-kamaral01              0.0      0.0          334.28  
+/players/tyler-lockett-lockety01             0.0      0.0          171.74  
+/players/kareem-hunt-huntka01                0.0      0.0          295.20  
+/players/dion-lewis-lewisdi01                0.0      0.0          225.80  
+/players/antonio-brown-brownan05             0.0      0.0          312.74  
+/players/lesean-mccoy-mccoyle02              0.0      0.0          263.60  
+/players/melvin-gordon-gordome01             0.0      0.0          288.10  
+/players/tarik-cohen-cohenta01               0.0      0.0          184.34  
+/players/mark-ingram-ingrama02               0.0      0.0          278.00  
+/players/keenan-allen-allenke03              0.0      0.0          278.20  
+/players/julio-jones-jonesju05               0.0      0.0          251.90  
+/players/tyreek-hill-hillty02                0.0      0.0          254.36  
+/players/pharoh-cooper-coopeph01             0.0      0.0           77.24  
+/players/deandre-hopkins-hopkide01           0.0      0.0          309.80  
+/players/leonard-fournette-fournle01         0.0      0.0          230.20  
+/players/christian-mccaffrey-mccafch01       0.0      0.0          237.40  
+/players/jerick-mckinnon-mckinje02           0.0      0.0          190.58  
+/players/carlos-hyde-hydeca01                0.0      0.0          233.80  
+/players/adam-thielen-thielad01              0.0      0.0          239.70  
+/players/ezekiel-elliott-ellioez01           0.0      0.0          203.20  
+/players/jordan-howard-howarjo02             0.0      0.0          199.70  
+/players/michael-thomas-thomami05            0.0      0.0          258.50  
+/players/cj-anderson-andercj01               0.0      0.0          175.10  
+/players/lamar-miller-millela03              0.0      0.0          193.50  
+/players/alex-collins-collial01              0.0      0.0          173.00  
+/players/frank-gore-gorefr01                 0.0      0.0          173.60  
+/players/devonta-freeman-freemde01           0.0      0.0          200.20  
+/players/juju-smithschuster-smithju03        0.0      0.0          207.30  
 ...                                          ...      ...             ...  
 /players/shane-smith-smithsh10               0.0      0.0            0.00  
 /players/cj-spiller-spillcj02                0.0      0.0            0.00  
