@@ -1,14 +1,34 @@
 # NFL-Data-Python
 This repository contains Python programs capable of scraping data from [The Football Database](https://www.footballdb.com/) and [Pro Football Reference](https://www.pro-football-reference.com/).
 
-The `football_db_scraper.py` is the main module used for scraping data. The `pro_football_ref_scraper` package is deprecated because it is not as efficient. It needs to scrape data from two different websites.
+#### Brief Overview
 
-Jupyter Notebook visualizations using `Matplotlib` and `Seaborn` can be found in `rb_carries/rb_carries.ipynb`.
+* The `football_db_scraper.py` is the main module used for scraping data. The `pro_football_ref_scraper` package is deprecated because it is not as efficient. It needs to scrape data from two different websites.
 
-This project was written using Python 3.6.1.
+* The `player.py` module includes a `Player` class used to represent an individual player and their stats.
+
+* Jupyter Notebook visualizations using `Matplotlib` and `Seaborn` can be found in `rb_carries/rb_carries.ipynb`.
+
+* This project was written using Python 3.6.1.
 
 ## football_db_scraper.py
 Scrapes data from footballdb.com. It can create a comprehensive data set containing players of all positions and calculate their fantasy point total for the season. It can also scrape an individual stat table (rushing only, receiving only, etc.) It is more accurate than the `pro_football_ref_scraper` package.
+
+Valid individual table types include:
+
+Valid table_type values include:
+
+'all_purpose': All purpose yardage data. Has data for all NFL players.
+'passing': Passing data.
+'rushing': Rushing data.
+'receiving': Receiving data.
+'scoring': Scoring data.
+'fumbles': Fumble data.
+'kick_returns': Kick return data.
+'punt_returns': Punt return data.
+'kicking': Field goal and point after touchdown data.
+'fantasy_offense': QB, RB, WR, and TE data with www.footballdb.com's custom fantasy settings data. Although fantasy settings are 
+                   included in this table, many players are left out.
 
 The `FbDbScraper` class will scrape the data. Just create an object.
 
@@ -26,7 +46,7 @@ custom_settings = {
     'rush_yards': 1 / 10,
     'rush_td': 6,
     'rec_yards': 1 / 10,
-    'receptions': 1,  # receptions: 0 -> receptions: 1
+    'receptions': 1,  # Default settings have - receptions: 0
     'rec_td': 6,
     'two_pt_conversions': 2,
     'fumbles_lost': -2,
