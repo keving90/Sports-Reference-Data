@@ -5,6 +5,8 @@ The `football_db_scraper.py` is the main module used for scraping data. The `pro
 
 Jupyter Notebook visualizations using `Matplotlib` and `Seaborn` can be found in `rb_carries/rb_carries.ipynb`.
 
+This project was written using Python 3.6.1.
+
 ## football_db_scraper.py
 Scrapes data from footballdb.com. It can create a comprehensive data set containing players of all positions and calculate their fantasy point total for the season. It can also scrape an individual stat table (rushing only, receiving only, etc.) It is more accurate than the `pro_football_ref_scraper` package.
 
