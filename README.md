@@ -16,19 +16,25 @@ Scrapes data from footballdb.com. It can create a comprehensive data set contain
 
 Valid individual table types include:
 
-Valid table_type values include:
+* 'all_purpose': All purpose yardage data. Has data for all NFL players.
 
-'all_purpose': All purpose yardage data. Has data for all NFL players.
-'passing': Passing data.
-'rushing': Rushing data.
-'receiving': Receiving data.
-'scoring': Scoring data.
-'fumbles': Fumble data.
-'kick_returns': Kick return data.
-'punt_returns': Punt return data.
-'kicking': Field goal and point after touchdown data.
-'fantasy_offense': QB, RB, WR, and TE data with www.footballdb.com's custom fantasy settings data. Although fantasy settings are 
-                   included in this table, many players are left out.
+* 'passing': Passing data.
+
+* 'rushing': Rushing data.
+
+* 'receiving': Receiving data.
+
+* 'scoring': Scoring data.
+
+* 'fumbles': Fumble data.
+
+* 'kick_returns': Kick return data.
+
+* 'punt_returns': Punt return data.
+
+* 'kicking': Field goal and point after touchdown data.
+
+* 'fantasy_offense': QB, RB, WR, and TE data with www.footballdb.com's custom fantasy settings data. Although fantasy settings are included in this table, many players are left out. This table is used in `get_fantasy_df()` to get passing two point conversion data.
 
 The `FbDbScraper` class will scrape the data. Just create an object.
 
@@ -70,6 +76,9 @@ fantasy_df = fb_db.get_fantasy_df(2017)
 
 # Get a data frame of a single table
 passing_df = fb_db.get_single_df(2017, 'passing')
+
+# Save a data fram to a csv file.
+fantasy_df.to_csv('fbdb_fantasy.csv')
 ```
 
 ## rb_carries package
