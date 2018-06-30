@@ -6,11 +6,6 @@ places the data into a Pandas data frame. Users can scrape a single table, or th
 will include a calculation of each player's fantasy point total for the season based on provided fantasy settings.
 
 Note: This module was built using Python 3.6.1, so dictionaries are ordered.
-
-Issues:
-    Currently, www.footballdb.com has no data for passing two point conversions. Therefore, fantasy calculations
-    for quarterbacks will be slightly off. Rushing and receiving two point conversions are still recorded (even
-    from a QB).
 """
 
 import requests
