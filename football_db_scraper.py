@@ -348,12 +348,14 @@ class FbDbScraper(object):
 
         self._fantasy_settings_dict = settings_dict
 
-    def get_fantasy_df(self, year):
+    def get_fantasy_df(self, start_year, end_year):
         """
-        Return a large data frame containing comprehensive players stats and their fantasy points total. Filters data
-        frame so only quarterbacks, wide receivers, running backs, tight ends, and kickers remain.
+        Returns a large data frame containing comprehensive player stats and their fantasy points total. Filters data
+        frame so only quarterbacks, wide receivers, running backs, tight ends, and kickers remain. A single season is
+        scraped if start_year == end_year.
 
-        :param year: Season's year.
+        :param start_year: Year to start scraping from.
+        :param end_year: Final year to scrape from.
 
         :return: Data frame containing all players and their fantasy points total for the season.
         """
@@ -362,12 +364,12 @@ class FbDbScraper(object):
         # first. This data frame is used as the "main data frame" because it has the highest number of NFL players.
         for table in self._fbdb_tables_dict.keys():
             # Scrape a given table from footballdb.com and create a data frame.
-            df = self.get_single_df(year, table)
+            df = self.get_specific_df(start_year, end_year, table)
 
             if table == 'all_purpose':
                 # The 'all_purpose' table will act as the "main data frame" since it has players of all positions.
                 main_df = df
-                main_df['year'] = year
+                # main_df['year'] = year
             else:
                 # All other data frames will be joined to main_df.
                 # The only columns in df we're interested in are the ones not in main_df.
@@ -390,9 +392,73 @@ class FbDbScraper(object):
 
         return main_df
 
-    def get_single_df(self, year, table_type):
+    # def get_fantasy_df(self, year):
+    #     """
+    #     Return a large data frame containing comprehensive players stats and their fantasy points total. Filters data
+    #     frame so only quarterbacks, wide receivers, running backs, tight ends, and kickers remain.
+    #
+    #     :param year: Season's year.
+    #
+    #     :return: Data frame containing all players and their fantasy points total for the season.
+    #     """
+    #     # Loop through dictionary keys, scraping a table and joining it to the "main data frame" each iteration. The
+    #     # dictionary is an OrderedDict, so the 'all_purpose' key (for the All Purpose Yardage table) will always come
+    #     # first. This data frame is used as the "main data frame" because it has the highest number of NFL players.
+    #     for table in self._fbdb_tables_dict.keys():
+    #         # Scrape a given table from footballdb.com and create a data frame.
+    #         df = self._get_single_df(year, table)
+    #
+    #         if table == 'all_purpose':
+    #             # The 'all_purpose' table will act as the "main data frame" since it has players of all positions.
+    #             main_df = df
+    #             main_df['year'] = year
+    #         else:
+    #             # All other data frames will be joined to main_df.
+    #             # The only columns in df we're interested in are the ones not in main_df.
+    #             relevant_cols = [col for col in df.columns if col not in main_df.columns]
+    #             df = df[relevant_cols]
+    #
+    #             # Join main_df and df using the unique player_url index.
+    #             main_df = main_df.join(df, how='left')
+    #
+    #     # Rearrange column order and calculate each player's fantasy point total.
+    #     main_df = self._prepare_for_fantasy_calc(main_df)
+    #     main_df = self._calculate_fantasy_points(main_df)
+    #
+    #     # Only interested in offense positions.
+    #     main_df = main_df[(main_df['position'] == 'QB')
+    #                       | (main_df['position'] == 'WR')
+    #                       | (main_df['position'] == 'RB')
+    #                       | (main_df['position'] == 'TE')
+    #                       | (main_df['position'] == 'K')]
+    #
+    #     return main_df
+
+    def get_specific_df(self, start_year, end_year, table_type):
         """
-        Scrape a table from www.footballdb.com based on the table_type and put it into a data frame.
+        Gets several seasons worth of data for a specific table type and concatenates the data frames into one big
+        data frame. A single season is scraped if start_year == end_year.
+
+        :param start_year: Year to start scraping from.
+        :param end_year: Final year to scrape from.
+        :param table_type: String representing the type of table to be scraped.
+
+        :return: Big data frame of several data frames concatenated together.
+        """
+        # Get year range for iteration.
+        year_range = self._get_year_range(start_year, end_year)
+
+        # Get a data frame for each season.
+        df_list = [self._get_single_df(year, table_type) for year in year_range]
+
+        # Concatenate all seasons into one big data frame.
+        big_df = pd.concat(df_list)
+
+        return big_df
+
+    def _get_single_df(self, year, table_type):
+        """
+        Scrapes a table from www.footballdb.com based on the table_type and puts it into a Pandas data frame.
 
         See documentation under FbDbScraper class for valid table types and their descriptions.
 
@@ -419,6 +485,25 @@ class FbDbScraper(object):
             df = self._handle_field_goals(df, table_type)
 
         return df
+
+    def _get_year_range(self, start_year, end_year):
+        """
+        Uses a star_year and an end_year to build a range iterator.
+
+        :param start_year: Year to begin iterator at.
+        :param end_year: Year to end iterator at.
+
+        :return: A range iterator.
+        """
+        # Build range iterator depending on how start_year and end_year are related.
+        if int(start_year) > int(end_year):
+            year_range = range(start_year, end_year - 1, -1)
+        elif int(start_year) <= int(end_year):
+            year_range = range(start_year, end_year + 1)
+        # else:
+        #     year_range = range(start_year, end_year + 1)
+
+        return year_range
 
     def _make_url(self, year, table_type):
         """
@@ -640,36 +725,40 @@ if __name__ == '__main__':
     fb_db = FbDbScraper()
 
     # Create custom fantasy settings dictionary.
-    custom_settings = {
-        'pass_yards': 1 / 25,
-        'pass_td': 4,
-        'interceptions': -1,
-        'rush_yards': 1 / 10,
-        'rush_td': 6,
-        'rec_yards': 1 / 10,
-        'receptions': 1,  # receptions: 0 -> receptions: 1
-        'rec_td': 6,
-        'two_pt_conversions': 2,
-        'fumbles_lost': -2,
-        'offensive_fumble_return_td': 6,
-        'return_yards': 1 / 25,
-        'return_td': 6,
-        'pat_made': 1,
-        '0-19_made': 3,
-        '20-29_made': 3,
-        '30-39_made': 3,
-        '40-49_made': 4,
-        '50+_made': 5,
-    }
+    # custom_settings = {
+    #     'pass_yards': 1 / 25,
+    #     'pass_td': 4,
+    #     'interceptions': -1,
+    #     'rush_yards': 1 / 10,
+    #     'rush_td': 6,
+    #     'rec_yards': 1 / 10,
+    #     'receptions': 1,  # receptions: 0 -> receptions: 1
+    #     'rec_td': 6,
+    #     'two_pt_conversions': 2,
+    #     'fumbles_lost': -2,
+    #     'offensive_fumble_return_td': 6,
+    #     'return_yards': 1 / 25,
+    #     'return_td': 6,
+    #     'pat_made': 1,
+    #     '0-19_made': 3,
+    #     '20-29_made': 3,
+    #     '30-39_made': 3,
+    #     '40-49_made': 4,
+    #     '50+_made': 5,
+    # }
+    #
+    # # Use custom fantasy settings
+    # fb_db.fantasy_settings = custom_settings
+    #
+    # fantasy_df = fb_db.get_fantasy_df(2017)
+    #
+    # print(fantasy_df)
+    #
+    # fantasy_df.to_csv('fbdb_fantasy.csv')
 
-    # Use custom fantasy settings
-    fb_db.fantasy_settings = custom_settings
+    # big_df = fb_db.get_big_fantasy_df(2017, 2017)
 
-    fantasy_df = fb_db.get_fantasy_df(2017)
-
-    print(fantasy_df)
-
-    fantasy_df.to_csv('fbdb_fantasy.csv')
+    big_df = fb_db.get_specific_df(2017, 2017, 'passing')
 
 """
 Sample output:
