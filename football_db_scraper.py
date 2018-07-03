@@ -362,7 +362,7 @@ class FbDbScraper(object):
         # first. This data frame is used as the "main data frame" because it has the highest number of NFL players.
         for table in self._fbdb_tables_dict.keys():
             # Scrape a given table from footballdb.com and create a data frame.
-            df = self.get_single_df(year, table, add_year_col=False)
+            df = self.get_single_df(year, table)
 
             if table == 'all_purpose':
                 # The 'all_purpose' table will act as the "main data frame" since it has players of all positions.
@@ -390,7 +390,7 @@ class FbDbScraper(object):
 
         return main_df
 
-    def get_single_df(self, year, table_type, add_year_col=True):
+    def get_single_df(self, year, table_type):
         """
         Scrape a table from www.footballdb.com based on the table_type and put it into a data frame.
 
@@ -411,11 +411,7 @@ class FbDbScraper(object):
         url = self._make_url(year, table_type)
         player_list = self._get_player_result_set(url)
         player_dicts = self._get_player_stats(player_list, table_type)
-        df = self._make_df(player_dicts, table_type)
-
-        # Add year column if specified.
-        if add_year_col:
-            df['year'] = year
+        df = self._make_df(year, player_dicts, table_type)
 
         # The 'scoring' and 'kicking' tables have field goal stats as a 'made/attempts' string.
         # Split these stats into two integer columns.
@@ -525,10 +521,11 @@ class FbDbScraper(object):
 
         return list_of_player_dicts
 
-    def _make_df(self, player_dicts, table_type):
+    def _make_df(self, year, player_dicts, table_type):
         """
         Make a data frame using a dictionary's keys as column names and list of player_object.__dict__'s as data.
 
+        :param year: Season's year used to create a unique index for the player's season in the data set.
         :param player_dicts: List of player_object.__dict__'s.
         :param table_type: String to get self._fbdb_tables_dict[table_type]['all_columns'].keys() for column names.
 
@@ -536,8 +533,19 @@ class FbDbScraper(object):
         """
         # Get dict's keys for df's column names.
         df_columns = list(self._fbdb_tables_dict[table_type]['all_columns'].keys())
-        df = pd.DataFrame(data=player_dicts, columns=df_columns)  # Create the data frame.
-        df.set_index('player_url', inplace=True)                  # Make 'name' the data frame's index
+
+        # Create the data frame.
+        df = pd.DataFrame(data=player_dicts, columns=df_columns)
+
+        # Add year column.
+        df['year'] = year
+
+        # Combine player_url and year into one column. This allows us to uniquely identify a player's season when they
+        # have records for different seasons in a single data set.
+        df['player_url'] = df['player_url'].apply(lambda x: x + str(year))
+
+        # Make the new 'player_url' the data frame's index.
+        df.set_index('player_url', inplace=True)
 
         return df
 
