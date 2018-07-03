@@ -541,7 +541,8 @@ class FbDbScraper(object):
         df['year'] = year
 
         # Combine player_url and year into one column. This allows us to uniquely identify a player's season when they
-        # have records for different seasons in a single data set.
+        # have records for multiple seasons in a single data set. It will prevent issues when joining two data sets
+        # that each have multiple seasons of data for a single player.
         df['player_url'] = df['player_url'].apply(lambda x: x + str(year))
 
         # Make the new 'player_url' the data frame's index.
