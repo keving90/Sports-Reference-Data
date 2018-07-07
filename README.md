@@ -5,7 +5,7 @@ This repository contains Python programs capable of scraping data from [The Foot
 
 * The `football_db_scraper.py` is the main module used for scraping data.
 
-* The `pro_football_ref_scraper` package is deprecated because it is not as efficient. It needs to scrape data from two different websites. It also has missing data when calculating fantasy points.
+* The `pro_football_ref_scraper` package is deprecated because it is not as efficient. It needs to scrape data from two different websites. It also has missing data when calculating fantasy points. I'm leaving this package in the repository because it was my first attempt at creating this entire project.
 
 * The `player.py` module includes a `Player` class used to represent an individual player and their stats.
 
@@ -86,8 +86,10 @@ fantasy_df.to_csv('fbdb_fantasy.csv')
 ## rb_carries package
 The `rb_carries` package contains a module called `rb_carries.py` which uses `football_db_scraper.py` to get data from www.footballdb.com. It then filters the data out so the only remaining players are running backs with 50 or more carries in each of the last `n` seasons. It also saves the data frame into a `csv` file. There is also a Jupyter Notebook version that shows the data set, its characteristics, visualizations, and analysis.
 
-## pro_football_ref_scraper package
+## pro_football_ref_scraper package (deprecated)
 Scrapes the Rushing and Receiving table from pro-football-reference.com for a given season. It can also calculate each player's fantasy point total. It needs to scrape some data from footballdb.com to account for missing fields.
+
+**Note:** This package is deprecated because it is not as efficient as `football_db_scraper.py`. It needs to scrape data from two sources, and some data is still missing when calculating fantasy points. I'm leaving this package in the repository because it was my first attempt at creating this entire project.
 
 ## player.py
 This module contains a class representing a single player object. The class takes a list of data and a dictionary as input. The dictionary's keys are a given stat category and values are the data type of the stat. When initializing the class, the `__init__` method will iterate through the list and dictionary's items. Dictionary keys are used as the object's attribute names. The values are the data type of the attribute, and the items in the list are the value of the attribute.
