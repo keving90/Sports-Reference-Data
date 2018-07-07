@@ -3,7 +3,7 @@ This repository contains Python programs capable of scraping data from [The Foot
 
 #### Brief Overview
 
-* The `football_db_scraper.py` is the main module used for scraping data. The `pro_football_ref_scraper` package is deprecated because it is not as efficient. It needs to scrape data from two different websites.
+* The `football_db_scraper.py` is the main module used for scraping data. The `pro_football_ref_scraper` package is deprecated because it is not as efficient. It needs to scrape data from two different websites. It also has missing data when calculating fantasy points.
 
 * The `player.py` module includes a `Player` class used to represent an individual player and their stats.
 
@@ -12,7 +12,7 @@ This repository contains Python programs capable of scraping data from [The Foot
 * This project was written using Python 3.6.1.
 
 ## football_db_scraper.py
-Scrapes data from footballdb.com. It can create a comprehensive data set containing players of all positions and calculate their fantasy point total for the season. It can also scrape an individual stat table (rushing only, receiving only, etc.) It is more accurate than the `pro_football_ref_scraper` package.
+Scrapes data from www.footballdb.com. It can create a comprehensive data set containing players of all relevant offensive positions and calculate their fantasy point total for the season. It can also scrape an individual stat table (rushing only, receiving only, etc.). Both methods can scrape multiple seasons of data at once. All you need to do is include a `start_year` and `end_year`. It does not matter if `start_year` > `end_year` (or <). This will only affect the order the data is scraped. If `start_year` == `end_year`, then one season is scraped. This module is more accurate than the `pro_football_ref_scraper` package because it does not have missing data.
 
 Valid individual table types include:
 
@@ -71,11 +71,11 @@ custom_settings = {
 # Skipping this step uses default settings from class.
 fb_db.fantasy_settings = custom_settings
 
-# Get fantasy data frame.
-fantasy_df = fb_db.get_fantasy_df(2017)
+# Get fantasy data frame. Scrape the 2017 NFL season only.
+fantasy_df = fb_db.get_fantasy_df(start_year=2017, end_year=2017)
 
-# Get a data frame of a single table
-passing_df = fb_db.get_single_df(2017, 'passing')
+# Get a data frame of a single table.
+passing_df = fb_db.get_specific_df(start_year=2017, end_year=2017, 'passing')
 
 # Save a data fram to a csv file.
 fantasy_df.to_csv('fbdb_fantasy.csv')
