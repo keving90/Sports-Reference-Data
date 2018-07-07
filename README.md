@@ -76,7 +76,7 @@ fb_db.fantasy_settings = custom_settings
 # Get fantasy data frame. Scrape the 2017 NFL season only.
 fantasy_df = fb_db.get_fantasy_df(start_year=2017, end_year=2017)
 
-# Get a data frame of a single table.
+# Get a data frame of a specific table.
 passing_df = fb_db.get_specific_df(start_year=2017, end_year=2017, 'passing')
 
 # Save a data fram to a csv file.
