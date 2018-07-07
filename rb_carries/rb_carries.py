@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 """
-This module uses football_db_scraper.py to scrape data from www.footballdb.com and place it into a data frame. It
-scrapes data from the past 'num_years' seasons. Each season is placed into a data frame, and each data frame is placed
-into a list. Each data frame in the list is concatenated into one large data frame. Then, various manipulations are
-made to the data frame to find all running backs who have had 50 or more rushing attempts in each of the last
-'num_years' seasons.
+This module uses football_db_scraper.py to scrape data from www.footballdb.com and place it into a data frame. The
+football_db_scraper.get_fantasy_data() scrapes several seasons worth of data. Then rb_carries.modify_df() performs
+various manipulations to find all running backs who have had 50 or more rushing attempts in each of the last
+'num_years' seasons. The usage example scrapes 5 seasons of data to find the running backs with 50 or more rushing
+attempts in each of the last 5 seasons.
 
 Built using Python 3.6.1
 """
