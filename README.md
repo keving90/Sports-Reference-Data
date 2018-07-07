@@ -3,7 +3,9 @@ This repository contains Python programs capable of scraping data from [The Foot
 
 #### Brief Overview
 
-* The `football_db_scraper.py` is the main module used for scraping data. The `pro_football_ref_scraper` package is deprecated because it is not as efficient. It needs to scrape data from two different websites. It also has missing data when calculating fantasy points.
+* The `football_db_scraper.py` is the main module used for scraping data.
+
+* The `pro_football_ref_scraper` package is deprecated because it is not as efficient. It needs to scrape data from two different websites. It also has missing data when calculating fantasy points.
 
 * The `player.py` module includes a `Player` class used to represent an individual player and their stats.
 
