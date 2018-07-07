@@ -23,37 +23,6 @@ sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
 from football_db_scraper import FbDbScraper
 
 
-def get_seasons(num_years):
-    """
-    Use football_db_scraper.FbDbScraper to scrape 'num_years' seasons worth of data.
-
-    :param num_years: Number of years of data to scrape
-
-    :return: Data frame containing 'num_years' seasons worth of NFL data.
-    """
-    # Get the current date to help figure out which year to start gathering data from.
-    now = datetime.datetime.now()
-
-    # The NFL regular season will end on December 28th at the earliest.
-    # If the season has ended and the current date is between 12/28 and 1/1, then unfortunately the newly ended season
-    # will not be included.
-    start_year = now.year - 1
-
-    # Get the final year to gather data from.
-    end_year = start_year - int(num_years)
-
-    # Create object to scrape data.
-    fb_db = FbDbScraper()
-
-    # Get a list of data frames, where each data frame if a year of NFL data.
-    df_list = [fb_db.get_fantasy_df(year) for year in range(start_year, end_year, -1)]
-
-    # Concatenate the data frames to create one large data frame that has data for each season.
-    big_df = pd.concat(df_list)
-
-    return big_df
-
-
 def modify_df(df, num_years):
     """
     Modify a data frame to get the running backs with 50 or more carries in each of the past num_years seasons.
@@ -90,7 +59,8 @@ if __name__ == '__main__':
     # Usage example.
 
     # Get the 5 most recent years of data.
-    five_seasons_df = get_seasons(5)
+    fb_db = FbDbScraper()
+    five_seasons_df = fb_db.get_fantasy_df(start_year=2017, end_year=2013)
 
     # Modify data frame so only running backs with 50 or more carries in each of the last 5 seasons remain.
     modified_df = modify_df(five_seasons_df, 5)
