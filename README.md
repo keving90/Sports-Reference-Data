@@ -66,7 +66,7 @@ custom_settings = {
     '20-29_made': 3,
     '30-39_made': 3,
     '40-49_made': 4,
-    '50+_made': 5,
+    '50+_made': 5
 }
 
 # Use custom fantasy settings.
