@@ -709,7 +709,7 @@ if __name__ == '__main__':
         '50+_made': 5
     }
 
-    # Use custom fantasy settings instead of defualt settings (optional).
+    # Use custom fantasy settings instead of default settings (optional).
     fb_db.fantasy_settings = custom_settings
 
     # Scrape data for the 2017 NFL season.
