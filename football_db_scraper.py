@@ -4,6 +4,7 @@
 This module contains a FbDbScraper class used to scrape NFL data from www.footballdb.com for a given season. It then
 places the data into a Pandas data frame. Users can scrape a single table, or they can scrape comprehensive data, which
 will include a calculation of each player's fantasy point total for the season based on provided fantasy settings.
+Multiple seasons of data can be scraped at once.
 
 Note: This module was built using Python 3.6.1, so dictionaries are ordered.
 """
@@ -18,11 +19,11 @@ class FbDbScraper(object):
     """
 
     Scrapes data from www.footballdb.com and places it into a Pandas data frame. It can scrape an individual table
-    using the get_df() method, or it can scrape several tables, join them together, and calculate each player's fantasy
-    point total using the get_fantasy_df() method. Each method returns a data frame. The data frames are created using
-    the __dict__ form of Player objects.
+    using the get_specific_df() method, or it can scrape several tables, join them together, and calculate each
+    player's fantasy point total using the get_fantasy_df() method. Each method returns a data frame. The data frames
+    are created using the __dict__ form of Player objects.
 
-    The methods will scrape data from different tables based on the table_type variable.
+    The methods will scrape data from different tables based on a table_type variable.
 
     Valid table_type values include:
 
@@ -40,7 +41,7 @@ class FbDbScraper(object):
     Attributes:
         _fbdb_tables_dict (dict): Dictionary whose keys are the type of table to scrape from. The value is
             another dictionary. The nested dictionary contains keys whose values are used for building the URL to the
-            table. Another key within the nested dict has a dict as values to store the column names and their data
+            table. Another key within the nested dict has a dict as a value to store the column names and their data
             type. The values for the 'fantasy_offense' key has a unique layout because its URL is different from other
             tables.
 
@@ -55,9 +56,9 @@ class FbDbScraper(object):
                     }
                 }
 
-        _fantasy_settings_dict (dict): Dictionary stores the name each fantasy stat as keys and their point value as
-            values. A property allows setting custom fantasy settings using a valid dictionary. Originally represents a
-            standard Yahoo! 0PPR league.
+        _fantasy_settings_dict (dict): Dictionary stores the name of  each fantasy stat as keys and their point value
+        as values. A property allows setting custom fantasy settings using a valid dictionary. Originally represents a
+        standard Yahoo! 0PPR league.
 
             Users can calculate fantasy points with a custom fantasy settings dictionary:
 
@@ -66,6 +67,7 @@ class FbDbScraper(object):
             A valid dictionary must be used.
 
             Example of valid dict (these are the default fantasy settings):
+
                 default_settings = {
                     'pass_yards': 1 / 25,  # 25 yards = 1 point
                     'pass_td': 4,
@@ -324,21 +326,18 @@ class FbDbScraper(object):
 
     @fantasy_settings.setter
     def fantasy_settings(self, settings_dict):
-        """
-        _fantasy_settings_dict can only be set to a dictionary with the same keys as original attribute.
-        """
+        """_fantasy_settings_dict can only be set to a dictionary with the same keys as original attribute."""
         # Fantasy settings must be a dictionary.
         if not isinstance(settings_dict, dict):
             raise ValueError("Fantasy settings must be a dictionary.")
 
         # Check for valid number of keys in new fantasy settings dictionary.
         dict_len = len(self._valid_fantasy_keys)
+        message = "keys in new fantasy settings dict. " + str(dict_len) + " keys required."
         if len(settings_dict) > dict_len:
-            raise KeyError("Too many keys in new fantasy settings dict. "
-                           + str(dict_len) + " keys required.")
+            raise KeyError("Too many " + message)
         elif len(settings_dict) < dict_len:
-            raise KeyError("Too few keys in new fantasy settings dict. "
-                           + str(dict_len) + " keys required.")
+            raise KeyError("Too few " + message)
 
         # Check for valid keys and value types in new fantasy settings dictionary.
         for key, value in settings_dict.items():
@@ -354,7 +353,8 @@ class FbDbScraper(object):
         """
         Returns a large data frame containing comprehensive player stats and their fantasy points total. Filters data
         frame so only quarterbacks, wide receivers, running backs, tight ends, and kickers remain. A single season is
-        scraped if start_year == end_year.
+        scraped if start_year == end_year. It does not matter which year is start_year or end_year. This will only
+        affect the order the data is scraped.
 
         :param start_year: Year to start scraping from.
         :param end_year: Final year to scrape from.
@@ -366,7 +366,7 @@ class FbDbScraper(object):
         # The 'all_purpose' data frame is used as the "main data frame" because it has the highest number of NFL
         # players.
         for table in self._fbdb_tables_dict.keys():
-            # Scrape a given table from footballdb.com and create a data frame.
+            # Scrape a given table from www.footballdb.com and create a data frame.
             df = self.get_specific_df(start_year, end_year, table)
 
             if table == 'all_purpose':
@@ -397,7 +397,8 @@ class FbDbScraper(object):
     def get_specific_df(self, start_year, end_year, table_type):
         """
         Gets several seasons worth of data for a specific table type and concatenates the data frames into one big
-        data frame. A single season is scraped if start_year == end_year.
+        data frame. A single season is scraped if start_year == end_year. It does not matter which year is start_year
+        or end_year. This will only affect the order the data is scraped.
 
         :param start_year: Year to start scraping from.
         :param end_year: Final year to scrape from.
@@ -433,7 +434,7 @@ class FbDbScraper(object):
                            + "Can only currently handle the following table names: "
                            + str(list(self._fbdb_tables_dict.keys())))
 
-        # Scrape a given table from footballdb.com and create a data frame.
+        # Scrape a given table from www.footballdb.com and create a data frame.
         url = self._make_url(year, table_type)
         player_list = self._get_player_result_set(url)
         player_dicts = self._get_player_stats(player_list, table_type)
@@ -448,7 +449,7 @@ class FbDbScraper(object):
 
     def _get_year_range(self, start_year, end_year):
         """
-        Uses a star_year and an end_year to build a range iterator.
+        Uses a start_year and end_year to build a range iterator.
 
         :param start_year: Year to begin iterator at.
         :param end_year: Year to end iterator at.
@@ -460,14 +461,12 @@ class FbDbScraper(object):
             year_range = range(start_year, end_year - 1, -1)
         elif int(start_year) <= int(end_year):
             year_range = range(start_year, end_year + 1)
-        # else:
-        #     year_range = range(start_year, end_year + 1)
 
         return year_range
 
     def _make_url(self, year, table_type):
         """
-        Create a URL string used to send a GET request to footballdb.com to scrape a table.
+        Creates a URL string used to send a GET request to www.footballdb.com to scrape a table.
 
         :param year: Season year needed to go to the correct season of data.
         :param table_type: Indicates which table to scrape from.
@@ -492,7 +491,7 @@ class FbDbScraper(object):
 
     def _get_player_result_set(self, url):
         """
-        Send a GET request and use BeautifulSoup4 to scrape a ResultSet from a footballdb.com table.
+        Sends a GET request and use BeautifulSoup4 to scrape a ResultSet from a www.footballdb.com table.
 
         :param url: String URL built by self._make_url().
 
@@ -503,7 +502,7 @@ class FbDbScraper(object):
         req_header = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36'
                                     + '(KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
 
-        # Send a GET request to Pro Football Reference's Rushing & Receiving page to gather the data.
+        # Send a GET request to gather the data.
         r = requests.get(url, headers=req_header)
         r.raise_for_status()
 
@@ -518,17 +517,15 @@ class FbDbScraper(object):
         body = table.find('tbody')
 
         # tr refers to a table row
-        # Each row in player_list has data for a single player
-        # This will also collect descriptions of each column found in the web page's table, which
-        # is filtered out in create_player_objects().
+        # Each row in player_list has data for a single player.
         player_list = body.find_all('tr')
 
         return player_list
 
     def _get_player_stats(self, player_list, table_type):
         """
-        Iterate through a BeautifulSoup4 ResultSet to get a player stat data. Use list to create a Player object for
-        each player.
+        Iterates through a BeautifulSoup4 ResultSet to get a player stat data. Uses a list of player stats to create a
+        Player object for each player. The object's attributes are based on the table_type.
 
         :param player_list: List of BeautifulSoup4 ResultSet player data.
         :param table_type: String used to access self._fbdb_tables_dict key data for creating Player objects.
@@ -539,8 +536,8 @@ class FbDbScraper(object):
         # Each dictionary is made from the object's __dict__ attribute.
         list_of_player_dicts = []
 
-        # Get each player's stats, create a Player object, and append the object
-        # and the instance's __dict__ to their own list.
+        # Get each player's stats and create a Player object.
+        # Create a list containing each player object's __dict__.
         for player in player_list:
             # The <td> tag defines a standard cell in an HTML table.
             # Get a list of cells. This raw web page data represents one player.
@@ -568,7 +565,8 @@ class FbDbScraper(object):
 
     def _make_df(self, year, player_dicts, table_type):
         """
-        Make a data frame using a dictionary's keys as column names and list of player_object.__dict__'s as data.
+        Makes a data frame using a dictionary's keys as column names and list of player_object.__dict__'s as data. The
+        player's unique URL is used as the data frame's index.
 
         :param year: Season's year used to create a unique index for the player's season in the data set.
         :param player_dicts: List of player_object.__dict__'s.
@@ -576,7 +574,7 @@ class FbDbScraper(object):
 
         :return: A data frame.
         """
-        # Get dict's keys for df's column names.
+        # Get data frame's columns from a relevant table dict's keys.
         df_columns = list(self._fbdb_tables_dict[table_type]['all_columns'].keys())
 
         # Create the data frame.
@@ -585,9 +583,9 @@ class FbDbScraper(object):
         # Add year column.
         df['year'] = year
 
-        # Combine player_url and year into one column. This allows us to uniquely identify a player's season when they
-        # have records for multiple seasons in a single data set. It will prevent issues when joining two data sets
-        # that each have multiple seasons of data for a single player.
+        # Combine player_url and year into one column. With this, a player's season can be uniquely identified when
+        # they have records for multiple seasons in a single data set. It will prevent issues when joining two data
+        # sets that each have multiple seasons of data for a single player.
         df['player_url'] = df['player_url'].apply(lambda x: x + str(year))
 
         # Make the new 'player_url' the data frame's index.
@@ -597,11 +595,12 @@ class FbDbScraper(object):
 
     def _handle_field_goals(self, df, table_type):
         """
-        Split 'made/attempts' string, create separate made and attempts integer columns, and drop original columns.
-        Handle point after touchdown and field goals of all ranges in 'scoring' and 'kicking' tables.
+        Handles a kicker's field goal stats. Splits 'made/attempts' string, creates separate made and attempts integer
+        columns, and drops original columns. Handles point after touchdown and field goals of all ranges in 'scoring'
+        and 'kicking' tables.
 
-        Example 'scoring' table whose PAT and FG columns would be modified (similar for 'kicking' table):
-        https://www.footballdb.com/stats/stats.html?lg=NFL&yr=2017&type=reg&mode=S&conf=&limit=all
+        Example 'kicking' table whose PAT and FG columns would be modified (similar for 'scoring' table):
+        https://www.footballdb.com/stats/stats.html?mode=K&yr=2017&lg=NFL
 
         :param df: Data frame to be modified.
         :param table_type: Type of table to be modified. Columns to modify vary based on table type.
@@ -633,12 +632,12 @@ class FbDbScraper(object):
 
     def _prepare_for_fantasy_calc(self, df):
         """
-        Grab only the relevant columns in df and rearrange their order. Replace all numpy.NaN values with 0. Insert
+        Grabs only the relevant columns in df and rearranges their order. Replaces all numpy.NaN values with 0. Inserts
         'return_yards' and 'return_td' columns for fantasy points calculation.
 
         :param df: Data frame to be prepared.
 
-        :return: A data frame prepared for fantasy point calculation.
+        :return: A data frame prepared for fantasy points calculation.
         """
         # Replace all numpy.NaN values with 0.
         [df[column].fillna(0, inplace=True) for column in df[3:]]
@@ -664,13 +663,16 @@ class FbDbScraper(object):
 
     def _calculate_fantasy_points(self, df):
         """
-        Insert the fantasy_points column and calculate each player's fantasy point total.
+        Inserts the fantasy_points column and calculates each player's fantasy point total.
 
         :param df: Data frame to have fantasy_points column inserted into.
 
         :return: A data frame with a fantasy_points column.
         """
+        # Insert the fantasy_points column.
         df['fantasy_points'] = 0
+
+        # Calculate each player's fantasy point total.
         for stat, value in self._fantasy_settings_dict.items():
             if stat in df.columns:
                 df['fantasy_points'] += df[stat] * value
@@ -704,7 +706,7 @@ if __name__ == '__main__':
         '20-29_made': 3,
         '30-39_made': 3,
         '40-49_made': 4,
-        '50+_made': 5,
+        '50+_made': 5
     }
 
     # Use custom fantasy settings instead of defualt settings (optional).
