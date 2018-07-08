@@ -39,7 +39,7 @@ class FbDbScraper(object):
     'fantasy_offense': QB, RB, WR, and TE data with www.footballdb.com's custom fantasy settings data.
 
     Attributes:
-        _fbdb_tables_dict (dict): Dictionary whose keys are the type of table to scrape from. The value is
+        _tables_dict (dict): Dictionary whose keys are the type of table to scrape from. The value is
             another dictionary. The nested dictionary contains keys whose values are used for building the URL to the
             table. Another key within the nested dict has a dict as a value to store the column names and their data
             type. The values for the 'fantasy_offense' key has a unique layout because its URL is different from other
@@ -96,7 +96,7 @@ class FbDbScraper(object):
     """
     def __init__(self):
         """Initialize FbDbScraper object."""
-        self._fbdb_tables_dict = {
+        self._tables_dict = {
             'all_purpose': {
                 'mode': 'A',
                 'sort': 'apyds',
@@ -365,7 +365,7 @@ class FbDbScraper(object):
         # dictionary is ordered, so the 'all_purpose' key (for the All Purpose Yardage table) will always come first.
         # The 'all_purpose' data frame is used as the "main data frame" because it has the highest number of NFL
         # players.
-        for table in self._fbdb_tables_dict.keys():
+        for table in self._tables_dict.keys():
             # Scrape a given table from www.footballdb.com and create a data frame.
             df = self.get_specific_df(start_year, end_year, table)
 
@@ -396,9 +396,9 @@ class FbDbScraper(object):
 
     def get_specific_df(self, start_year, end_year, table_type):
         """
-        Gets several seasons worth of data for a specific table type and concatenates the data frames into one big
-        data frame. A single season is scraped if start_year == end_year. It does not matter which year is start_year
-        or end_year. This will only affect the order the data is scraped.
+        Gets a data frame of one or more seasons of data for a given table_type. A single season is scraped if
+        start_year == end_year. It does not matter which year is start_year or end_year. This will only affect the
+        order the data is scraped.
 
         :param start_year: Year to start scraping from.
         :param end_year: Final year to scrape from.
@@ -410,14 +410,14 @@ class FbDbScraper(object):
         year_range = self._get_year_range(start_year, end_year)
 
         # Get a data frame for each season.
-        df_list = [self._get_single_df(year, table_type) for year in year_range]
+        df_list = [self._get_season(year, table_type) for year in year_range]
 
         # Concatenate all seasons into one big data frame.
         big_df = pd.concat(df_list)
 
         return big_df
 
-    def _get_single_df(self, year, table_type):
+    def _get_season(self, year, table_type):
         """
         Scrapes a table from www.footballdb.com based on the table_type and puts it into a Pandas data frame.
 
@@ -428,11 +428,11 @@ class FbDbScraper(object):
 
         :return: A data frame of the scraped table.
         """
-        # Only scrapes from tables in self._fbdb_tables_dict.keys().
-        if table_type.lower() not in self._fbdb_tables_dict.keys():
+        # Only scrapes from tables in self._tables_dict.keys().
+        if table_type.lower() not in self._tables_dict.keys():
             raise KeyError("Error, make sure to specify table_type. "
                            + "Can only currently handle the following table names: "
-                           + str(list(self._fbdb_tables_dict.keys())))
+                           + str(list(self._tables_dict.keys())))
 
         # Scrape a given table from www.footballdb.com and create a data frame.
         url = self._make_url(year, table_type)
@@ -476,16 +476,16 @@ class FbDbScraper(object):
         # Build the URL.
         # The 'fantasy_offense' table has a different URL than all other tables.
         if table_type == 'fantasy_offense':
-            url = (self._fbdb_tables_dict[table_type]['url1']
+            url = (self._tables_dict[table_type]['url1']
                    + str(year)
-                   + self._fbdb_tables_dict[table_type]['url2'])
+                   + self._tables_dict[table_type]['url2'])
         else:
             url = ('https://www.footballdb.com/stats/stats.html?lg=NFL&yr='
                    + str(year)
                    + '&type=reg&mode='
-                   + self._fbdb_tables_dict[table_type]['mode']
+                   + self._tables_dict[table_type]['mode']
                    + '&conf=&limit=all&sort='
-                   + self._fbdb_tables_dict[table_type]['sort'])
+                   + self._tables_dict[table_type]['sort'])
 
         return url
 
@@ -528,7 +528,7 @@ class FbDbScraper(object):
         Player object for each player. The object's attributes are based on the table_type.
 
         :param player_list: List of BeautifulSoup4 ResultSet player data.
-        :param table_type: String used to access self._fbdb_tables_dict key data for creating Player objects.
+        :param table_type: String used to access self._tables_dict key data for creating Player objects.
 
         :return: List of player_object.__dict__'s for building a data frame.
         """
@@ -558,7 +558,7 @@ class FbDbScraper(object):
 
             # Create a Player object and append the __dict__ attribute to a list.
             # This list is used for the data in our data frame.
-            obj = Player(player_stats, self._fbdb_tables_dict[table_type]['all_columns'])
+            obj = Player(player_stats, self._tables_dict[table_type]['all_columns'])
             list_of_player_dicts.append(obj.__dict__)
 
         return list_of_player_dicts
@@ -570,12 +570,12 @@ class FbDbScraper(object):
 
         :param year: Season's year used to create a unique index for the player's season in the data set.
         :param player_dicts: List of player_object.__dict__'s.
-        :param table_type: String to get self._fbdb_tables_dict[table_type]['all_columns'].keys() for column names.
+        :param table_type: String to get self._tables_dict[table_type]['all_columns'].keys() for column names.
 
         :return: A data frame.
         """
         # Get data frame's columns from a relevant table dict's keys.
-        df_columns = list(self._fbdb_tables_dict[table_type]['all_columns'].keys())
+        df_columns = list(self._tables_dict[table_type]['all_columns'].keys())
 
         # Create the data frame.
         df = pd.DataFrame(data=player_dicts, columns=df_columns)
