@@ -2,9 +2,9 @@
 
 """
 This module contains a FbDbScraper class used to scrape NFL data from www.footballdb.com for a given season. It then
-places the data into a Pandas data frame. Users can scrape a single table, or they can scrape comprehensive data, which
-will include a calculation of each player's fantasy point total for the season based on provided fantasy settings.
-Multiple seasons of data can be scraped at once.
+places the data into a Pandas data frame. Users can scrape a table for a single stat category. They can also scrape
+comprehensive data for several stat categories. This will include a calculation of each player's fantasy point total
+for the season based on provided fantasy settings. Multiple seasons of data can be scraped at once.
 
 Note: This module was built using Python 3.6.1, so dictionaries are ordered.
 """
