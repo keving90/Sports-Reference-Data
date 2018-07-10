@@ -19,7 +19,7 @@ class FbDbScraper(object):
     """
 
     Scrapes data from www.footballdb.com and places it into a Pandas data frame. It can scrape an individual table
-    using the get_specific_df() method, or it can scrape several tables, join them together, and calculate each
+    using the get_specific_df() method. It can also scrape several tables, join them together, and calculate each
     player's fantasy point total using the get_fantasy_df() method. Each method returns a data frame. The data frames
     are created using the __dict__ form of Player objects.
 
@@ -56,7 +56,7 @@ class FbDbScraper(object):
                     }
                 }
 
-        _fantasy_settings_dict (dict): Dictionary stores the name of  each fantasy stat as keys and their point value
+        _fantasy_settings_dict (dict): Dictionary stores the name of each fantasy stat as keys and their point value
         as values. A property allows setting custom fantasy settings using a valid dictionary. Originally represents a
         standard Yahoo! 0PPR league.
 
@@ -633,7 +633,7 @@ class FbDbScraper(object):
     def _prepare_for_fantasy_calc(self, df):
         """
         Grabs only the relevant columns in df and rearranges their order. Replaces all numpy.NaN values with 0. Inserts
-        'return_yards' and 'return_td' columns for fantasy points calculation.
+        'return_yards', 'return_td', and 'two_pt_conversions' columns for fantasy points calculation.
 
         :param df: Data frame to be prepared.
 
