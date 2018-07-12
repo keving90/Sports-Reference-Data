@@ -51,6 +51,41 @@ class ProFbRefScraper(object):
                     'rush_rec_td': int,
                     'fumbles': int  # all fumbles
                 }
+            },
+            'passing': {
+                'table_id': 'passing',
+                'all_columns': {
+                    'name': str,
+                    'player_url': str,
+                    'team': str,
+                    'age': int,
+                    'position': str,
+                    'games_played': int,
+                    'games_started': int,
+                    'qb_record': str,
+                    'pass_completions': int,
+                    'pass_attempts': int,
+                    'comp_pct': float,
+                    'pass_yards': int,
+                    'pass_td': int,
+                    'pass_td_pct': float,
+                    'interceptions': int,
+                    'int_pct': float,
+                    'longest_pass': int,
+                    'pass_yards_per_att': float,
+                    'adj_yards_per_att': float,
+                    'pass_yards_per_comp': float,
+                    'pass_yards_per_game': float,
+                    'qb_rating': float,
+                    'total_qbr': float,
+                    'sacked': int,
+                    'sack_yards': int,
+                    'net_yards_per_att': float,
+                    'adj_net_yards_per_att': float,
+                    'sack_pct': float,
+                    'Q4_comebacks': int,
+                    'game_winning_drives': int
+                }
             }
         }
 
@@ -134,7 +169,10 @@ class ProFbRefScraper(object):
                            + "Can only currently handle the following table names: "
                            + str(list(self._tables_dict.keys())))
 
+        # Get seasons to iterate through.
         year_range = self._get_year_range(start_year, end_year)
+
+        # Scrape data for each season.
         df_list = [self._get_single_season(year, table_type) for year in year_range]
 
         # Concatenate all seasons into one big data frame.
@@ -162,8 +200,6 @@ class ProFbRefScraper(object):
     def _get_single_season(self, year, table_type):
         """
         Scrapes a table from www.footballdb.com based on the table_type and puts it into a Pandas data frame.
-
-        See documentation under FbDbScraper class for valid table types and their descriptions.
 
         :param year: Season's year.
         :param table_type: String representing the type of table to be scraped.
@@ -238,16 +274,15 @@ class ProFbRefScraper(object):
             if raw_stat_list:
                 # Create a Player object and append the __dict__ attribute to a list.
                 # This list is used for the data in our data frame.
-                player_stats = self._get_clean_row(raw_stat_list)
+                player_stats = self._get_clean_data(raw_stat_list)
                 obj = Player(player_stats, self._tables_dict[table_type]['all_columns'])
                 list_of_player_dicts.append(obj.__dict__)
 
         return list_of_player_dicts
 
-    def _get_clean_row(self, raw_stat_list):
+    def _get_clean_data(self, raw_stat_list):
         """
-        Get text data from from a BeautifulSoup4 element tag. Also gets a URL to the player's personal career stat
-        page. Used in create_player_objects().
+        Gets clean text stats from a list of BeautifulSoup4 element tags.
 
         :param raw_stat_list: List of BeautifulSoup4 element ResultSets. Inside of each ResultSet is a stat.
 
@@ -255,13 +290,17 @@ class ProFbRefScraper(object):
         """
         clean_player_stats = []
         for stat in raw_stat_list:
-            clean_player_stats.append(stat.text)  # Grab the text representing the given stat.
+            # Grab the text representing the given stat.
+            clean_player_stats.append(stat.text)
+
+            # Every tag has an attribute.
+            # If the tag's data-stat attribute is 'player', then we get the player's URL.
             if stat['data-stat'] == 'player':
-                # Every tag has an attribute.
-                # If the tag's data-stat attribute is 'player', then we get the player's URL.
-                # get_player_url(stat, player_info)
-                href = stat.find_all('a', href=True)  # Get href, which specifies the URL of the page the link goes to
-                url = href[0]['href']  # Get the URL string
+                # Get href, which specifies the URL of the page the link goes to.
+                href = stat.find_all('a', href=True)
+
+                # Get the URL string
+                url = href[0]['href']
                 clean_player_stats.append(url)
 
         return clean_player_stats
@@ -273,7 +312,7 @@ class ProFbRefScraper(object):
 
         :param year: Season's year used to create a unique index for the player's season in the data set.
         :param player_dicts: List of player_object.__dict__'s.
-        :param table_type: String to get self._tables_dict[table_type]['all_columns'].keys() for column names.
+        :param table_type: String to get column names for data frame.
 
         :return: A data frame.
         """
@@ -296,43 +335,46 @@ class ProFbRefScraper(object):
 
         return df
 
-    def scrape_game_log(self, player_url, year):
-        """
-        Scrape regular season stats from a player's game log for a specific year.
 
-        :param player_url: String representing player's unique URL found in the "Rushing and Receiving" table.
-        :param year: Season's year for the game log.
+    # Work in progress:
 
-        :return: Data frame where each row is the stats for a game.
-        """
-        # Remove the '.htm' part of the player's url if necessary.
-        if player_url.endswith('.htm'):
-            player_url = player_url[:-4]
-
-        # Build the URL to the player's game log page
-        url = 'https://www.pro-football-reference.com' + player_url + '/gamelog/' + str(year) + '/'
-
-        # ID used to identify the regular season stats table.
-        table_id = 'stats'
-
-        # Get the data from the game log page.
-        data = self.__scrape_table(url, table_id)
-
-        # Use the appropriate header dictionary based on the number of elements in data list.
-        if not data[0]:
-            raise ValueError("Error, no data was scraped from the game log.")
-        elif len(data[0]) == 33:
-            header = self._log_rush_rec_pass_header
-        elif len(data[0]) == 21:
-            header = self._log_rush_rec_header
-        else:
-            raise ValueError("Error, can only currently handle logs with rushing and receiving data (21 columns), "
-                             + "or with rushing, receiving, and passing data (33 columns).")
-
-        list_of_log_dicts = self.__create_player_objects(data, header)
-        df = self.__make_data_frame(list_of_log_dicts, year)
-
-        return df
+    # def scrape_game_log(self, player_url, year):
+    #     """
+    #     Scrapes regular season stats from a player's game log for a specific year.
+    #
+    #     :param player_url: String representing player's unique URL found in the "Rushing and Receiving" table.
+    #     :param year: Season's year for the game log.
+    #
+    #     :return: Data frame where each row is the stats for a game.
+    #     """
+    #     # Remove the '.htm' part of the player's url if necessary.
+    #     if player_url.endswith('.htm'):
+    #         player_url = player_url[:-4]
+    #
+    #     # Build the URL to the player's game log page
+    #     url = 'https://www.pro-football-reference.com' + player_url + '/gamelog/' + str(year) + '/'
+    #
+    #     # ID used to identify the regular season stats table.
+    #     table_id = 'stats'
+    #
+    #     # Get the data from the game log page.
+    #     data = self.__scrape_table(url, table_id)
+    #
+    #     # Use the appropriate header dictionary based on the number of elements in data list.
+    #     if not data[0]:
+    #         raise ValueError("Error, no data was scraped from the game log.")
+    #     elif len(data[0]) == 33:
+    #         header = self._log_rush_rec_pass_header
+    #     elif len(data[0]) == 21:
+    #         header = self._log_rush_rec_header
+    #     else:
+    #         raise ValueError("Error, can only currently handle logs with rushing and receiving data (21 columns), "
+    #                          + "or with rushing, receiving, and passing data (33 columns).")
+    #
+    #     list_of_log_dicts = self.__create_player_objects(data, header)
+    #     df = self.__make_data_frame(list_of_log_dicts, year)
+    #
+    #     return df
 
 
 if __name__ == '__main__':
