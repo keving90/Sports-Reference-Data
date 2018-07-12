@@ -570,7 +570,7 @@ class FbDbScraper(object):
 
         :param year: Season's year used to create a unique index for the player's season in the data set.
         :param player_dicts: List of player_object.__dict__'s.
-        :param table_type: String to get self._tables_dict[table_type]['all_columns'].keys() for column names.
+        :param table_type: String to get column names for data frame.
 
         :return: A data frame.
         """
