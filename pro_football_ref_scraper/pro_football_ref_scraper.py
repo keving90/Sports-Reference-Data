@@ -3,7 +3,8 @@
 import requests
 import bs4
 import pandas as pd
-import pro_football_ref_scraper.football_db_utility_scraper as fbdb
+# import pro_football_ref_scraper.football_db_utility_scraper as fbdb
+# import football_db_utility_scraper as fbdb
 from player import Player
 from datetime import datetime
 
@@ -380,26 +381,29 @@ if __name__ == '__main__':
 
     # Use custom fantasy settings.
     # Changes: 'receptions': 0 -> 'receptions': 1.
-    new_fantasy_settings_dict = {
-        'rush_td': 6,
-        'pass_yards': 1 / 25,  # 25 yards = 1 point
-        'pass_td': 4,
-        'rec_td': 6,
-        'interceptions': -1,
-        'receptions': 1,
-        'two_pt_conversions': 2,
-        'fumbles_lost': -2,
-        'offensive_fumble_return_td': 6,
-        'rec_yards': 1 / 10,  # 10 yards = 1 point
-        'return_yards': 1 / 25,  # 25 yards = 1 point
-        'return_td': 6,
-        'rush_yards': 1 / 10  # 10 yards = 1 point
-    }
-
-    fb_ref.fantasy_settings = new_fantasy_settings_dict
-    rush_rec_df = fb_ref.get_rushing_receiving_data(2017, fantasy=True)
-    print(rush_rec_df)
+    # new_fantasy_settings_dict = {
+    #     'rush_td': 6,
+    #     'pass_yards': 1 / 25,  # 25 yards = 1 point
+    #     'pass_td': 4,
+    #     'rec_td': 6,
+    #     'interceptions': -1,
+    #     'receptions': 1,
+    #     'two_pt_conversions': 2,
+    #     'fumbles_lost': -2,
+    #     'offensive_fumble_return_td': 6,
+    #     'rec_yards': 1 / 10,  # 10 yards = 1 point
+    #     'return_yards': 1 / 25,  # 25 yards = 1 point
+    #     'return_td': 6,
+    #     'rush_yards': 1 / 10  # 10 yards = 1 point
+    # }
+    #
+    # fb_ref.fantasy_settings = new_fantasy_settings_dict
+    # rush_rec_df = fb_ref.get_rushing_receiving_data(2017, fantasy=True)
+    # print(rush_rec_df)
     # rush_rec_df.to_csv('oop_results.csv')
+
+    rush_rec_df = fb_ref.get_rushing_receiving_data(2017, fantasy=False)
+    rush_rec_df.to_csv('rush_rec_df.csv')
 
 
 """
