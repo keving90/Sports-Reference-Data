@@ -86,6 +86,28 @@ class ProFbRefScraper(object):
                     'Q4_comebacks': int,
                     'game_winning_drives': int
                 }
+            },
+            'receiving': {
+                'table_id': 'receiving',
+                'all_columns': {
+                    'name': str,
+                    'player_url': str,
+                    'team': str,
+                    'age': int,
+                    'position': str,
+                    'games_played': int,
+                    'games_started': int,
+                    'targets': int,
+                    'receptions': int,
+                    'catch_pct': float,
+                    'rec_yards': int,
+                    'yards_per_rec': float,
+                    'rec_td': int,
+                    'longest_rec': int,
+                    'rec_per_game': float,
+                    'rec_yards_per_game': float,
+                    'fumbles': int
+                }
             }
         }
 
@@ -381,6 +403,10 @@ if __name__ == '__main__':
     # Usage example.
     fb_ref = ProFbRefScraper()
 
-    rush_rec_df = fb_ref.get_data(start_year=2017, end_year=2015, table_type='rushing')
+    # rush_rec_df = fb_ref.get_data(start_year=2017, end_year=2015, table_type='rushing')
+    #
+    # rush_rec_df.to_csv('rush_rec.csv')
 
-    rush_rec_df.to_csv('rush_rec.csv')
+    passing_df = fb_ref.get_data(start_year=2017, end_year=2015, table_type='passing')
+
+    passing_df.to_csv('passing.csv')
