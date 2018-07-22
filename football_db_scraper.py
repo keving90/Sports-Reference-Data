@@ -87,7 +87,7 @@ class FbDbScraper(object):
                     '20-29_made': 3,
                     '30-39_made': 3,
                     '40-49_made': 4,
-                    '50+_made': 5,
+                    '50_plus_made': 5,
                 }
 
         _valid_fantasy_keys (dict_keys): Dictionary view object records initial keys in _fantasy_settings_dict to check
@@ -256,7 +256,7 @@ class FbDbScraper(object):
                     '20-29': str,
                     '30-39': str,
                     '40-49': str,
-                    '50+': str,
+                    '50_plus': str,
                     'longest_fg': int,
                     'fg_points': int
                 }
@@ -310,7 +310,7 @@ class FbDbScraper(object):
             '20-29_made': 3,
             '30-39_made': 3,
             '40-49_made': 4,
-            '50+_made': 5,
+            '50_plus_made': 5,
         }
 
         self._valid_fantasy_keys = self._fantasy_settings_dict.keys()
@@ -611,7 +611,7 @@ class FbDbScraper(object):
         if table_type == 'scoring':
             kicking_cols = ['pat', 'field_goals']
         elif table_type == 'kicking':
-            kicking_cols = ['fg_pct', 'pat', '0-19', '20-29', '30-39', '40-49', '50+']
+            kicking_cols = ['fg_pct', 'pat', '0-19', '20-29', '30-39', '40-49', '50_plus']
 
         # Split 'made/attempts' string column into two different integer columns.
         for col in kicking_cols:
@@ -652,8 +652,8 @@ class FbDbScraper(object):
                      'rush_td', 'targets', 'receptions', 'rec_yards', 'rec_td', 'pass_attempts', 'pass_completions',
                      'completion_pct', 'pass_yards', 'pass_td', 'interceptions', 'sacked', 'return_yards', 'return_td',
                      'two_pt_conversions', 'fumbles_lost', 'pat_made', 'pat_att', '0-19_made', '0-19_att',
-                     '20-29_made', '20-29_att', '30-39_made', '30-39_att', '40-49_made', '40-49_att', '50+_made',
-                     '50+_att']
+                     '20-29_made', '20-29_att', '30-39_made', '30-39_att', '40-49_made', '40-49_att', '50_plus_made',
+                     '50_plus_att']
 
         # Reorder the columns, and drop the unnecessary ones.
         # Need to create a deep copy in order to prevent a SettingWithCopy warning.
@@ -706,7 +706,7 @@ if __name__ == '__main__':
         '20-29_made': 3,
         '30-39_made': 3,
         '40-49_made': 4,
-        '50+_made': 5
+        '50_plus_made': 5
     }
 
     # Use custom fantasy settings instead of default settings (optional).
@@ -1106,133 +1106,133 @@ player_url
 /players/krishawn-hogan-hogankr012017              0.0        0.0         0.0   
 /players/landry-jones-jonesla062017                0.0        0.0         0.0   
 
-                                            40-49_att  50+_made  50+_att  \
-player_url                                                                 
-/players/todd-gurley-gurleto022017                0.0       0.0      0.0   
-/players/leveon-bell-bellle022017                 0.0       0.0      0.0   
-/players/alvin-kamara-kamaral012017               0.0       0.0      0.0   
-/players/tyler-lockett-lockety012017              0.0       0.0      0.0   
-/players/kareem-hunt-huntka012017                 0.0       0.0      0.0   
-/players/dion-lewis-lewisdi012017                 0.0       0.0      0.0   
-/players/antonio-brown-brownan052017              0.0       0.0      0.0   
-/players/lesean-mccoy-mccoyle022017               0.0       0.0      0.0   
-/players/melvin-gordon-gordome012017              0.0       0.0      0.0   
-/players/tarik-cohen-cohenta012017                0.0       0.0      0.0   
-/players/mark-ingram-ingrama022017                0.0       0.0      0.0   
-/players/keenan-allen-allenke032017               0.0       0.0      0.0   
-/players/julio-jones-jonesju052017                0.0       0.0      0.0   
-/players/tyreek-hill-hillty022017                 0.0       0.0      0.0   
-/players/pharoh-cooper-coopeph012017              0.0       0.0      0.0   
-/players/deandre-hopkins-hopkide012017            0.0       0.0      0.0   
-/players/leonard-fournette-fournle012017          0.0       0.0      0.0   
-/players/christian-mccaffrey-mccafch012017        0.0       0.0      0.0   
-/players/jerick-mckinnon-mckinje022017            0.0       0.0      0.0   
-/players/carlos-hyde-hydeca012017                 0.0       0.0      0.0   
-/players/adam-thielen-thielad012017               0.0       0.0      0.0   
-/players/ezekiel-elliott-ellioez012017            0.0       0.0      0.0   
-/players/jordan-howard-howarjo022017              0.0       0.0      0.0   
-/players/michael-thomas-thomami052017             0.0       0.0      0.0   
-/players/cj-anderson-andercj012017                0.0       0.0      0.0   
-/players/lamar-miller-millela032017               0.0       0.0      0.0   
-/players/alex-collins-collial012017               0.0       0.0      0.0   
-/players/frank-gore-gorefr012017                  0.0       0.0      0.0   
-/players/devonta-freeman-freemde012017            0.0       0.0      0.0   
-/players/juju-smithschuster-smithju032017         0.0       0.0      0.0   
-...                                               ...       ...      ...   
-/players/shane-smith-smithsh102017                0.0       0.0      0.0   
-/players/cj-spiller-spillcj022017                 0.0       0.0      0.0   
-/players/caleb-sturgis-sturgca012017              1.0       1.0      1.0   
-/players/ryan-succop-succory012017               20.0       2.0      5.0   
-/players/giorgio-tavecchio-tavecgi012017          5.0       3.0      4.0   
-/players/justin-tucker-tuckeju012017             12.0       5.0      7.0   
-/players/jason-vander-laan-vandeja032017          0.0       0.0      0.0   
-/players/adam-vinatieri-vinatad012017             7.0       5.0      6.0   
-/players/blair-walsh-walshbl012017               12.0       0.0      1.0   
-/players/isaac-whitney-whitnis012017              0.0       0.0      0.0   
-/players/marquez-williams-willima262017           0.0       0.0      0.0   
-/players/greg-zuerlein-zuerlgr012017             12.0       6.0      7.0   
-/players/austin-davis-davisau012017               0.0       0.0      0.0   
-/players/cody-kessler-kesslco012017               0.0       0.0      0.0   
-/players/derek-anderson-anderde012017             0.0       0.0      0.0   
-/players/chase-daniel-daniech012017               0.0       0.0      0.0   
-/players/bronson-hill-hillbr022017                0.0       0.0      0.0   
-/players/sean-mannion-mannise022017               0.0       0.0      0.0   
-/players/darren-mcfadden-mcfadda012017            0.0       0.0      0.0   
-/players/sam-bradford-bradfsa012017               0.0       0.0      0.0   
-/players/teddy-bridgewater-bridgte012017          0.0       0.0      0.0   
-/players/ryan-mallett-mallery012017               0.0       0.0      0.0   
-/players/tyler-bray-brayty012017                  0.0       0.0      0.0   
-/players/kellen-clemens-clemeke012017             0.0       0.0      0.0   
-/players/nick-foles-folesni012017                 0.0       0.0      0.0   
-/players/chad-henne-hennech012017                 0.0       0.0      0.0   
-/players/brian-hoyer-hoyerbr012017                0.0       0.0      0.0   
-/players/philip-rivers-riverph012017              0.0       0.0      0.0   
-/players/krishawn-hogan-hogankr012017             0.0       0.0      0.0   
-/players/landry-jones-jonesla062017               0.0       0.0      0.0   
+                                            40-49_att  50_plus_made  \
+player_url                                                            
+/players/todd-gurley-gurleto022017                0.0           0.0   
+/players/leveon-bell-bellle022017                 0.0           0.0   
+/players/alvin-kamara-kamaral012017               0.0           0.0   
+/players/tyler-lockett-lockety012017              0.0           0.0   
+/players/kareem-hunt-huntka012017                 0.0           0.0   
+/players/dion-lewis-lewisdi012017                 0.0           0.0   
+/players/antonio-brown-brownan052017              0.0           0.0   
+/players/lesean-mccoy-mccoyle022017               0.0           0.0   
+/players/melvin-gordon-gordome012017              0.0           0.0   
+/players/tarik-cohen-cohenta012017                0.0           0.0   
+/players/mark-ingram-ingrama022017                0.0           0.0   
+/players/keenan-allen-allenke032017               0.0           0.0   
+/players/julio-jones-jonesju052017                0.0           0.0   
+/players/tyreek-hill-hillty022017                 0.0           0.0   
+/players/pharoh-cooper-coopeph012017              0.0           0.0   
+/players/deandre-hopkins-hopkide012017            0.0           0.0   
+/players/leonard-fournette-fournle012017          0.0           0.0   
+/players/christian-mccaffrey-mccafch012017        0.0           0.0   
+/players/jerick-mckinnon-mckinje022017            0.0           0.0   
+/players/carlos-hyde-hydeca012017                 0.0           0.0   
+/players/adam-thielen-thielad012017               0.0           0.0   
+/players/ezekiel-elliott-ellioez012017            0.0           0.0   
+/players/jordan-howard-howarjo022017              0.0           0.0   
+/players/michael-thomas-thomami052017             0.0           0.0   
+/players/cj-anderson-andercj012017                0.0           0.0   
+/players/lamar-miller-millela032017               0.0           0.0   
+/players/alex-collins-collial012017               0.0           0.0   
+/players/frank-gore-gorefr012017                  0.0           0.0   
+/players/devonta-freeman-freemde012017            0.0           0.0   
+/players/juju-smithschuster-smithju032017         0.0           0.0   
+...                                               ...           ...   
+/players/shane-smith-smithsh102017                0.0           0.0   
+/players/cj-spiller-spillcj022017                 0.0           0.0   
+/players/caleb-sturgis-sturgca012017              1.0           1.0   
+/players/ryan-succop-succory012017               20.0           2.0   
+/players/giorgio-tavecchio-tavecgi012017          5.0           3.0   
+/players/justin-tucker-tuckeju012017             12.0           5.0   
+/players/jason-vander-laan-vandeja032017          0.0           0.0   
+/players/adam-vinatieri-vinatad012017             7.0           5.0   
+/players/blair-walsh-walshbl012017               12.0           0.0   
+/players/isaac-whitney-whitnis012017              0.0           0.0   
+/players/marquez-williams-willima262017           0.0           0.0   
+/players/greg-zuerlein-zuerlgr012017             12.0           6.0   
+/players/austin-davis-davisau012017               0.0           0.0   
+/players/cody-kessler-kesslco012017               0.0           0.0   
+/players/derek-anderson-anderde012017             0.0           0.0   
+/players/chase-daniel-daniech012017               0.0           0.0   
+/players/bronson-hill-hillbr022017                0.0           0.0   
+/players/sean-mannion-mannise022017               0.0           0.0   
+/players/darren-mcfadden-mcfadda012017            0.0           0.0   
+/players/sam-bradford-bradfsa012017               0.0           0.0   
+/players/teddy-bridgewater-bridgte012017          0.0           0.0   
+/players/ryan-mallett-mallery012017               0.0           0.0   
+/players/tyler-bray-brayty012017                  0.0           0.0   
+/players/kellen-clemens-clemeke012017             0.0           0.0   
+/players/nick-foles-folesni012017                 0.0           0.0   
+/players/chad-henne-hennech012017                 0.0           0.0   
+/players/brian-hoyer-hoyerbr012017                0.0           0.0   
+/players/philip-rivers-riverph012017              0.0           0.0   
+/players/krishawn-hogan-hogankr012017             0.0           0.0   
+/players/landry-jones-jonesla062017               0.0           0.0   
 
-                                            fantasy_points  
-player_url                                                  
-/players/todd-gurley-gurleto022017                  383.30  
-/players/leveon-bell-bellle022017                   341.60  
-/players/alvin-kamara-kamaral012017                 334.28  
-/players/tyler-lockett-lockety012017                171.74  
-/players/kareem-hunt-huntka012017                   295.20  
-/players/dion-lewis-lewisdi012017                   225.80  
-/players/antonio-brown-brownan052017                312.74  
-/players/lesean-mccoy-mccoyle022017                 263.60  
-/players/melvin-gordon-gordome012017                288.10  
-/players/tarik-cohen-cohenta012017                  184.34  
-/players/mark-ingram-ingrama022017                  278.00  
-/players/keenan-allen-allenke032017                 278.20  
-/players/julio-jones-jonesju052017                  251.90  
-/players/tyreek-hill-hillty022017                   254.36  
-/players/pharoh-cooper-coopeph012017                 77.24  
-/players/deandre-hopkins-hopkide012017              309.80  
-/players/leonard-fournette-fournle012017            230.20  
-/players/christian-mccaffrey-mccafch012017          237.40  
-/players/jerick-mckinnon-mckinje022017              190.58  
-/players/carlos-hyde-hydeca012017                   233.80  
-/players/adam-thielen-thielad012017                 239.70  
-/players/ezekiel-elliott-ellioez012017              203.20  
-/players/jordan-howard-howarjo022017                199.70  
-/players/michael-thomas-thomami052017               258.50  
-/players/cj-anderson-andercj012017                  175.10  
-/players/lamar-miller-millela032017                 193.50  
-/players/alex-collins-collial012017                 173.00  
-/players/frank-gore-gorefr012017                    173.60  
-/players/devonta-freeman-freemde012017              200.20  
-/players/juju-smithschuster-smithju032017           207.30  
-...                                                    ...  
-/players/shane-smith-smithsh102017                    0.00  
-/players/cj-spiller-spillcj022017                     0.00  
-/players/caleb-sturgis-sturgca012017                 13.00  
-/players/ryan-succop-succory012017                  156.00  
-/players/giorgio-tavecchio-tavecgi012017             90.00  
-/players/justin-tucker-tuckeju012017                162.00  
-/players/jason-vander-laan-vandeja032017              0.00  
-/players/adam-vinatieri-vinatad012017               125.00  
-/players/blair-walsh-walshbl012017                  108.00  
-/players/isaac-whitney-whitnis012017                  0.00  
-/players/marquez-williams-willima262017               0.00  
-/players/greg-zuerlein-zuerlgr012017                182.00  
-/players/austin-davis-davisau012017                  -0.10  
-/players/cody-kessler-kesslco012017                   3.94  
-/players/derek-anderson-anderde012017                 0.48  
-/players/chase-daniel-daniech012017                  -0.20  
-/players/bronson-hill-hillbr022017                   -0.20  
-/players/sean-mannion-mannise022017                   5.20  
-/players/darren-mcfadden-mcfadda012017               -0.20  
-/players/sam-bradford-bradfsa012017                  26.98  
-/players/teddy-bridgewater-bridgte012017             -1.30  
-/players/ryan-mallett-mallery012017                   9.94  
-/players/tyler-bray-brayty012017                     -2.00  
-/players/kellen-clemens-clemeke012017                -0.06  
-/players/nick-foles-folesni012017                    35.78  
-/players/chad-henne-hennech012017                    -0.50  
-/players/brian-hoyer-hoyerbr012017                   67.88  
-/players/philip-rivers-riverph012017                280.40  
-/players/krishawn-hogan-hogankr012017                -0.32  
-/players/landry-jones-jonesla062017                   9.56  
+                                            50_plus_att  fantasy_points  
+player_url                                                               
+/players/todd-gurley-gurleto022017                  0.0          383.30  
+/players/leveon-bell-bellle022017                   0.0          341.60  
+/players/alvin-kamara-kamaral012017                 0.0          334.28  
+/players/tyler-lockett-lockety012017                0.0          171.74  
+/players/kareem-hunt-huntka012017                   0.0          295.20  
+/players/dion-lewis-lewisdi012017                   0.0          225.80  
+/players/antonio-brown-brownan052017                0.0          312.74  
+/players/lesean-mccoy-mccoyle022017                 0.0          263.60  
+/players/melvin-gordon-gordome012017                0.0          288.10  
+/players/tarik-cohen-cohenta012017                  0.0          184.34  
+/players/mark-ingram-ingrama022017                  0.0          278.00  
+/players/keenan-allen-allenke032017                 0.0          278.20  
+/players/julio-jones-jonesju052017                  0.0          251.90  
+/players/tyreek-hill-hillty022017                   0.0          254.36  
+/players/pharoh-cooper-coopeph012017                0.0           77.24  
+/players/deandre-hopkins-hopkide012017              0.0          309.80  
+/players/leonard-fournette-fournle012017            0.0          230.20  
+/players/christian-mccaffrey-mccafch012017          0.0          237.40  
+/players/jerick-mckinnon-mckinje022017              0.0          190.58  
+/players/carlos-hyde-hydeca012017                   0.0          233.80  
+/players/adam-thielen-thielad012017                 0.0          239.70  
+/players/ezekiel-elliott-ellioez012017              0.0          203.20  
+/players/jordan-howard-howarjo022017                0.0          199.70  
+/players/michael-thomas-thomami052017               0.0          258.50  
+/players/cj-anderson-andercj012017                  0.0          175.10  
+/players/lamar-miller-millela032017                 0.0          193.50  
+/players/alex-collins-collial012017                 0.0          173.00  
+/players/frank-gore-gorefr012017                    0.0          173.60  
+/players/devonta-freeman-freemde012017              0.0          200.20  
+/players/juju-smithschuster-smithju032017           0.0          207.30  
+...                                                 ...             ...  
+/players/shane-smith-smithsh102017                  0.0            0.00  
+/players/cj-spiller-spillcj022017                   0.0            0.00  
+/players/caleb-sturgis-sturgca012017                1.0           13.00  
+/players/ryan-succop-succory012017                  5.0          156.00  
+/players/giorgio-tavecchio-tavecgi012017            4.0           90.00  
+/players/justin-tucker-tuckeju012017                7.0          162.00  
+/players/jason-vander-laan-vandeja032017            0.0            0.00  
+/players/adam-vinatieri-vinatad012017               6.0          125.00  
+/players/blair-walsh-walshbl012017                  1.0          108.00  
+/players/isaac-whitney-whitnis012017                0.0            0.00  
+/players/marquez-williams-willima262017             0.0            0.00  
+/players/greg-zuerlein-zuerlgr012017                7.0          182.00  
+/players/austin-davis-davisau012017                 0.0           -0.10  
+/players/cody-kessler-kesslco012017                 0.0            3.94  
+/players/derek-anderson-anderde012017               0.0            0.48  
+/players/chase-daniel-daniech012017                 0.0           -0.20  
+/players/bronson-hill-hillbr022017                  0.0           -0.20  
+/players/sean-mannion-mannise022017                 0.0            5.20  
+/players/darren-mcfadden-mcfadda012017              0.0           -0.20  
+/players/sam-bradford-bradfsa012017                 0.0           26.98  
+/players/teddy-bridgewater-bridgte012017            0.0           -1.30  
+/players/ryan-mallett-mallery012017                 0.0            9.94  
+/players/tyler-bray-brayty012017                    0.0           -2.00  
+/players/kellen-clemens-clemeke012017               0.0           -0.06  
+/players/nick-foles-folesni012017                   0.0           35.78  
+/players/chad-henne-hennech012017                   0.0           -0.50  
+/players/brian-hoyer-hoyerbr012017                  0.0           67.88  
+/players/philip-rivers-riverph012017                0.0          280.40  
+/players/krishawn-hogan-hogankr012017               0.0           -0.32  
+/players/landry-jones-jonesla062017                 0.0            9.56  
 
 [613 rows x 36 columns]
 """
