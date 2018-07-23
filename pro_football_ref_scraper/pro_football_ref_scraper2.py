@@ -108,6 +108,152 @@ class ProFbRefScraper(object):
                     'rec_yards_per_game': float,
                     'fumbles': int
                 }
+            },
+            'kicking': {
+                'table_id': 'kicking',
+                'all_columns': {
+                    'name': str,
+                    'player_url': str,
+                    'team': str,
+                    'age': int,
+                    'position': str,
+                    'games_played': int,
+                    'games_started': int,
+                    '0-19_made': int,
+                    '0-19_att': int,
+                    '20-29_made': int,
+                    '20-29_att': int,
+                    '30-39_made': int,
+                    '30-39_att': int,
+                    '40-49_made': int,
+                    '40-49_att': int,
+                    '50_plus_made': int,
+                    '50_plus_att': int,
+                    'fg_made': int,
+                    'fg_att': int,
+                    'fg_pct': float,
+                    'extra_pt_att': int,
+                    'extra_pt_made': int,
+                    'extra_pt_pct': float,
+                    'punts': int,
+                    'punt_yards': int,
+                    'longest_punt': int,
+                    'blocked_punts': int,
+                    'yards_per_punt': float
+
+                }
+            },
+            'returns': {
+                'table_id':'returns',
+                'all_columns': {
+                    'name': str,
+                    'player_url': str,
+                    'team': str,
+                    'age': int,
+                    'position': str,
+                    'games_played': int,
+                    'games_started': int,
+                    'punt_returns': int,
+                    'punt_return_yards': int,
+                    'punt_return_td': int,
+                    'lng_punt_return': int,
+                    'yards_per_punt_return': float,
+                    'kick_returns': int,
+                    'kick_return_yards': int,
+                    'kick_return_td': int,
+                    'lng_kick_return': int,
+                    'yards_per_kick_return': float,
+                    'all_purpose_yards': int
+
+                }
+            },
+            'scoring': {
+                'table_id': 'scoring',
+                'all_columns': {
+                    'name': str,
+                    'player_url': str,
+                    'team': str,
+                    'age': int,
+                    'position': str,
+                    'games_played': int,
+                    'games_started': int,
+                    'rush_td': int,
+                    'rec_td': int,
+                    'punt_return_td': int,
+                    'kick_return_td': int,
+                    'fum_return_td': int,
+                    'int_return_td': int,
+                    'other_td': int,  # Blocked kicks or missed field goals.
+                    'all_td': int,
+                    'two_pt_made': int,
+                    'two_pt_att': int,
+                    'extra_point_made': int,
+                    'extra_point_att': int,
+                    'fg_made': int,
+                    'fg_att': int,
+                    'safeties': int,
+                    'points': int,
+                    'points_per_game': float
+                }
+            },
+            'fantasy': {
+                'table_id': 'fantasy',
+                'all_columns': {
+                    'name': str,
+                    'player_url': str,
+                    'team': str,
+                    'position': str,
+                    'age': int,
+                    'games_played': int,
+                    'games_started': int,
+                    'pass_completions': int,
+                    'pass_attempts': int,
+                    'pass_yards': int,
+                    'pass_td': int,
+                    'interceptions': int,
+                    'rush_attempts': int,
+                    'rush_yards': int,
+                    'yards_per_rush': float,
+                    'rush_td': int,
+                    'targets': int,
+                    'receptions': int,
+                    'rec_yards': int,
+                    'yards_per_rec': float,
+                    'rec_td': int,
+                    'fan_points': int,  # Standard scoring. (football_db_scraper.py default settings)
+                    'fan_points_ppr': int,  # 1 point per reception.
+                    'draft_kings': float,
+                    'fan_duel': float,
+                    'vbd': int,  # Player's fantasy points minus fantasy points of the baseline player.
+                    'position_rank': int,
+                    'overall_rank': int
+                }
+            },
+            'defense': {
+                'table_id': 'defense',
+                'all_columns': {
+                    'name': str,
+                    'player_url': str,
+                    'team': str,
+                    'age': int,
+                    'position': str,
+                    'games_played': int,
+                    'games_started': int,
+                    'interceptions': int,
+                    'int_yards': int,
+                    'int_td': int,
+                    'lng_int': int,
+                    'passes_def': int,
+                    'forced_fumbles': int,
+                    'fumbles': int,
+                    'fum_recovered': int,
+                    'fum_ret_yards': int,
+                    'fum_ret_td': int,
+                    'sacks': float,
+                    'tackles': int,
+                    'tackle_asst': int,
+                    'safeties': int
+                }
             }
         }
 
@@ -407,6 +553,26 @@ if __name__ == '__main__':
     #
     # rush_rec_df.to_csv('rush_rec.csv')
 
-    passing_df = fb_ref.get_data(start_year=2017, end_year=2015, table_type='passing')
+    # passing_df = fb_ref.get_data(start_year=2017, end_year=2015, table_type='passing')
+    #
+    # passing_df.to_csv('passing.csv')
 
-    passing_df.to_csv('passing.csv')
+    # kicking_df = fb_ref.get_data(start_year=2017, end_year=2015, table_type='kicking')
+    #
+    # kicking_df.to_csv('kicking.csv')
+
+    # returns_df = fb_ref.get_data(start_year=2017, end_year=2015, table_type='returns')
+    #
+    # returns_df.to_csv('returns.csv')
+
+    # scoring = fb_ref.get_data(start_year=2017, end_year=2015, table_type='scoring')
+    #
+    # scoring.to_csv('scoring.csv')
+
+    # fantasy = fb_ref.get_data(start_year=2017, end_year=2015, table_type='fantasy')
+    #
+    # fantasy.to_csv('fantasy.csv')
+
+    defense = fb_ref.get_data(start_year=2017, end_year=2015, table_type='defense')
+
+    defense.to_csv('defense.csv')
