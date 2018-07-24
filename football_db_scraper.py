@@ -313,6 +313,7 @@ class FbDbScraper(object):
             '50_plus_made': 5,
         }
 
+        # Helps check for invalid keys when using a custom fantasy settings dictionary.
         self._valid_fantasy_keys = self._fantasy_settings_dict.keys()
 
     @property
@@ -675,7 +676,11 @@ class FbDbScraper(object):
         # Calculate each player's fantasy point total.
         for stat, value in self._fantasy_settings_dict.items():
             if stat in df.columns:
-                df['fantasy_points'] += df[stat] * value
+                # Round to two decimal places because of float arithmetic.
+                df['fantasy_points'] += round(df[stat] * value, 2)
+                # df['fantasy_points'] += df[stat] * value
+
+        # df['fantasy_points'].apply(lambda x: round(x, 2))
 
         return df
 
