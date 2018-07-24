@@ -652,9 +652,9 @@ class FbDbScraper(object):
         col_order = ['name', 'team', 'position', 'year', 'rush_attempts', 'rush_yards', 'yards_per_rush',
                      'rush_td', 'targets', 'receptions', 'rec_yards', 'rec_td', 'pass_attempts', 'pass_completions',
                      'completion_pct', 'pass_yards', 'pass_td', 'interceptions', 'sacked', 'return_yards', 'return_td',
-                     'two_pt_conversions', 'fumbles_lost', 'pat_made', 'pat_att', '0-19_made', '0-19_att',
-                     '20-29_made', '20-29_att', '30-39_made', '30-39_att', '40-49_made', '40-49_att', '50_plus_made',
-                     '50_plus_att']
+                     'two_pt_conversions', 'fumbles_lost', 'fumble_return_td', 'pat_made', 'pat_att', '0-19_made',
+                     '0-19_att', '20-29_made', '20-29_att', '30-39_made', '30-39_att', '40-49_made', '40-49_att',
+                     '50_plus_made', '50_plus_att']
 
         # Reorder the columns, and drop the unnecessary ones.
         # Need to create a deep copy in order to prevent a SettingWithCopy warning.
