@@ -68,3 +68,6 @@ target/
 
 # IPython Notebook
 .ipynb_checkpoints
+
+# Selenium
+geckodriver.log
