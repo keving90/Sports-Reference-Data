@@ -20,7 +20,7 @@ import os
 # This line of code grabs the head, joins it with '..', and inserts the path into the first element of sys.path.
 sys.path.insert(0, os.path.join(os.path.split(__file__)[0], '..'))
 
-from football_db_scraper import FbDbScraper
+from football_db.football_db_scraper import FbDbScraper
 
 
 def modify_df(df, num_years):
