@@ -699,7 +699,7 @@ if __name__ == '__main__':
         'rush_yards': 1 / 10,
         'rush_td': 6,
         'rec_yards': 1 / 10,
-        'receptions': 1,  # receptions: 0 -> receptions: 1
+        'receptions': 0,  # receptions: 0 -> receptions: 1
         'rec_td': 6,
         'two_pt_conversions': 2,
         'fumbles_lost': -2,
