@@ -3,7 +3,7 @@ This repository contains Python programs capable of scraping data from [The Foot
 
 #### Brief Overview
 
-* The `football_db` package contains a module called `football_db_scraper.py` used for scraping comprehensive data and calculating fantasy points. It also contains a module called `yahoo_scraper.py` used to scrape data from a Yahoo fantasy football account. This data is used for confirming the fanatsy point calculations created in `football_db_scraper.py` are accurate. A Jupyter Notebook file is used to confirm these calculations.
+* The `football_db` package contains a module called `football_db_scraper.py` used for scraping comprehensive data from www.footballdb.com and calculating fantasy points. It also contains a module called `yahoo_scraper.py` used to scrape data from a Yahoo fantasy football account. This data is used for confirming the fanatsy point calculations created in `football_db_scraper.py` are accurate. A Jupyter Notebook file is used to confirm these calculations.
 
 * The `pro_football_ref` package contains a module called `pro_football_ref_scraper.py`, which is used for scraping data from www.pro-football-reference.com. It does not include fanatsy point calculations.
 
@@ -37,6 +37,8 @@ Valid individual table types include:
 * 'kicking': Field goal and point after touchdown data.
 
 * 'fantasy_offense': QB, RB, WR, and TE data with www.footballdb.com's custom fantasy settings data. Although fantasy settings are included in this table, many players are left out. This table is used in `get_fantasy_df()` to get passing two point conversion data.
+
+* 'scrimmage': Scrimmage yards data.
 
 The `FbDbScraper` class will scrape the data. Just create an object.
 
@@ -86,7 +88,7 @@ fantasy_df.to_csv('fbdb_fantasy.csv')
 ## rb_carries package
 The `rb_carries` package contains a module called `rb_carries.py` which uses `football_db/football_db_scraper.py` to get data from www.footballdb.com. It then filters the data out so the only remaining players are running backs with 50 or more carries in each of the last `n` seasons. It also saves the data frame into a `csv` file. There is also a Jupyter Notebook version that shows the data set, its characteristics, visualizations, and analysis.
 
-## pro_football_ref package (under construction)
+## pro_football_ref package
 Scrapes data from www.pro-football-reference.com (similar to `football_db_scraper.py`). It does not include fantasy calculations.
 
 ## player.py
