@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
 
+"""
+This module contains a ProFbRefScraper class used to scrape NFL data from www.pro-football-reference.com. It then
+places the data into a Pandas data frame. Users can scrape data from the following data tables: rushing, receiving,
+passing, kicking, returns, scoring, fantasy, and defense. Multiple years of data can be scraped and placed into the
+same data frame.
+
+Note: This module was built using Python 3.6.1, so dictionaries are ordered.
+"""
+
+
 import requests
 import bs4
 import pandas as pd
-# import pro_football_ref_scraper.football_db_utility_scraper as fbdb
 from player import Player
 from datetime import datetime
 
@@ -11,10 +20,46 @@ from datetime import datetime
 class ProFbRefScraper(object):
     """
 
-    Uses Requests and Beautiful Soup 4 to scrape data from www.pro-football-reference.com's Rushing and Receiving table
-    for a given season and save it into a data frame. Can calculate fantasy points for the player's season. Extra
-    fumbles lost, return yards, return touchdowns, and two point conversions data will need to be scraped from
-    www.footballdb.com to get accurate fantasy calculations. This will lead to more overhead.
+    Scrapes NFL data from www.pro-football-reference.com and places it into a Pandas data frame. Multiple years of data
+    can be scraped and placed into a single data frame for the same statistical category. Users can scrape data for
+    the following stats: rushing, receiving, passing, kicking, returns, scoring, fantasy, and defense. The get_data()
+    method is used to scrape the data. The user must specify a table type, start year, and end year.
+
+    Valid table_type values include:
+
+    'all_purpose': All purpose yardage data. Has data for all NFL players.
+
+    'rushing': Rushing data.
+    'passing': Passing data.
+    'receiving': Receiving data.
+    'kicking': Field goal, point after touchdown, and punt data.
+    'returns': Punt and kick return data.
+    'scoring': All types of scoring data, such as touchdowns (defense/offense), two point conversions, kicking, etc.
+    'fantasy': Rushing, receiving, and passing stats, along with fantasy point totals from various leagues.
+    'defense': Defensive player stats.
+
+    Attributes:
+        _tables_dict (dict): Dictionary whose keys are the type of table to scrape from. The value is
+            another dictionary. The nested dictionary contains a key whose value is used for building the URL to the
+            table. Another key within the nested dict has a dict as a value to store the column names and their data
+            type.
+
+            Example:
+                ex = {
+                    'table_type': {
+                        'table_type_id': 'url_table_type_id',
+                        'columns_to_grab_from_table': {
+                            'column_name': data_type_of_column,
+                            .
+                            .
+                            .
+                            'column_name': data_type_of_column
+                        }
+                    }
+                }
+
+        _logs_dict (dict): Similar to _tables_dict, except it scrapes and individual player's game log for a given
+            season. (this feature is under construction)
 
     """
     def __init__(self):
@@ -49,7 +94,7 @@ class ProFbRefScraper(object):
                     'catch_percentage': float,
                     'scrimmage_yards': int,
                     'rush_rec_td': int,
-                    'fumbles': int  # all fumbles
+                    'fumbles': int  # all fumbles (not just fumbles lost)
                 }
             },
             'passing': {
@@ -549,30 +594,8 @@ if __name__ == '__main__':
     # Usage example.
     fb_ref = ProFbRefScraper()
 
-    # rush_rec_df = fb_ref.get_data(start_year=2017, end_year=2015, table_type='rushing')
-    #
-    # rush_rec_df.to_csv('rush_rec.csv')
+    rush_rec_df = fb_ref.get_data(start_year=2017, end_year=2017, table_type='rushing')
 
-    # passing_df = fb_ref.get_data(start_year=2017, end_year=2015, table_type='passing')
-    #
-    # passing_df.to_csv('passing.csv')
+    print(rush_rec_df)
 
-    # kicking_df = fb_ref.get_data(start_year=2017, end_year=2015, table_type='kicking')
-    #
-    # kicking_df.to_csv('kicking.csv')
-
-    # returns_df = fb_ref.get_data(start_year=2017, end_year=2015, table_type='returns')
-    #
-    # returns_df.to_csv('returns.csv')
-
-    # scoring = fb_ref.get_data(start_year=2017, end_year=2015, table_type='scoring')
-    #
-    # scoring.to_csv('scoring.csv')
-
-    # fantasy = fb_ref.get_data(start_year=2017, end_year=2015, table_type='fantasy')
-    #
-    # fantasy.to_csv('fantasy.csv')
-
-    defense = fb_ref.get_data(start_year=2017, end_year=2015, table_type='defense')
-
-    defense.to_csv('defense.csv')
+    rush_rec_df.to_csv('rushing.csv')
