@@ -86,7 +86,7 @@ fantasy_df.to_csv('fbdb_fantasy.csv')
 ## rb_carries package
 The `rb_carries` package contains a module called `rb_carries.py` which uses `football_db/football_db_scraper.py` to get data from www.footballdb.com. It then filters the data out so the only remaining players are running backs with 50 or more carries in each of the last `n` seasons. It also saves the data frame into a `csv` file. There is also a Jupyter Notebook version that shows the data set, its characteristics, visualizations, and analysis.
 
-## pro_football_ref package
+## pro_football_ref package (under construction)
 Scrapes data from www.pro-football-reference.com (similar to `football_db_scraper.py`). It does not include fantasy calculations.
 
 ## player.py
