@@ -617,3 +617,393 @@ if __name__ == '__main__':
     print(rush_rec_df)
 
     rush_rec_df.to_csv('rushing.csv')
+
+"""
+Sample output:
+
+                                           name team  age position  \
+player_url                                                           
+/players/B/BellLe00.htm2017        Le'Veon Bell  PIT   25       RB   
+/players/M/McCoLe01.htm2017        LeSean McCoy  BUF   29       RB   
+/players/G/GordMe00.htm2017       Melvin Gordon  LAC   24       RB   
+/players/G/GurlTo01.htm2017         Todd Gurley  LAR   23       RB   
+/players/H/HowaJo00.htm2017       Jordan Howard  CHI   23       RB   
+/players/H/HuntKa00.htm2017         Kareem Hunt  KAN   22       RB   
+/players/F/FourLe00.htm2017   Leonard Fournette  JAX   22       RB   
+/players/G/GoreFr00.htm2017          Frank Gore  IND   34       RB   
+/players/A/AndeC.00.htm2017       C.J. Anderson  DEN   26       RB   
+/players/E/ElliEz00.htm2017     Ezekiel Elliott  DAL   22       RB   
+/players/H/HydeCa00.htm2017         Carlos Hyde  SFO   27       RB   
+/players/M/MillLa01.htm2017        Lamar Miller  HOU   26       RB   
+/players/I/IngrMa01.htm2017         Mark Ingram  NOR   28       RB   
+/players/M/MurrLa00.htm2017     Latavius Murray  MIN   27       RB   
+/players/C/CollAl00.htm2017        Alex Collins  BAL   23       RB   
+/players/A/AjayJa00.htm2017           Jay Ajayi  2TM   24        0   
+/players/L/LyncMa00.htm2017      Marshawn Lynch  OAK   31       RB   
+/players/C/CrowIs00.htm2017      Isaiah Crowell  CLE   24       RB   
+/players/S/StewJo00.htm2017    Jonathan Stewart  CAR   30       RB   
+/players/F/FreeDe00.htm2017     Devonta Freeman  ATL   25       RB   
+/players/M/MurrDe00.htm2017      DeMarco Murray  TEN   29       RB   
+/players/L/LewiDi00.htm2017          Dion Lewis  NWE   27       RB   
+/players/M/MixoJo00.htm2017           Joe Mixon  CIN   21       rb   
+/players/P/PoweBi00.htm2017        Bilal Powell  NYJ   29       RB   
+/players/H/HenrDe00.htm2017       Derrick Henry  TEN   23       rb   
+/players/P/PeriSa00.htm2017       Samaje Perine  WAS   22       RB   
+/players/B/BlouLe00.htm2017   LeGarrette Blount  PHI   31       RB   
+/players/D/DarkOr00.htm2017      Orleans Darkwa  NYG   25       RB   
+/players/A/AbduAm00.htm2017      Ameer Abdullah  DET   24       RB   
+/players/C/ColeTe01.htm2017       Tevin Coleman  ATL   24    fb/rb   
+...                                         ...  ...  ...      ...   
+/players/H/HillBr01.htm2017        Bronson Hill  ARI   24        0   
+/players/H/HillJo02.htm2017           Josh Hill  NOR   27       TE   
+/players/H/HollJa03.htm2017     Jacob Hollister  NWE   24       te   
+/players/H/HumpAd00.htm2017      Adam Humphries  TAM   24       wr   
+/players/J/JoneCh02.htm2017         Chris Jones  DAL   28        P   
+/players/J/JoneJu02.htm2017         Julio Jones  ATL   28       WR   
+/players/K/KessCo00.htm2017        Cody Kessler  CLE   24        0   
+/players/K/KuhnJo00.htm2017           John Kuhn  NOR   35       fb   
+/players/L/LandJa00.htm2017       Jarvis Landry  MIA   25       WR   
+/players/L/LeexMa00.htm2017         Marqise Lee  JAX   26       WR   
+/players/L/LutzWi00.htm2017            Wil Lutz  NOR   23        K   
+/players/M/MattRi00.htm2017    Rishard Matthews  TEN   28       WR   
+/players/M/McFaDa00.htm2017     Darren McFadden  DAL   30        0   
+/players/M/McKeIs00.htm2017     Isaiah McKenzie  DEN   22        0   
+/players/M/MillBr03.htm2017      Braxton Miller  HOU   25       wr   
+/players/N/NatsJo00.htm2017         Jojo Natson  NYJ   23        0   
+/players/N/NjokDa00.htm2017         David Njoku  CLE   21       te   
+/players/R/RainBo00.htm2017        Bobby Rainey  BAL   30        0   
+/players/R/RaymKa00.htm2017       Kalif Raymond  2TM   23        0   
+/players/R/RedfKa00.htm2017       Kasey Redfern  DET   26        p   
+/players/R/RossJo00.htm2017           John Ross  CIN   23       wr   
+/players/S/SmitTo02.htm2017        Torrey Smith  PHI   28       WR   
+/players/S/SudfNa00.htm2017        Nate Sudfeld  PHI   24        0   
+/players/T/ThieAd00.htm2017        Adam Thielen  MIN   27       WR   
+/players/T/ThomDe05.htm2017   De'Anthony Thomas  KAN   24       wr   
+/players/T/TregBr00.htm2017        Bryce Treggs  CLE   23       wr   
+/players/W/WallMi00.htm2017        Mike Wallace  BAL   31       WR   
+/players/W/WeemEr00.htm2017          Eric Weems  TEN   32        0   
+/players/W/WhitJe02.htm2017  Jermaine Whitehead  GNB   24        0   
+/players/W/WillKy20.htm2017       Kyle Williams  BUF   34  LDT/rdt   
+
+                             games_played  games_started  rush_attempts  \
+player_url                                                                
+/players/B/BellLe00.htm2017            15             15            321   
+/players/M/McCoLe01.htm2017            16             16            287   
+/players/G/GordMe00.htm2017            16             16            284   
+/players/G/GurlTo01.htm2017            15             15            279   
+/players/H/HowaJo00.htm2017            16             16            276   
+/players/H/HuntKa00.htm2017            16             16            272   
+/players/F/FourLe00.htm2017            13             13            268   
+/players/G/GoreFr00.htm2017            16             16            261   
+/players/A/AndeC.00.htm2017            16             16            245   
+/players/E/ElliEz00.htm2017            10             10            242   
+/players/H/HydeCa00.htm2017            16             16            240   
+/players/M/MillLa01.htm2017            16             13            238   
+/players/I/IngrMa01.htm2017            16             13            230   
+/players/M/MurrLa00.htm2017            16             11            216   
+/players/C/CollAl00.htm2017            15             12            212   
+/players/A/AjayJa00.htm2017            14              8            208   
+/players/L/LyncMa00.htm2017            15             15            207   
+/players/C/CrowIs00.htm2017            16             16            206   
+/players/S/StewJo00.htm2017            15             10            198   
+/players/F/FreeDe00.htm2017            14             14            196   
+/players/M/MurrDe00.htm2017            15             15            184   
+/players/L/LewiDi00.htm2017            16              8            180   
+/players/M/MixoJo00.htm2017            14              7            178   
+/players/P/PoweBi00.htm2017            15             10            178   
+/players/H/HenrDe00.htm2017            16              2            176   
+/players/P/PeriSa00.htm2017            16              8            175   
+/players/B/BlouLe00.htm2017            16             11            173   
+/players/D/DarkOr00.htm2017            15             11            171   
+/players/A/AbduAm00.htm2017            14             11            165   
+/players/C/ColeTe01.htm2017            15              3            156   
+...                                   ...            ...            ...   
+/players/H/HillBr01.htm2017             2              0              1   
+/players/H/HillJo02.htm2017            16             11              1   
+/players/H/HollJa03.htm2017            15              1              1   
+/players/H/HumpAd00.htm2017            16              3              1   
+/players/J/JoneCh02.htm2017            16              0              1   
+/players/J/JoneJu02.htm2017            16             16              1   
+/players/K/KessCo00.htm2017             3              0              1   
+/players/K/KuhnJo00.htm2017             2              1              1   
+/players/L/LandJa00.htm2017            16             16              1   
+/players/L/LeexMa00.htm2017            14             14              1   
+/players/L/LutzWi00.htm2017            16              0              1   
+/players/M/MattRi00.htm2017            14             11              1   
+/players/M/McFaDa00.htm2017             1              0              1   
+/players/M/McKeIs00.htm2017            11              0              1   
+/players/M/MillBr03.htm2017            11              3              1   
+/players/N/NatsJo00.htm2017             7              0              1   
+/players/N/NjokDa00.htm2017            16              5              1   
+/players/R/RainBo00.htm2017             4              0              1   
+/players/R/RaymKa00.htm2017             8              0              1   
+/players/R/RedfKa00.htm2017             1              0              1   
+/players/R/RossJo00.htm2017             3              1              1   
+/players/S/SmitTo02.htm2017            16             14              1   
+/players/S/SudfNa00.htm2017             1              0              1   
+/players/T/ThieAd00.htm2017            16             16              1   
+/players/T/ThomDe05.htm2017            16              2              1   
+/players/T/TregBr00.htm2017             6              1              1   
+/players/W/WallMi00.htm2017            15             14              1   
+/players/W/WeemEr00.htm2017            16              0              1   
+/players/W/WhitJe02.htm2017            10              0              1   
+/players/W/WillKy20.htm2017            16             16              1   
+
+                             rush_yards  rush_td  longest_run  ...   \
+player_url                                                     ...    
+/players/B/BellLe00.htm2017        1291        9           27  ...    
+/players/M/McCoLe01.htm2017        1138        6           48  ...    
+/players/G/GordMe00.htm2017        1105        8           87  ...    
+/players/G/GurlTo01.htm2017        1305       13           57  ...    
+/players/H/HowaJo00.htm2017        1122        9           53  ...    
+/players/H/HuntKa00.htm2017        1327        8           69  ...    
+/players/F/FourLe00.htm2017        1040        9           90  ...    
+/players/G/GoreFr00.htm2017         961        3           21  ...    
+/players/A/AndeC.00.htm2017        1007        3           40  ...    
+/players/E/ElliEz00.htm2017         983        7           30  ...    
+/players/H/HydeCa00.htm2017         938        8           61  ...    
+/players/M/MillLa01.htm2017         888        3           21  ...    
+/players/I/IngrMa01.htm2017        1124       12           72  ...    
+/players/M/MurrLa00.htm2017         842        8           46  ...    
+/players/C/CollAl00.htm2017         973        6           50  ...    
+/players/A/AjayJa00.htm2017         873        1           71  ...    
+/players/L/LyncMa00.htm2017         891        7           51  ...    
+/players/C/CrowIs00.htm2017         853        2           59  ...    
+/players/S/StewJo00.htm2017         680        6           60  ...    
+/players/F/FreeDe00.htm2017         865        7           44  ...    
+/players/M/MurrDe00.htm2017         659        6           75  ...    
+/players/L/LewiDi00.htm2017         896        6           44  ...    
+/players/M/MixoJo00.htm2017         626        4           25  ...    
+/players/P/PoweBi00.htm2017         772        5           75  ...    
+/players/H/HenrDe00.htm2017         744        5           75  ...    
+/players/P/PeriSa00.htm2017         603        1           30  ...    
+/players/B/BlouLe00.htm2017         766        2           68  ...    
+/players/D/DarkOr00.htm2017         751        5           75  ...    
+/players/A/AbduAm00.htm2017         552        4           34  ...    
+/players/C/ColeTe01.htm2017         628        5           52  ...    
+...                                 ...      ...          ...  ...    
+/players/H/HillBr01.htm2017          -2        0           -2  ...    
+/players/H/HillJo02.htm2017          -8        0           -8  ...    
+/players/H/HollJa03.htm2017           5        0            5  ...    
+/players/H/HumpAd00.htm2017           6        0            6  ...    
+/players/J/JoneCh02.htm2017          24        0           24  ...    
+/players/J/JoneJu02.htm2017          15        0           15  ...    
+/players/K/KessCo00.htm2017          -1        0           -1  ...    
+/players/K/KuhnJo00.htm2017           2        0            2  ...    
+/players/L/LandJa00.htm2017          -7        0           -7  ...    
+/players/L/LeexMa00.htm2017          17        0           17  ...    
+/players/L/LutzWi00.htm2017           4        0            4  ...    
+/players/M/MattRi00.htm2017          -3        0           -3  ...    
+/players/M/McFaDa00.htm2017          -2        0           -2  ...    
+/players/M/McKeIs00.htm2017           4        0            4  ...    
+/players/M/MillBr03.htm2017           1        0            1  ...    
+/players/N/NatsJo00.htm2017          15        0           15  ...    
+/players/N/NjokDa00.htm2017           1        0            1  ...    
+/players/R/RainBo00.htm2017           2        0            2  ...    
+/players/R/RaymKa00.htm2017          -1        0            0  ...    
+/players/R/RedfKa00.htm2017          10        0           10  ...    
+/players/R/RossJo00.htm2017          12        0           12  ...    
+/players/S/SmitTo02.htm2017          -3        0           -3  ...    
+/players/S/SudfNa00.htm2017          22        0           22  ...    
+/players/T/ThieAd00.htm2017          11        0           11  ...    
+/players/T/ThomDe05.htm2017           4        0            4  ...    
+/players/T/TregBr00.htm2017           6        0            6  ...    
+/players/W/WallMi00.htm2017           4        0            4  ...    
+/players/W/WeemEr00.htm2017           0        0            0  ...    
+/players/W/WhitJe02.htm2017           7        0            7  ...    
+/players/W/WillKy20.htm2017           1        1            1  ...    
+
+                             yards_per_rec  rec_td  longest_rec  rec_per_game  \
+player_url                                                                      
+/players/B/BellLe00.htm2017            7.7     2.0         42.0           5.7   
+/players/M/McCoLe01.htm2017            7.6     2.0         39.0           3.7   
+/players/G/GordMe00.htm2017            8.2     4.0         49.0           3.6   
+/players/G/GurlTo01.htm2017           12.3     6.0         80.0           4.3   
+/players/H/HowaJo00.htm2017            5.4     0.0         12.0           1.4   
+/players/H/HuntKa00.htm2017            8.6     3.0         78.0           3.3   
+/players/F/FourLe00.htm2017            8.4     1.0         28.0           2.8   
+/players/G/GoreFr00.htm2017            8.4     1.0         26.0           1.8   
+/players/A/AndeC.00.htm2017            8.0     1.0         25.0           1.8   
+/players/E/ElliEz00.htm2017           10.3     2.0         72.0           2.6   
+/players/H/HydeCa00.htm2017            5.9     0.0         18.0           3.7   
+/players/M/MillLa01.htm2017            9.1     3.0         32.0           2.3   
+/players/I/IngrMa01.htm2017            7.2     0.0         54.0           3.6   
+/players/M/MurrLa00.htm2017            6.9     0.0         28.0           0.9   
+/players/C/CollAl00.htm2017            8.1     0.0         37.0           1.5   
+/players/A/AjayJa00.htm2017            6.6     1.0         32.0           1.7   
+/players/L/LyncMa00.htm2017            7.6     0.0         26.0           1.3   
+/players/C/CrowIs00.htm2017            6.5     0.0         38.0           1.8   
+/players/S/StewJo00.htm2017            6.5     1.0         21.0           0.5   
+/players/F/FreeDe00.htm2017            8.8     1.0         29.0           2.6   
+/players/M/MurrDe00.htm2017            6.8     1.0         18.0           2.6   
+/players/L/LewiDi00.htm2017            6.7     3.0         20.0           2.0   
+/players/M/MixoJo00.htm2017            9.6     0.0         67.0           2.1   
+/players/P/PoweBi00.htm2017            7.4     0.0         31.0           1.5   
+/players/H/HenrDe00.htm2017           12.4     1.0         66.0           0.7   
+/players/P/PeriSa00.htm2017            8.3     1.0         25.0           1.4   
+/players/B/BlouLe00.htm2017            6.3     1.0         20.0           0.5   
+/players/D/DarkOr00.htm2017            6.1     0.0         13.0           1.3   
+/players/A/AbduAm00.htm2017            6.5     1.0         22.0           1.8   
+/players/C/ColeTe01.htm2017           11.1     3.0         39.0           1.8   
+...                                    ...     ...          ...           ...   
+/players/H/HillBr01.htm2017            0.0     0.0          0.0           0.0   
+/players/H/HillJo02.htm2017            7.8     1.0         22.0           1.0   
+/players/H/HollJa03.htm2017           10.5     0.0         19.0           0.3   
+/players/H/HumpAd00.htm2017           10.3     1.0         43.0           3.8   
+/players/J/JoneCh02.htm2017            0.0     0.0          0.0           0.0   
+/players/J/JoneJu02.htm2017           16.4     3.0         53.0           5.5   
+/players/K/KessCo00.htm2017            0.0     0.0          0.0           0.0   
+/players/K/KuhnJo00.htm2017            0.0     0.0          0.0           0.0   
+/players/L/LandJa00.htm2017            8.8     9.0         49.0           7.0   
+/players/L/LeexMa00.htm2017           12.5     3.0         45.0           4.0   
+/players/L/LutzWi00.htm2017            0.0     0.0          0.0           0.0   
+/players/M/MattRi00.htm2017           15.0     4.0         75.0           3.8   
+/players/M/McFaDa00.htm2017            0.0     0.0          0.0           0.0   
+/players/M/McKeIs00.htm2017            7.3     0.0         14.0           0.4   
+/players/M/MillBr03.htm2017            8.5     1.0         57.0           1.7   
+/players/N/NatsJo00.htm2017            9.0     0.0         19.0           0.3   
+/players/N/NjokDa00.htm2017           12.1     4.0         34.0           2.0   
+/players/R/RainBo00.htm2017            3.6     0.0         12.0           1.3   
+/players/R/RaymKa00.htm2017           12.0     0.0         12.0           0.1   
+/players/R/RedfKa00.htm2017            0.0     0.0          0.0           0.0   
+/players/R/RossJo00.htm2017            0.0     0.0          0.0           0.0   
+/players/S/SmitTo02.htm2017           11.9     2.0         59.0           2.3   
+/players/S/SudfNa00.htm2017            0.0     0.0          0.0           0.0   
+/players/T/ThieAd00.htm2017           14.0     4.0         65.0           5.7   
+/players/T/ThomDe05.htm2017           10.2     2.0         57.0           0.9   
+/players/T/TregBr00.htm2017           15.8     0.0         20.0           0.8   
+/players/W/WallMi00.htm2017           14.4     4.0         66.0           3.5   
+/players/W/WeemEr00.htm2017            5.0     0.0          5.0           0.1   
+/players/W/WhitJe02.htm2017            0.0     0.0          0.0           0.0   
+/players/W/WillKy20.htm2017            0.0     0.0          0.0           0.0   
+
+                             rec_yards_per_game  catch_percentage  \
+player_url                                                          
+/players/B/BellLe00.htm2017                43.7              80.2   
+/players/M/McCoLe01.htm2017                28.0              76.6   
+/players/G/GordMe00.htm2017                29.8              69.9   
+/players/G/GurlTo01.htm2017                52.5              73.6   
+/players/H/HowaJo00.htm2017                 7.8              71.9   
+/players/H/HuntKa00.htm2017                28.4              84.1   
+/players/F/FourLe00.htm2017                23.2              75.0   
+/players/G/GoreFr00.htm2017                15.3              76.3   
+/players/A/AndeC.00.htm2017                14.0              70.0   
+/players/E/ElliEz00.htm2017                26.9              68.4   
+/players/H/HydeCa00.htm2017                21.9              67.0   
+/players/M/MillLa01.htm2017                20.4              80.0   
+/players/I/IngrMa01.htm2017                26.0              81.7   
+/players/M/MurrLa00.htm2017                 6.4              88.2   
+/players/C/CollAl00.htm2017                12.5              63.9   
+/players/A/AjayJa00.htm2017                11.3              70.6   
+/players/L/LyncMa00.htm2017                10.1              64.5   
+/players/C/CrowIs00.htm2017                11.4              66.7   
+/players/S/StewJo00.htm2017                 3.5              53.3   
+/players/F/FreeDe00.htm2017                22.6              76.6   
+/players/M/MurrDe00.htm2017                17.7              83.0   
+/players/L/LewiDi00.htm2017                13.4              91.4   
+/players/M/MixoJo00.htm2017                20.5              88.2   
+/players/P/PoweBi00.htm2017                11.3              69.7   
+/players/H/HenrDe00.htm2017                 8.5              64.7   
+/players/P/PeriSa00.htm2017                11.4              91.7   
+/players/B/BlouLe00.htm2017                 3.1             100.0   
+/players/D/DarkOr00.htm2017                 7.7              67.9   
+/players/A/AbduAm00.htm2017                11.6              71.4   
+/players/C/ColeTe01.htm2017                19.9              69.2   
+...                                         ...               ...   
+/players/H/HillBr01.htm2017                 0.0               0.0   
+/players/H/HillJo02.htm2017                 7.8              72.7   
+/players/H/HollJa03.htm2017                 2.8              36.4   
+/players/H/HumpAd00.htm2017                39.4              73.5   
+/players/J/JoneCh02.htm2017                 0.0               0.0   
+/players/J/JoneJu02.htm2017                90.3              59.5   
+/players/K/KessCo00.htm2017                 0.0               0.0   
+/players/K/KuhnJo00.htm2017                 0.0               0.0   
+/players/L/LandJa00.htm2017                61.7              69.6   
+/players/L/LeexMa00.htm2017                50.1              58.3   
+/players/L/LutzWi00.htm2017                 0.0               0.0   
+/players/M/MattRi00.htm2017                56.8              60.9   
+/players/M/McFaDa00.htm2017                 0.0               0.0   
+/players/M/McKeIs00.htm2017                 2.6              30.8   
+/players/M/MillBr03.htm2017                14.7              65.5   
+/players/N/NatsJo00.htm2017                 2.6              40.0   
+/players/N/NjokDa00.htm2017                24.1              53.3   
+/players/R/RainBo00.htm2017                 4.5              71.4   
+/players/R/RaymKa00.htm2017                 1.5             100.0   
+/players/R/RedfKa00.htm2017                 0.0               0.0   
+/players/R/RossJo00.htm2017                 0.0               0.0   
+/players/S/SmitTo02.htm2017                26.9              53.7   
+/players/S/SudfNa00.htm2017                 0.0               0.0   
+/players/T/ThieAd00.htm2017                79.8              64.1   
+/players/T/ThomDe05.htm2017                 8.9              87.5   
+/players/T/TregBr00.htm2017                13.2              27.8   
+/players/W/WallMi00.htm2017                49.9              56.5   
+/players/W/WeemEr00.htm2017                 0.3              50.0   
+/players/W/WhitJe02.htm2017                 0.0               0.0   
+/players/W/WillKy20.htm2017                 0.0               0.0   
+
+                             scrimmage_yards  rush_rec_td  fumbles  year  
+player_url                                                                
+/players/B/BellLe00.htm2017              406         1946       11  2017  
+/players/M/McCoLe01.htm2017              346         1586        8  2017  
+/players/G/GordMe00.htm2017              342         1581       12  2017  
+/players/G/GurlTo01.htm2017              343         2093       19  2017  
+/players/H/HowaJo00.htm2017              299         1247        9  2017  
+/players/H/HuntKa00.htm2017              325         1782       11  2017  
+/players/F/FourLe00.htm2017              304         1342       10  2017  
+/players/G/GoreFr00.htm2017              290         1206        4  2017  
+/players/A/AndeC.00.htm2017              273         1231        4  2017  
+/players/E/ElliEz00.htm2017              268         1252        9  2017  
+/players/H/HydeCa00.htm2017              299         1288        8  2017  
+/players/M/MillLa01.htm2017              274         1215        6  2017  
+/players/I/IngrMa01.htm2017              288         1540       12  2017  
+/players/M/MurrLa00.htm2017              231          945        8  2017  
+/players/C/CollAl00.htm2017              237         1160        6  2017  
+/players/A/AjayJa00.htm2017              232         1031        2  2017  
+/players/L/LyncMa00.htm2017              227         1042        7  2017  
+/players/C/CrowIs00.htm2017              234         1035        2  2017  
+/players/S/StewJo00.htm2017              206          732        7  2017  
+/players/F/FreeDe00.htm2017              232         1182        8  2017  
+/players/M/MurrDe00.htm2017              223          925        7  2017  
+/players/L/LewiDi00.htm2017              235         1110        9  2017  
+/players/M/MixoJo00.htm2017              208          913        4  2017  
+/players/P/PoweBi00.htm2017              201          942        5  2017  
+/players/H/HenrDe00.htm2017              187          880        6  2017  
+/players/P/PeriSa00.htm2017              199          785        2  2017  
+/players/B/BlouLe00.htm2017              181          816        3  2017  
+/players/D/DarkOr00.htm2017              190          867        5  2017  
+/players/A/AbduAm00.htm2017              198          714        5  2017  
+/players/C/ColeTe01.htm2017              183          927        8  2017  
+...                                      ...          ...      ...   ...  
+/players/H/HillBr01.htm2017                1           -2        0  2017  
+/players/H/HillJo02.htm2017               17          117        1  2017  
+/players/H/HollJa03.htm2017                5           47        0  2017  
+/players/H/HumpAd00.htm2017               68          637        1  2017  
+/players/J/JoneCh02.htm2017                1           24        0  2017  
+/players/J/JoneJu02.htm2017               89         1459        3  2017  
+/players/K/KessCo00.htm2017                1           -1        0  2017  
+/players/K/KuhnJo00.htm2017                2            2        0  2017  
+/players/L/LandJa00.htm2017              125          980        9  2017  
+/players/L/LeexMa00.htm2017               62          719        3  2017  
+/players/L/LutzWi00.htm2017                1            4        0  2017  
+/players/M/MattRi00.htm2017               54          792        4  2017  
+/players/M/McFaDa00.htm2017                1           -2        0  2017  
+/players/M/McKeIs00.htm2017               29           33        0  2017  
+/players/M/MillBr03.htm2017               23          163        1  2017  
+/players/N/NatsJo00.htm2017               35           33        0  2017  
+/players/N/NjokDa00.htm2017               33          387        4  2017  
+/players/R/RainBo00.htm2017               19           20        0  2017  
+/players/R/RaymKa00.htm2017               34           11        0  2017  
+/players/R/RedfKa00.htm2017                1           10        0  2017  
+/players/R/RossJo00.htm2017                1           12        0  2017  
+/players/S/SmitTo02.htm2017               38          427        2  2017  
+/players/S/SudfNa00.htm2017                1           22        0  2017  
+/players/T/ThieAd00.htm2017               92         1287        4  2017  
+/players/T/ThomDe05.htm2017               36          147        2  2017  
+/players/T/TregBr00.htm2017               11           85        0  2017  
+/players/W/WallMi00.htm2017               53          752        4  2017  
+/players/W/WeemEr00.htm2017                6            5        0  2017  
+/players/W/WhitJe02.htm2017                2            7        0  2017  
+/players/W/WillKy20.htm2017                1            1        1  2017  
+
+[316 rows x 26 columns]
+"""
