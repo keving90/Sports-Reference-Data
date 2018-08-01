@@ -99,7 +99,7 @@ It depends upon your goal. If you would like to have fantasy points calculations
 
 #### Why doesn't `pro_football_ref_scraper.py` include fantasy point calculations?
 
-Unfortunately, www.pro-football-reference.com has missing data, so fantasy point calculations will not be 100% accurate. This includes two point conversion and fumbles lost data.
+Unfortunately, www.pro-football-reference.com has missing data, so fantasy point calculations will not be 100% accurate. This includes two point conversion and fumbles lost data. However, the 'fantasy' table contains pre-calculated fantasy point totals from various leagues.
 
 #### What have been some difficulties along the way?
 First, I wanted to scrape data from Pro Football Reference. Then, I decided I want to be able to calculate accurate pantasy point data. The first issues were that fumbles lost and two point conversion data cannot be found.  I filled in these gaps by scraping additional data from The Football Database, and joining the two data sets. The next issue was players with the same name (Chris Thompson). This leads to difficulties when using player names as the index to join two data frames on. I realized I could use a player's unique URL as an index, which is what you find when you click on a player's name in a table. However, the same player will have a different URL on different websites. Finally, I decided to just make a program capable of getting all data from The Football Database. It still uses the player's URL as an index, and joining data frames are not a problem. The only drawbacks are the games played and age stats are missing, which Pro Football Reference has.
