@@ -51,6 +51,10 @@ class FbDbScraper(object):
                         'mode_id_for_table_type': 'url_letter_id',
                         'column_to_sort_on': 'url_column_name',
                         'columns_to_grab_from_table': {
+                            'column_name': data_type_of_column,
+                            .
+                            .
+                            .
                             'column_name': data_type_of_column
                         }
                     }
@@ -259,6 +263,23 @@ class FbDbScraper(object):
                     '50_plus': str,
                     'longest_fg': int,
                     'fg_points': int
+                }
+            },
+            'scrimmage': {
+                'mode': 'Y',
+                'sort': 'scrimyds',
+                'all_columns': {
+                    'name': str,
+                    'player_url': str,
+                    'team': str,
+                    'position': str,
+                    'games_played': int,
+                    'scrim_yards': int,
+                    'scrim_yards_per_game': float,
+                    'rush_yards': int,
+                    'rush_yards_per_game': float,
+                    'rec_yards': int,
+                    'rec_yards_per_game': float
                 }
             },
             'fantasy_offense': {
