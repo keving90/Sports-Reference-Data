@@ -266,7 +266,7 @@ class ProFbRefScraper(object):
                     'yards_per_rec': float,
                     'rec_td': int,
                     'fan_points': int,  # Standard scoring. (football_db_scraper.py default settings)
-                    'fan_points_ppr': int,  # 1 point per reception.
+                    'fan_points_ppr': float,  # 1 point per reception.
                     'draft_kings': float,
                     'fan_duel': float,
                     'vbd': int,  # Player's fantasy points minus fantasy points of the baseline player.
@@ -390,6 +390,8 @@ class ProFbRefScraper(object):
 
         # Concatenate all seasons into one big data frame.
         big_df = pd.concat(df_list)
+
+        big_df = self._replace_nan(big_df, table_type)
 
         return big_df
 
@@ -545,6 +547,22 @@ class ProFbRefScraper(object):
 
         # Make the new 'player_url' the data frame's index.
         df.set_index('player_url', inplace=True)
+
+        return df
+
+    def _replace_nan(self, df, table_type):
+        """
+        Replaces numpy.NaN values with 0 in a data frame for numerical categories only.
+
+        :param df: Data frame to be modified.
+        :param table_type: Type of table scraped to be modified.
+
+        :return: The modified data frame.
+        """
+        if table_type.lower() == 'passing':
+            [df[column].fillna(0, inplace=True) for column in df[8:]]
+        else:
+            [df[column].fillna(0, inplace=True) for column in df[7:]]
 
         return df
 
