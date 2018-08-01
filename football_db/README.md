@@ -12,7 +12,7 @@ This package requires the following Python modules:
 
 ## Overview
 
-* This package was built using Python 3.6.1, so dictionaries are ordered. This information is important because the `get_fantasy_df()` method in `football_db_scraper.py` requires an ordered dictionary.
+* This package was built using Python 3.6.1, so dictionaries are ordered. This information is important because the `get_fantasy_df()` method in `football_db_scraper.py` requires an ordered dictionary. I highly recommend using a version of python that is 3.6 or leter.
 
 * The `football_db_scraper.py` scrapes data from www.footballdb.com. It can scrape comprehensive fantasy points data for a given season, or it can scrape an individual table type. Multiple seasons worth of data can be scraped and placed into the same data frame.
 
