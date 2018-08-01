@@ -3,7 +3,7 @@ This repository contains Python programs capable of scraping data from [The Foot
 
 ## Requirements
 
-* This package was built using Python 3.6.1, so dictionaries are ordered. This information is important because the `get_fantasy_df()` method in `football_db_scraper.py` requires an ordered dictionary. I highly recommend using a version of python that is 3.6 or later.
+* This package was built using Python 3.6.1, so dictionaries are ordered. This information is important because the `get_fantasy_df()` method in `football_db_scraper.py` requires an ordered dictionary. I highly recommend using a version of Python that is 3.6 or later.
 * Requests
 * BeautifulSoup4
 * NumPy
