@@ -27,8 +27,6 @@ class ProFbRefScraper(object):
 
     Valid table_type values include:
 
-    'all_purpose': All purpose yardage data. Has data for all NFL players.
-
     'rushing': Rushing data.
     'passing': Passing data.
     'receiving': Receiving data.
