@@ -699,9 +699,6 @@ class FbDbScraper(object):
             if stat in df.columns:
                 # Round to two decimal places because of float arithmetic.
                 df['fantasy_points'] += round(df[stat] * value, 2)
-                # df['fantasy_points'] += df[stat] * value
-
-        # df['fantasy_points'].apply(lambda x: round(x, 2))
 
         return df
 
