@@ -90,6 +90,9 @@ class ProFbRefScraper(object):
                     'rec_per_game': float,
                     'rec_yards_per_game': float,
                     'catch_percentage': float,
+                    'touches': int,
+                    'all_purpose_ypg': int,
+                    'ap_yards_per_touch': float,
                     'scrimmage_yards': int,
                     'rush_rec_td': int,
                     'fumbles': int  # all fumbles (not just fumbles lost)
