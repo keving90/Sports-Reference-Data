@@ -402,8 +402,14 @@ class ProFbRefScraper(object):
 
         :return: A range iterator.
         """
+        # Convert years to string.
+        if isinstance(start_year, str):
+            start_year = int(start_year)
+        if isinstance(end_year, str):
+            end_year = int(end_year)
+
         # Build range iterator depending on how start_year and end_year are related.
-        if int(start_year) > int(end_year):
+        if start_year > end_year:
             year_range = range(start_year, end_year - 1, -1)
         elif int(start_year) <= int(end_year):
             year_range = range(start_year, end_year + 1)
