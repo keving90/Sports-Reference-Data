@@ -266,6 +266,8 @@ class ProFbRefScraper(object):
                     'rec_yards': int,
                     'yards_per_rec': float,
                     'rec_td': int,
+                    'two_pt_conversions_made': int,
+                    'two_pt_conversion_passes': int,
                     'fan_points': int,  # Standard scoring. (football_db_scraper.py default settings)
                     'fan_points_ppr': float,  # 1 point per reception.
                     'draft_kings': float,
