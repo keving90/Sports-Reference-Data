@@ -313,6 +313,17 @@ class MainMenuFrame(Frame):
         button = Button(top, text="Okay", command=top.destroy)
         button.grid(row=1, column=0, pady=(0, 10))
 
+    def display_invalid_stat_msg(self):
+        """Displays error message to user when a save directory for the data file has not been chosen."""
+        # Window prompting user to choose a directory to save the data file in.
+        top = Toplevel()
+        top.title("Invalid Fantasy Stat Value")
+        message_label = Label(top, text='Point values for custom fantasy stats\n'
+                                        'must be integer or decimal numbers.')
+        message_label.grid(row=0, column=0, padx=10, pady=10)
+        button = Button(top, text="Okay", command=top.destroy)
+        button.grid(row=1, column=0, pady=(0, 10))
+
     def get_file_name(self, table_name):
         """
         Returns the data file's name from the text entry box if provided. Otherwise, returns a default file name.
@@ -354,10 +365,14 @@ class MainMenuFrame(Frame):
                 custom_setting = self.fantasy_settings[key].get()
 
                 # Convert StringVar in Custom Fantasy Settings text entries to necessary data type.
-                if isinstance(football_db_obj.fantasy_settings[key], int):
-                    football_db_obj.fantasy_settings[key] = int(custom_setting)
-                elif isinstance(football_db_obj.fantasy_settings[key], float):
-                    football_db_obj.fantasy_settings[key] = float(custom_setting)
+                try:
+                    if isinstance(football_db_obj.fantasy_settings[key], int):
+                        football_db_obj.fantasy_settings[key] = int(custom_setting)
+                    elif isinstance(football_db_obj.fantasy_settings[key], float):
+                        football_db_obj.fantasy_settings[key] = float(custom_setting)
+                except ValueError:
+                    self.display_invalid_stat_msg()
+                    return
 
             # Create the data frame.
             df = football_db_obj.get_fantasy_df(start_year=self.start_year_option_var.get(),
