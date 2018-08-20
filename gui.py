@@ -1,10 +1,8 @@
 from tkinter import *  # Standard binding to Tk.
 from tkinter.filedialog import askdirectory
 from football_db.football_db_scraper import FbDbScraper
-import os
-import pandas as pd
 from pro_football_ref.pro_football_ref_scraper import ProFbRefScraper
-from tkinter import ttk  # Contains newer themed widgets.
+import os
 
 
 class NflScraperGui(Tk):
@@ -17,29 +15,13 @@ class NflScraperGui(Tk):
 
         # Create and initialize the main container.
         container = Frame(self)
-
-        # container.pack(side='top', fill='both', expand=True)
         container.grid(row=0, column=0)
-
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
-        # Dictionary to store all the frames we can shift through.
-        self.frames = {}
-
-        # Add frames to the self.frames dict.
-        # for F in (StartPage, PageOne, PageTwo, TopFrame, BottomFrame, FbdbFrame, ProRefFrame):
-        for F in (MainMenuFrame, BottomFrame):
-            frame = F(container, self)
-            self.frames[F] = frame
-
-            if F == MainMenuFrame:
-                frame.grid(row=0, column=0, sticky='nsew')
-            # else:
-            #     frame.grid(row=1, column=0, sticky='nsew')
-
-        self.show_frame(MainMenuFrame)
-        # self.show_frame(BottomFrame)
+        # Create main menu frame and place in main container.
+        frame = MainMenuFrame(container, self)
+        frame.grid(row=0, column=0, sticky='nsew')
 
     def show_frame(self, container):
         """Makes the frame specified by 'container' visible using self.frames dict."""
