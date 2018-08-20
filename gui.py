@@ -22,15 +22,7 @@ class NflScraperGui(Tk):
         # Create main menu frame and place in main container.
         frame = MainMenuFrame(container, self)
         frame.grid(row=0, column=0, sticky='nsew')
-
-    def show_frame(self, container):
-        """Makes the frame specified by 'container' visible using self.frames dict."""
-        # Grab the relevant frame.
-        frame = self.frames[container]
-
-        # Raise the frame to the top so it's visible.
-        frame.tkraise()
-
+        
 
 class MainMenuFrame(Frame):
     def __init__(self, parent, controller):
