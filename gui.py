@@ -371,8 +371,8 @@ class MainMenuFrame(Frame):
                     elif isinstance(football_db_obj.fantasy_settings[key], float):
                         football_db_obj.fantasy_settings[key] = float(custom_setting)
                 except ValueError:
-                    self.display_invalid_stat_msg()
-                    return
+                    # Invalid data in fantasy setting values.
+                    return None
 
             # Create the data frame.
             df = football_db_obj.get_fantasy_df(start_year=self.start_year_option_var.get(),
@@ -426,6 +426,11 @@ class MainMenuFrame(Frame):
             # Scraping data from Football Database.
             if self.data_source_var.get() == 0:
                 df = self.scrape_from_football_db(table_name)
+
+                # Invalid data for fantasy stat values.
+                if df is None:
+                    self.display_invalid_stat_msg()
+                    return
             # Scraping data from Pro Football Reference.
             else:
                 df = self.scrape_from_pro_football_reference(table_name)
