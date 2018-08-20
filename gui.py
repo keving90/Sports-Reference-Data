@@ -22,7 +22,7 @@ class NflScraperGui(Tk):
         # Create main menu frame and place in main container.
         frame = MainMenuFrame(container, self)
         frame.grid(row=0, column=0, sticky='nsew')
-        
+
 
 class MainMenuFrame(Frame):
     def __init__(self, parent, controller):
@@ -426,12 +426,12 @@ class MainMenuFrame(Frame):
     """
     TODO:
     
-    SET FANTASY SETTINGS DICT FOR FOOTBALL DATABASE OBJECT
-    
     CHECK STRING INPUT FOR FANTASY SETTINGS NUMBERS
     
     
     DONE:
+    
+    SET FANTASY SETTINGS DICT FOR FOOTBALL DATABASE OBJECT
     
     SHOULD BE ABLE TO NAME THE FILE
     Fix tables names in drop-down menu.
@@ -451,207 +451,6 @@ class MainMenuFrame(Frame):
         key = category
         value = label message 
     """
-
-
-class BottomFrame(Frame):
-    def __init__(self, parent, controller):
-        super(BottomFrame, self).__init__(parent)
-
-        # Create the bottom frame.
-        bottom_frame = Frame(self)
-        bottom_frame.grid(row=0, column=0)
-
-        # Option menu variables.
-        controller.fbdb_tables = ['all_purpose', 'passing', 'rushing', 'receiving', 'scoring', 'fumbles', 'kick_returns',
-                       'punt_returns',
-                       'kicking', 'scrimmage', 'fantasy_offense']
-        controller.pro_ref_tables = ['rushing', 'passing', 'receiving', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
-        years = [year for year in range(2017, 1939, -1)]
-
-        # Football Database option variable.
-        self.option_menu_var = StringVar(self)
-        self.option_menu_var.set('rushing')
-
-        # Start year variable.
-        self.start_year_option_var = StringVar(self)
-        self.start_year_option_var.set(str(years[0]))
-
-        # End year variable.
-        self.end_year_option_var = StringVar(self)
-        self.end_year_option_var.set(str(years[0]))
-
-        # Scrape Data label.
-        self.scrape_label = Label(self, text='Table to scrape from:')
-        self.scrape_label.grid(row=1, column=0, sticky='E')
-
-        # Football Database option menu.
-        self.fb_db_option_menu = OptionMenu(self, self.option_menu_var, *controller.fbdb_tables)
-        self.fb_db_option_menu.grid(column=1, row=1)
-
-        # Start Year label and option menu.
-        self.start_year_label = Label(self, text='First year to scrape from:')
-        self.start_year_label.grid(row=2, column=0, sticky='E')
-        self.start_year_menu = OptionMenu(self, self.start_year_option_var, *years)
-        self.start_year_menu.grid(row=2, column=1, sticky='W')
-
-        # End Year label and option menu.
-        self.end_year_label = Label(self, text='Last year to scrape from:')
-        self.end_year_label.grid(row=3, column=0, sticky='E')
-        self.end_year_menu = OptionMenu(self, self.end_year_option_var, *years)
-        self.end_year_menu.grid(row=3, column=1, sticky='W')
-
-
-class FbdbFrame(Frame):
-    def __init__(self, parent, controller):
-        super(FbdbFrame, self).__init__(parent)
-
-        # Option menu variables.
-        fbdb_tables = ['all_purpose', 'passing', 'rushing', 'receiving', 'scoring', 'fumbles', 'kick_returns',
-                       'punt_returns',
-                       'kicking', 'scrimmage', 'fantasy_offense']
-        years = [year for year in range(2017, 1939, -1)]
-
-        # Source website label.
-        label = Label(self, text="Getting data from www.footballdb.com:")
-        label.grid(row=0, column=0)
-
-        # Football Database option variable.
-        self.fbdb_option_var = StringVar(self)
-        self.fbdb_option_var.set('rushing')
-
-        # Start year variable.
-        self.start_year_option_var = StringVar(self)
-        self.start_year_option_var.set(str(years[0]))
-
-        # End year variable.
-        self.end_year_option_var = StringVar(self)
-        self.end_year_option_var.set(str(years[0]))
-
-        # Scrape Data label.
-        self.scrape_label = Label(self, text='Table to scrape from:')
-        self.scrape_label.grid(row=1, column=0, sticky='E')
-
-        # Football Database option menu.
-        self.fb_db_option_menu = OptionMenu(self, self.fbdb_option_var, *fbdb_tables)
-        self.fb_db_option_menu.grid(column=1, row=1)
-
-        # Start Year label and option menu.
-        self.start_year_label = Label(self, text='First year to scrape from:')
-        self.start_year_label.grid(row=2, column=0, sticky='E')
-        self.start_year_menu = OptionMenu(self, self.start_year_option_var, *years)
-        self.start_year_menu.grid(row=2, column=1, sticky='W')
-
-        # End Year label and option menu.
-        self.end_year_label = Label(self, text='Last year to scrape from:')
-        self.end_year_label.grid(row=3, column=0, sticky='E')
-        self.end_year_menu = OptionMenu(self, self.end_year_option_var, *years)
-        self.end_year_menu.grid(row=3, column=1, sticky='W')
-
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
-
-        # Fantasy settings button.
-        self.fantasy_settings_button = Button(self, text='Edit Fantasy Settings', command=lambda: print("settings"))
-        self.fantasy_settings_button.grid(row=4, column=0)
-
-        # Scrape data button.
-        self.scrape_data_button = Button(self, text='Scrape Data', command=lambda: print("hello"))
-        self.scrape_data_button.grid(row=5, column=0)
-
-
-class ProRefFrame(Frame):
-    def __init__(self, parent, controller):
-        super(ProRefFrame, self).__init__(parent)
-
-        # Option menu variables.
-        pro_ref_tables = ['rushing', 'passing', 'receiving', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
-        years = [year for year in range(2017, 1939, -1)]
-
-        # Source website label.
-        label = Label(self, text="Getting data from www.pro-football-reference.com:")
-        label.grid(row=0, column=0)
-
-        # Pro Football Reference option variable.
-        self.pro_ref_option_var = StringVar(self)
-        self.pro_ref_option_var.set('rushing')
-
-        # Start year variable.
-        self.start_year_option_var = StringVar(self)
-        self.start_year_option_var.set(str(years[0]))
-
-        # End year variable.
-        self.end_year_option_var = StringVar(self)
-        self.end_year_option_var.set(str(years[0]))
-
-        # Football Database option menu.
-        self.pro_ref_option_menu = OptionMenu(self, self.pro_ref_option_var, *pro_ref_tables)
-        self.pro_ref_option_menu.grid(column=1, row=1)
-
-        # Scrape Data label.
-        self.table_label = Label(self, text='Table to scrape from:')
-        self.table_label.grid(row=1, column=0, sticky='E')
-
-        # Start Year label and option menu.
-        self.start_year_label = Label(self, text='First year to scrape from:')
-        self.start_year_label.grid(row=2, column=0, sticky='E')
-        self.start_year_menu = OptionMenu(self, self.start_year_option_var, *years)
-        self.start_year_menu.grid(row=2, column=1, sticky='W')
-
-        # End Year label and option menu.
-        self.end_year_label = Label(self, text='Last year to scrape from:')
-        self.end_year_label.grid(row=3, column=0, sticky='E')
-        self.end_year_menu = OptionMenu(self, self.end_year_option_var, *years)
-        self.end_year_menu.grid(row=3, column=1, sticky='W')
-
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
-
-        # Scrape data button.
-        self.scrape_data_button = Button(self, text='Scrape Data', command=lambda: print("hello"))
-        self.scrape_data_button.grid(row=4, column=0)
-
-
-
-class StartPage(Frame):
-    def __init__(self, parent, controller):
-        super(StartPage, self).__init__(parent)
-
-        # Create a label.
-        label = Label(self, text='NFL Scraper')
-        label.pack(padx=10, pady=10)
-
-        button1 = Button(self, text='Visit Page 1', command=lambda: controller.show_frame(PageOne))
-        button1.pack()
-
-        button2 = Button(self, text='Visit Page 2', command=lambda: controller.show_frame(PageTwo))
-        button2.pack()
-
-
-class PageOne(Frame):
-    def __init__(self, parent, controller):
-        super(PageOne, self).__init__(parent)
-
-        # Create a label.
-        label = Label(self, text='Page 1')
-        label.pack(padx=10, pady=10)
-
-        button1 = Button(self, text='Back To Home', command=lambda: controller.show_frame(StartPage))
-        button1.pack()
-
-
-class PageTwo(Frame):
-    def __init__(self, parent, controller):
-        super(PageTwo, self).__init__(parent)
-
-        # Create a label.
-        label = Label(self, text='Page 2')
-        label.pack(padx=10, pady=10)
-
-        button1 = Button(self, text='Back To Home', command=lambda: controller.show_frame(StartPage))
-        button1.pack()
-
-        button1 = Button(self, text='Page One', command=lambda: controller.show_frame(PageOne))
-        button1.pack()
 
 
 if __name__ == '__main__':
