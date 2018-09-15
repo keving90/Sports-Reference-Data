@@ -94,8 +94,12 @@ class MainMenuFrame(Frame):
         self.save_location_button.grid(row=0, column=0, padx=50)
 
         # Scrape Data button.
-        self.scrape_data_button = Button(save_and_scrape_frame, text='Scrape Data', command=self.scrape_data)
-        self.scrape_data_button.grid(row=0, column=1, padx=50)
+        # self.scrape_data_button = Button(save_and_scrape_frame, text='Scrape Data', command=self.scrape_data)
+        # self.scrape_data_button.grid(row=0, column=1, padx=50)
+
+        # Fantasy Settings button.
+        self.fantasy_settings_button = Button(save_and_scrape_frame, text='Fantasy Settings', command=self.view_fantasy_settings)
+        self.fantasy_settings_button.grid(row=0, column=1, padx=50)
 
         # Option menus
         # ------------
@@ -155,7 +159,11 @@ class MainMenuFrame(Frame):
         # -----------------------
 
         # Fantasy Settings button (not contained in its own frame).
-        self.scrape_data_button = Button(main_frame, text='Fantasy Settings', command=self.view_fantasy_settings)
+        # self.scrape_data_button = Button(main_frame, text='Fantasy Settings', command=self.view_fantasy_settings)
+        # self.scrape_data_button.grid(row=4, column=0)
+
+        # Scrape Data button.
+        self.scrape_data_button = Button(main_frame, text='Scrape Data', command=self.scrape_data)
         self.scrape_data_button.grid(row=4, column=0)
 
         # Dictionary containing the default fantasy settings.
@@ -208,7 +216,7 @@ class MainMenuFrame(Frame):
 
         # Enable the fantasy settings button.
         # self.scrape_data_button.state(['!disabled'])
-        self.scrape_data_button['state'] = 'normal'
+        self.fantasy_settings_button['state'] = 'normal'
 
     def set_pro_ref_table_types(self):
         """Gives the self.table_types_menu OptionMenu the relevant Pro Football Reference table types."""
@@ -227,7 +235,7 @@ class MainMenuFrame(Frame):
         self.option_menu_var.set('Passing')
 
         # Disable the fantasy settings button.
-        self.scrape_data_button['state'] = 'disabled'
+        self.fantasy_settings_button['state'] = 'disabled'
 
     def view_fantasy_settings(self):
         """
