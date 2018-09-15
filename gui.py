@@ -109,7 +109,7 @@ class MainMenuFrame(Frame):
 
         # List of NFL seasons whose data can be scraped.
         # These years range from the beginning of the Super Bowl Era to present day.
-        years = [year for year in range(2017, 1939, -1)]
+        years = [year for year in range(2018, 1939, -1)]
 
         # Frame containing drop-down option menus.
         option_menu_frame = Frame(main_frame)
