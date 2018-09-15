@@ -84,18 +84,13 @@ class MainMenuFrame(Frame):
 
         # Data file's save directory location.
         self.directory = None
-        # self.directory = '~/Desktop'
 
-        # Set Save Location and Scrape Data buttons
-        # -----------------------------------------
+        # Set Save Location and Fantasy Settings buttons
+        # ----------------------------------------------
 
         # Set Save Location button opens folder browser to select CSV file's save location.
         self.save_location_button = Button(save_and_scrape_frame, text='Set Save Location', command=self.get_save_location)
         self.save_location_button.grid(row=0, column=0, padx=50)
-
-        # Scrape Data button.
-        # self.scrape_data_button = Button(save_and_scrape_frame, text='Scrape Data', command=self.scrape_data)
-        # self.scrape_data_button.grid(row=0, column=1, padx=50)
 
         # Fantasy Settings button.
         self.fantasy_settings_button = Button(save_and_scrape_frame, text='Fantasy Settings', command=self.view_fantasy_settings)
@@ -155,14 +150,9 @@ class MainMenuFrame(Frame):
         self.end_year_menu.grid(row=2, column=1, sticky='w')
         self.end_year_menu.config(width=16)
 
-        # Fantasy Settings button
+        # Scrape Data button
         # -----------------------
 
-        # Fantasy Settings button (not contained in its own frame).
-        # self.scrape_data_button = Button(main_frame, text='Fantasy Settings', command=self.view_fantasy_settings)
-        # self.scrape_data_button.grid(row=4, column=0)
-
-        # Scrape Data button.
         self.scrape_data_button = Button(main_frame, text='Scrape Data', command=self.scrape_data)
         self.scrape_data_button.grid(row=4, column=0)
 
@@ -215,7 +205,6 @@ class MainMenuFrame(Frame):
         self.option_menu_var.set('Passing')
 
         # Enable the fantasy settings button.
-        # self.scrape_data_button.state(['!disabled'])
         self.fantasy_settings_button['state'] = 'normal'
 
     def set_pro_ref_table_types(self):
