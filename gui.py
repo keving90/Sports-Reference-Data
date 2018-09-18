@@ -89,11 +89,13 @@ class MainMenuFrame(Frame):
         # ----------------------------------------------
 
         # Set Save Location button opens folder browser to select CSV file's save location.
-        self.save_location_button = Button(save_and_scrape_frame, text='Set Save Location', command=self.get_save_location)
+        self.save_location_button = Button(save_and_scrape_frame, text='Set Save Location',
+                                           command=self.get_save_location)
         self.save_location_button.grid(row=0, column=0, padx=50)
 
         # Fantasy Settings button.
-        self.fantasy_settings_button = Button(save_and_scrape_frame, text='Fantasy Settings', command=self.view_fantasy_settings)
+        self.fantasy_settings_button = Button(save_and_scrape_frame, text='Fantasy Settings',
+                                              command=self.view_fantasy_settings)
         self.fantasy_settings_button.grid(row=0, column=1, padx=50)
 
         # Option menus
