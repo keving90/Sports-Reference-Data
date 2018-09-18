@@ -71,7 +71,7 @@ class Player(object):
             # These qualities are found when scraping from www.pro-football-reference.com.
             # '*' in the player's name indicates a Pro Bowl appearance.
             # '+' in the player's name indicates a First-Team All-Pro award.
-            # '%' is included in the catch percentage stat on pro-football reference
+            # '%' is included in the catch percentage stat on pro-football reference.
             if stat.endswith('*+'):
                 stat = stat[:-2]
             elif stat.endswith('%') or stat.endswith('*') or stat.endswith('+'):
@@ -79,8 +79,15 @@ class Player(object):
 
             # Set the class attribute.
             if not stat:
-                # The data is empty. Assign a numpy.NaN value to the attribute.
-                setattr(self, attr, np.NaN)
+                # No data exists for this stat in the table. Give the attribute:
+                # Empty string if data_type is string, or
+                # numpy.NaN if data_type is float or integer.
+                if data_type == str:
+                    setattr(self, attr, '')
+                elif data_type == float or data_type == int:
+                    setattr(self, attr, np.NaN)
+                else:
+                    raise ValueError('Player object can only handle string, float, and integer data types.')
             else:
                 # Set the attribute as usual.
                 # Get rid of a comma found in numerical stats if needed.
