@@ -95,12 +95,6 @@ class ProFbRefScraper(object):
                     'scrimmage_yards': int,
                     'rush_rec_td': int,
                     'fumbles': int  # all fumbles (not just fumbles lost)
-
-                    # 'all_purpose_ypg': int,
-                    # 'ap_yards_per_touch': float,
-                    # 'scrimmage_yards': int,
-                    # 'rush_rec_td': int,
-                    # 'fumbles': int  # all fumbles (not just fumbles lost)
                 }
             },
             'passing': {
