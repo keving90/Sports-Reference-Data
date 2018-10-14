@@ -82,8 +82,15 @@ class MainMenuFrame(Frame):
         save_and_scrape_frame = Frame(main_frame)
         save_and_scrape_frame.grid(row=2, column=0)
 
-        # Data file's save directory location.
-        self.directory = None
+        # Data file's save directory location. Use a text file to get previous save directory.
+        with open('save_dir.txt', 'r') as file:
+            save_dir = file.readline()
+            if not save_dir:
+                # Text file is blank, so no save directory has been specified.
+                self.directory = None
+            else:
+                # Use the previous save directory.
+                self.directory = save_dir
 
         # Set Save Location and Fantasy Settings buttons
         # ----------------------------------------------
@@ -287,8 +294,14 @@ class MainMenuFrame(Frame):
             entry.grid(row=row_num, column=1, sticky='w')
 
     def get_save_location(self):
-        """Prompts user to choose directory to save data files in."""
+        """
+        Prompts user to choose directory to save data files in. Writes new save location to a file to remember the
+        directory.
+        """
         self.directory = askdirectory()
+        with open('save_dir.txt', 'w') as file:
+            # Write new save directory to file for storage.
+            file.write(self.directory)
 
     def display_invalid_filename_msg(self):
         """Displays error message to user when the data file's name contains invalid characters."""
@@ -444,31 +457,8 @@ class MainMenuFrame(Frame):
 
     """
     TODO:
-    
-    CHECK STRING INPUT FOR FANTASY SETTINGS NUMBERS
-    
-    
-    DONE:
-    
-    SET FANTASY SETTINGS DICT FOR FOOTBALL DATABASE OBJECT
-    
-    SHOULD BE ABLE TO NAME THE FILE
-    Fix tables names in drop-down menu.
-    
-    Initialize fantasy settings to default in __init__.
-    Provide fantasy settings fields in top level frame.
-    User can press 'save' button, which will give instance variables new values.
-    
-    It looks like a save button is not needed.
-    
-    Initialize variables inside __init__
-        Declare as StringVar()
-        Use set() to give initial value
         
-    To create label/entry combo:
-        use dict
-        key = category
-        value = label message 
+    Keep stat category drop down menu item same when changing sources.
     """
 
 
