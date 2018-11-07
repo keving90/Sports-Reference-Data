@@ -35,6 +35,15 @@ class MainMenuFrame(Frame):
         # Data Source
         # -----------
 
+        # Possible tables to scrape from.
+        self._fbdb_tables = ['Passing', 'Rushing', 'Receiving', 'Scoring', 'Fumbles', 'Kick Returns', 'Punt Returns',
+                             'Kicking', 'Scrimmage Yards', 'All Purpose Yards', 'Fantasy Offense']
+        self._pro_ref_tables = ['Passing', 'Rushing', 'Receiving', 'Scoring', 'Kicking', 'Returns', 'Defense',
+                                'Fantasy']
+
+        # Get the table names that are shared by both sources.
+        self._shared_tables = set(self._fbdb_tables).intersection(self._pro_ref_tables)
+
         # Frame containing source label and radio buttons.
         data_source_frame = Frame(main_frame)
         data_source_frame.grid(row=0, column=0, sticky='w')
@@ -52,7 +61,7 @@ class MainMenuFrame(Frame):
         fbdb_radio_button = Radiobutton(data_source_frame, text='Football Database',
                                         variable=self.data_source_var,
                                         value='0',
-                                        command=self.set_fbdb_table_types)
+                                        command=lambda: self.set_table_types('football_database'))
 
         fbdb_radio_button.grid(row=0, column=1, sticky='w')
 
@@ -61,7 +70,7 @@ class MainMenuFrame(Frame):
                                            text='Pro Football Reference',
                                            variable=self.data_source_var,
                                            value='1',
-                                           command=self.set_pro_ref_table_types)
+                                           command=lambda: self.set_table_types('pro-football-reference'))
 
         pro_ref_radio_button.grid(row=0, column=2, sticky='w')
 
@@ -108,13 +117,6 @@ class MainMenuFrame(Frame):
         # Option menus
         # ------------
 
-        # Option menu variables for when the Football Database source is selected.
-        # This data source is selected by default.
-        # fbdb_tables = ['all_purpose', 'passing', 'rushing', 'receiving', 'scoring', 'fumbles', 'kick_returns',
-        #                'punt_returns', 'kicking', 'scrimmage', 'fantasy_offense']
-        fbdb_tables = ['Passing', 'Rushing', 'Receiving', 'Scoring', 'Fumbles', 'Kick Returns', 'Punt Returns',
-                       'Kicking', 'Scrimmage Yards', 'All Purpose Yards', 'Fantasy Offense']
-
         # List of NFL seasons whose data can be scraped.
         # These years range from the beginning of the Super Bowl Era to present day.
         years = [year for year in range(2018, 1939, -1)]
@@ -124,8 +126,8 @@ class MainMenuFrame(Frame):
         option_menu_frame.grid(row=3, column=0)
 
         # Table type option menu variable.
-        self.option_menu_var = StringVar(option_menu_frame)
-        self.option_menu_var.set('Passing')
+        self.table_type_option_var = StringVar(option_menu_frame)
+        self.table_type_option_var.set('Passing')
 
         # Start year variable.
         self.start_year_option_var = StringVar(option_menu_frame)
@@ -138,8 +140,8 @@ class MainMenuFrame(Frame):
         # Table type label and option menu.
         self.scrape_label = Label(option_menu_frame, text='Table to scrape from:')
         self.scrape_label.grid(row=0, column=0, sticky='e')
-        self.table_types_menu = OptionMenu(option_menu_frame, self.option_menu_var, *fbdb_tables,
-                                           command=self.option_menu_var.set)
+        self.table_types_menu = OptionMenu(option_menu_frame, self.table_type_option_var, *self._fbdb_tables,
+                                           command=self.table_type_option_var.set)
         self.table_types_menu.grid(row=0, column=1, sticky='w')
         self.table_types_menu.config(width=16)
 
@@ -196,44 +198,49 @@ class MainMenuFrame(Frame):
             self.fantasy_settings[cat] = StringVar()
             self.fantasy_settings[cat].set(value)
 
-    def set_fbdb_table_types(self):
-        """Gives the self.table_types_menu OptionMenu the relevant Football Database table types."""
-        # Relevant table types.
-        fbdb_tables = ['Passing', 'Rushing', 'Receiving', 'Scoring', 'Fumbles', 'Kick Returns', 'Punt Returns',
-                       'Kicking', 'Scrimmage Yards', 'All Purpose Yards', 'Fantasy Offense']
+    def set_table_types(self, source):
+        """
+        Gives the self.table_types_menu OptionMenu the relevant table types based on the data source. Some table types
+        exist in both data sources. When a new data source is chosen while one of these table types is selected, the
+        table type in the drop down OptionMenu will still be selected.
+        """
+
+        # Use certain tables based on the data sources chosen by the user.
+        if source.lower() == "football_database":
+            tables = self._fbdb_tables
+        elif source.lower() == "pro-football-reference":
+            tables = self._pro_ref_tables
+        else:
+            raise ValueError("Invalid source type for self.set_table_types().")
+
+        # Save the previous table type if it exists in both data sources so user will not have to reselect the table
+        # when changing sources.
+        if self.table_type_option_var.get() in self._shared_tables:
+            previous_table = self.table_type_option_var.get()
+        else:
+            previous_table = None
 
         # Clear the current OptionMenu choices.
         self.table_types_menu.children['menu'].delete(0, 'end')
 
         # Add new OptionMenu choices.
-        for table in fbdb_tables:
+        for table in tables:
             self.table_types_menu.children['menu'].add_command(label=table,
-                                                               command=lambda t=table: self.option_menu_var.set(t))
+                                                               command=lambda t=table: self.table_type_option_var.set(t))
 
         # Set the default OptionMenu table selection.
-        self.option_menu_var.set('Passing')
+        if previous_table is None:
+            # Previously selected table not in newly selected data source - use 'Passing' as default.
+            self.table_type_option_var.set('Passing')
+        else:
+            # Previously selected table exists in both data sources - leave table name in the OptionMenu
+            self.table_type_option_var.set(previous_table)
 
-        # Enable the fantasy settings button.
-        self.fantasy_settings_button['state'] = 'normal'
-
-    def set_pro_ref_table_types(self):
-        """Gives the self.table_types_menu OptionMenu the relevant Pro Football Reference table types."""
-        # Relevant table types.
-        pro_ref_tables = ['Passing', 'Rushing', 'Receiving', 'Scoring', 'Kicking', 'Returns', 'Defense', 'Fantasy']
-
-        # Clear the current OptionMenu choices.
-        self.table_types_menu.children['menu'].delete(0, 'end')
-
-        # Add new OptionMenu choices.
-        for table in pro_ref_tables:
-            self.table_types_menu.children['menu'].add_command(label=table,
-                                                               command=lambda t=table: self.option_menu_var.set(t))
-
-        # Set the default OptionMenu table selection.
-        self.option_menu_var.set('Passing')
-
-        # Disable the fantasy settings button.
-        self.fantasy_settings_button['state'] = 'disabled'
+        # Enable the fantasy settings button based on data source.
+        if source.lower() == 'football_database':
+            self.fantasy_settings_button['state'] = 'normal'
+        elif source.lower() == 'pro-football-reference':
+            self.fantasy_settings_button['state'] = 'disabled'
 
     def view_fantasy_settings(self):
         """
@@ -425,7 +432,7 @@ class MainMenuFrame(Frame):
 
             # Table type names in the option menu are different from the ones used to scrape the data.
             # Get the corresponding table type name for data scraping methods.
-            table_name = table_names[self.option_menu_var.get()]
+            table_name = table_names[self.table_type_option_var.get()]
 
             # Get the file name provided by the user, and check for invalid characters in it.
             file_name = self.get_file_name(table_name)
@@ -457,8 +464,10 @@ class MainMenuFrame(Frame):
 
     """
     TODO:
-        
-    Keep stat category drop down menu item same when changing sources.
+    Write unit tests for testing data scraping.
+    
+    DONE:
+    Keep stat category drop down menu item same when changing sources if stat is in both sources.
     """
 
 
