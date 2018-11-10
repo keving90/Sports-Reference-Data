@@ -338,6 +338,11 @@ class FbDbScraper(object):
         self._valid_fantasy_keys = self._fantasy_settings_dict.keys()
 
     @property
+    def tables(self):
+        """getter: Returns a list of the possible table types to scrape from."""
+        return list(self._tables_dict.keys())
+
+    @property
     def fantasy_settings(self):
         """
         getter: Return the current fantasy settings dictionary.
