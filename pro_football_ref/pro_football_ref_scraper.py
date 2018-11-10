@@ -369,6 +369,11 @@ class ProFbRefScraper(object):
             }
         }
 
+    @property
+    def tables(self):
+        """getter: Returns a list of the possible table types to scrape from."""
+        return list(self._tables_dict.keys())
+
     def get_data(self, start_year, end_year, table_type):
         """
         Gets a data frame of NFL player stats for one for more seasons based on the desired stat table.
