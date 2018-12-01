@@ -65,7 +65,7 @@ class ProFbRefScraper(object):
         # Also used to create columns in a data frame.
         self._tables_dict = {
             'rushing': {
-                'table_id': 'rushing_and_receiving',
+                'table_id': 'rushing',
                 'all_columns': {
                     'name': str,
                     'player_url': str,
@@ -80,20 +80,6 @@ class ProFbRefScraper(object):
                     'longest_run': int,
                     'yards_per_rush': float,
                     'yards_per_game': float,
-                    'attempts_per_game': float,
-                    'targets': int,
-                    'receptions': int,
-                    'rec_yards': int,
-                    'yards_per_rec': float,
-                    'rec_td': int,
-                    'longest_rec': int,
-                    'rec_per_game': float,
-                    'rec_yards_per_game': float,
-                    'catch_percentage': float,
-                    'touches': int,
-                    'yards_per_touch': float,
-                    'scrimmage_yards': int,
-                    'rush_rec_td': int,
                     'fumbles': int  # all fumbles (not just fumbles lost)
                 }
             },
