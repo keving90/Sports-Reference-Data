@@ -35,11 +35,13 @@ class MainMenuFrame(Frame):
         # Data Source
         # -----------
 
-        # Possible tables to scrape from.
-        self._fbdb_tables = ['Passing', 'Rushing', 'Receiving', 'Scoring', 'Fumbles', 'Kick Returns', 'Punt Returns',
-                             'Kicking', 'Scrimmage Yards', 'All Purpose Yards', 'Fantasy Offense']
-        self._pro_ref_tables = ['Passing', 'Rushing', 'Receiving', 'Scoring', 'Kicking', 'Returns', 'Defense',
-                                'Fantasy']
+        # Create objects to get the possible tables to scrape from
+        fb_db_obj = FbDbScraper()
+        pro_ref_obj = ProFbRefScraper()
+
+        # Possible tables to scrape from. Formatted for GUI's drop-down OptionMenu
+        self._fbdb_tables = self.format_table_strings(fb_db_obj.tables)
+        self._pro_ref_tables = self.format_table_strings(pro_ref_obj.tables)
 
         # Get the table names that are shared by both sources.
         self._shared_tables = set(self._fbdb_tables).intersection(self._pro_ref_tables)
@@ -197,6 +199,16 @@ class MainMenuFrame(Frame):
         for cat, value in default_fantasy_settings.items():
             self.fantasy_settings[cat] = StringVar()
             self.fantasy_settings[cat].set(value)
+
+    def format_table_strings(self, table_list):
+        """Splits a list of strings up by underscore, capitalizes each word, and joins the string back together."""
+        final_tables = []
+        for table in table_list:
+            table_words = table.split('_')
+            capitalized_table = [word.capitalize() for word in table_words]
+            final_tables.append(' '.join(capitalized_table))
+
+        return final_tables
 
     def set_table_types(self, source):
         """
@@ -464,7 +476,14 @@ class MainMenuFrame(Frame):
 
     """
     TODO:
+    
+    FbDbScraper all_purpose_yards table now only goes back to 2010, need to account for this
+    
+    User should only be able to go back to 2010 for All Purpose Yards and Fantasy
+    
     Write unit tests for testing data scraping.
+    
+    Add tables attribute (list of tables as strings) to classes to make testing easier
     
     DONE:
     Keep stat category drop down menu item same when changing sources if stat is in both sources.
