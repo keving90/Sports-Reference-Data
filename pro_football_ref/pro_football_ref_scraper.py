@@ -265,6 +265,9 @@ class ProFbRefScraper(object):
                     'rec_yards': int,
                     'yards_per_rec': float,
                     'rec_td': int,
+                    'fumbles': int,
+                    'fumbles_lost': int,
+                    'total_td': int,  # touchdowns of any type
                     'two_pt_conversions_made': int,
                     'two_pt_conversion_passes': int,
                     'fan_points': int,  # Standard scoring. (football_db_scraper.py default settings)
