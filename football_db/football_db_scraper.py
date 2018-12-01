@@ -388,6 +388,10 @@ class FbDbScraper(object):
 
         :return: Data frame containing all players and their fantasy points total for the season.
         """
+        # Method uses "All Purpose Yards" data in the fantasy calculation, which only has data going back to 2010.
+        if start_year < 2010 or end_year < 2010:
+            raise ValueError("Cannot calculate fantasy data for years before 2010.")
+
         # Loop through dictionary keys, scraping a table and joining it to the "main data frame" each iteration. The
         # dictionary is ordered, so the 'all_purpose' key (for the All Purpose Yardage table) will always come first.
         # The 'all_purpose' data frame is used as the "main data frame" because it has the highest number of NFL
@@ -433,6 +437,11 @@ class FbDbScraper(object):
 
         :return: Big data frame of several data frames concatenated together.
         """
+        # Cannot scrape All Purpose Yards data before 2010 because it is not available.
+        if table_type.lower() == 'all_purpose':
+            if start_year < 2010 or end_year < 2010:
+                raise ValueError("All purpose yards for seasons before 2010 are not available.")
+
         # Get year range for iteration.
         year_range = self._get_year_range(start_year, end_year)
 
