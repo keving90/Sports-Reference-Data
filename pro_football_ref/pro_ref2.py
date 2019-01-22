@@ -9,6 +9,18 @@ class ProRefScraper(object):
     def __init__(self):
         self._tables = ['rushing', 'passing', 'receiving', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
         self._possible_cols_for_all_seasons = None
+        self._kicking_cols_to_rename = {
+            'fga1': 'att_0-19',
+            'fgm1': 'made_0-19',
+            'fga2': 'att_20-29',
+            'fgm2': 'made_20-29',
+            'fga3': 'att_30-39',
+            'fgm3': 'made_30-39',
+            'fga4': 'att_40-49',
+            'fgm4': 'made_40-49',
+            'fga5': 'att_50_plus',
+            'fgm5': 'made_50_plus'
+        }
 
     @property
     def tables(self):
@@ -31,7 +43,7 @@ class ProRefScraper(object):
                            + "Can only currently handle the following table names: "
                            + str(self._tables))
 
-        # if self._possible_cols_for_all_seasons:
+        # Different years of data may have different columns. Keeps track of all possibilities.
         self._possible_cols_for_all_seasons = []
 
         # Get seasons to iterate through.
@@ -47,15 +59,16 @@ class ProRefScraper(object):
         # player_url is not an index, not a df column
         self._possible_cols_for_all_seasons.remove('player_url')
 
-        # Reorder the columns, and drop the unnecessary ones.
+        # Reorder the columns since pd.concat() may sort them if some data frames don't have the same columns.
         # Need to create a deep copy in order to prevent a SettingWithCopy warning.
         reordered_df = big_df[self._possible_cols_for_all_seasons].copy()
 
-        # df2 = big_df.reindex_axis(big_df.columns, axis=1)
-
-        # big_df = self._replace_nan(big_df, table_type)
-
+        # Change data from string to numeric, where applicable.
         reordered_df = reordered_df.apply(pd.to_numeric, errors='ignore')
+
+        # Rename some columns if kicking data is being scraped.
+        if table_type.lower() == 'kicking':
+            reordered_df = reordered_df.rename(index=str, columns=self._kicking_cols_to_rename)
 
         return reordered_df
 
@@ -84,7 +97,7 @@ class ProRefScraper(object):
 
     def _get_single_season(self, year, table_type):
         """
-        Scrapes a table from www.footballdb.com based on the table_type and puts it into a Pandas data frame.
+        Scrapes a table from Pro Football Reference based on the table_type and puts it into a Pandas data frame.
 
         :param year: Season's year.
         :param table_type: String representing the type of table to be scraped.
@@ -92,41 +105,17 @@ class ProRefScraper(object):
         :return: A data frame of the scraped table for a single season.
         """
 
-        # Don't need to check for valid table type because it's done in get_data()
-
-
-        # Scrape a given table from www.footballdb.com and create a data frame.
-        # player_list = self._get_player_result_set(year, table_type)
-        # player_dicts = self._get_player_stats(player_list, table_type)
-        # df = self._make_df(year, player_dicts, table_type)
-
-        # Get player data
-        # Extract player stats
-        # Make DataFrame
-
-        # Need something to get table head and 'data-stat' - need to get this every season since table header can
-        # change between years
+        # STILL NEED TO HANDLE KICKING SOMEHOW
 
         table_rows = self._get_table(year, table_type)
-
-        # header_row = self._get_table_headers(table_rows, table_type)
-        table_head = table_rows.find('thead')
-
-        main_columns = self._get_main_header_cols(table_head, table_type)
-
-        df_cols = self._get_df_columns(main_columns, table_type)
-
-        if table_type.lower() in ['kicking', 'fantasy']:
-            over_header = self._get_over_header_cols(main_columns)
-
+        header_row = self._get_table_headers(table_rows)
+        df_cols = self._get_df_columns(header_row, table_type)
         self._get_possible_cols_for_all_seasons(df_cols)
         player_elements = self._get_player_elements(table_rows)
         season_data = self._get_player_stats(player_elements)
-        df = self._make_df(year, season_data, df_cols)
 
-        return df
-
-        # return df
+        # final data frame for single season
+        return self._make_df(year, season_data, df_cols, table_type)
 
     def _get_table(self, year, table_type):
         """
@@ -145,29 +134,18 @@ class ProRefScraper(object):
         # Return the table containing the data.
         return soup.find('table', id=table_type)
 
-    def _get_main_header_cols(self, header, table_type):
-        col_names = header.find_all('tr')[-1]
-        return col_names.find_all('th')
-
-    def _get_table_headers(self, table_element, table_type):
+    def _get_table_headers(self, table_element):
         """
 
         :param table_element:
         :return:
         """
-        # tbody is the table's body
-        # Get the body of the table
+        # 'thead' contains the table's header row
         head = table_element.find('thead')
 
         # tr refers to a table row
         # Each element in player_list has data for a single player.
-        # This will also collect descriptions of each column found in the web page's table, which
-        # is filtered out in create_player_objects().
         col_names = head.find_all('tr')[-1]
-
-        if table_type.lower() == 'kicking':
-            over_header = head.find_all('tr')[0]
-            # col_categories = over_header.fin
 
         # th is a table header cell in HTML
         return col_names.find_all('th')
@@ -196,24 +174,6 @@ class ProRefScraper(object):
         #     self._possible_cols_for_all_seasons.insert(1, 'player_url')
 
         return cols_for_single_season
-
-    def _get_over_header_cols(self, main_columns):
-        # cols_for_single_season = [header_cell['data-stat'] for header_cell in header_elements[1:]]
-        # cols_for_single_season.insert(1, 'player_url')
-        # h = header[5]['data-over-header']
-        # col_names = main_columns.find_all('tr')[0]
-        # c = col_names.find_all('th')
-        # h_cell = c[5]['class'][1]
-        over_header_cols = []
-        for col in main_columns:
-            try:
-                over_header_cols.append(col['data-over-header'])
-            except KeyError:
-                continue
-
-        # h = main_columns[0]['data-over-header']
-        pass
-
 
     def _get_possible_cols_for_all_seasons(self, single_season_cols):
         """
@@ -315,7 +275,7 @@ class ProRefScraper(object):
         # Return URL string
         return href[0]['href']
 
-    def _make_df(self, year, league_stats, column_headers):
+    def _make_df(self, year, league_stats, column_headers, table_type):
         """
         Makes a data frame using a dictionary's keys as column names and list of player_object.__dict__'s as data. The
         player's unique URL is used as the data frame's index.
@@ -345,7 +305,7 @@ class ProRefScraper(object):
 
         return df
 
+
 ref = ProRefScraper()
-# df = ref.get_data(2018, 2018, 'kicking')
-df = ref.get_data(2018, 2018, 'fantasy')
+df = ref.get_data(2018, 2018, 'kicking')
 df.to_csv('kicking2018.csv')
