@@ -2,8 +2,7 @@ import requests
 import bs4
 import numpy as np
 import pandas as pd
-from player import Player
-from datetime import datetime
+
 
 class ProRefScraper(object):
     def __init__(self):
@@ -27,21 +26,20 @@ class ProRefScraper(object):
         """getter: Returns a list of the possible table types to scrape from."""
         return self._tables
 
-    def get_data(self, start_year, end_year, table_type):
+    def get_data(self, start_year, end_year, table_type, remove_pro_bowl=True, remove_all_pro=True):
         """
         Gets a data frame of NFL player stats for one for more seasons.
 
         :param start_year: First season to scrape data from (string or int)
         :param end_year: Final season (inclusive) to scrape data from (string or int)
         :param table_type: Stat category to scrape
+        :param remove_pro_bowl:
+        :param remove_all_pro:
 
         :return: DataFrame of one or more seasons of data for a given stat.
         """
-        # Only scrapes from tables in self._tables_dict.keys().
-        if table_type.lower() not in self._tables:
-            raise KeyError("Error, make sure to specify table_type. "
-                           + "Can only currently handle the following table names: "
-                           + str(self._tables))
+        self._check_table_type(table_type)
+        start_year, end_year = self._check_start_and_end_years(start_year, end_year)
 
         # Different years of data may have different columns. Keeps track of all possibilities.
         self._possible_cols_for_all_seasons = []
@@ -50,27 +48,31 @@ class ProRefScraper(object):
         year_range = self._get_year_range(start_year, end_year)
 
         # Scrape data for each season.
-        df_list = [self._get_single_season(year, table_type) for year in year_range]
+        data_frames = [self._get_single_season(year, table_type) for year in year_range]
 
         # Concatenate all seasons into one big data frame.
         # sort = True because of FutureWarning when concatenating data frames with different number of columns (1/18/19)
-        big_df = pd.concat(df_list, sort=True)
+        big_df = pd.concat(data_frames, sort=True)
 
         # player_url is not an index, not a df column
         self._possible_cols_for_all_seasons.remove('player_url')
+        self._possible_cols_for_all_seasons += ['year']
 
         # Reorder the columns since pd.concat() may sort them if some data frames don't have the same columns.
         # Need to create a deep copy in order to prevent a SettingWithCopy warning.
-        reordered_df = big_df[self._possible_cols_for_all_seasons].copy()
+        big_df = big_df[self._possible_cols_for_all_seasons].copy()
 
         # Change data from string to numeric, where applicable.
-        reordered_df = reordered_df.apply(pd.to_numeric, errors='ignore')
+        big_df = big_df.apply(pd.to_numeric, errors='ignore')
+
+        if remove_pro_bowl or remove_all_pro:
+            self._remove_player_accolades(big_df, remove_pro_bowl, remove_all_pro)
 
         # Rename some columns if kicking data is being scraped.
         if table_type.lower() == 'kicking':
-            reordered_df = reordered_df.rename(index=str, columns=self._kicking_cols_to_rename)
+            big_df = big_df.rename(index=str, columns=self._kicking_cols_to_rename)
 
-        return reordered_df
+        return big_df
 
     def _get_year_range(self, start_year, end_year):
         """
@@ -81,12 +83,6 @@ class ProRefScraper(object):
 
         :return: A range iterator.
         """
-        # Convert years to string.
-        if isinstance(start_year, str):
-            start_year = int(start_year)
-        if isinstance(end_year, str):
-            end_year = int(end_year)
-
         # Build range iterator depending on how start_year and end_year are related.
         if start_year > end_year:
             year_range = range(start_year, end_year - 1, -1)
@@ -94,6 +90,21 @@ class ProRefScraper(object):
             year_range = range(start_year, end_year + 1)
 
         return year_range
+
+    def _check_start_and_end_years(self, start_year, end_year):
+        # Convert years to int.
+        if not isinstance(start_year, int):
+            try:
+                start_year = int(start_year)
+            except ValueError:
+                raise ValueError('Must input number as type string or int for start_year.')
+        if isinstance(end_year, str):
+            try:
+                end_year = int(end_year)
+            except ValueError:
+                raise ValueError('Must input number as type string or int for end_year.')
+
+        return start_year, end_year
 
     def _get_single_season(self, year, table_type):
         """
@@ -104,8 +115,6 @@ class ProRefScraper(object):
 
         :return: A data frame of the scraped table for a single season.
         """
-
-        # STILL NEED TO HANDLE KICKING SOMEHOW
 
         table_rows = self._get_table(year, table_type)
         header_row = self._get_table_headers(table_rows)
@@ -131,8 +140,13 @@ class ProRefScraper(object):
         # Create a BeautifulSoup object.
         soup = bs4.BeautifulSoup(response.text, 'lxml')
 
+        table = soup.find('table', id=table_type)
+
+        if table is None:
+            raise AttributeError("Table for '" + table_type + "' stats not found for year " + str(year) + ".")
+
         # Return the table containing the data.
-        return soup.find('table', id=table_type)
+        return table
 
     def _get_table_headers(self, table_element):
         """
@@ -143,7 +157,7 @@ class ProRefScraper(object):
         # 'thead' contains the table's header row
         head = table_element.find('thead')
 
-        # tr refers to a table row
+        # 'tr' refers to a table row
         # Each element in player_list has data for a single player.
         col_names = head.find_all('tr')[-1]
 
@@ -156,22 +170,8 @@ class ProRefScraper(object):
         :param header_elements:
         :return:
         """
-        # cols_for_single_season = []
-        #
-        # if not self._possible_cols_for_all_seasons:
-        #     self._possible_cols_for_all_seasons = []
-        #
-        # for header_cell in header_elements[1:]:
-        #     cols_for_single_season.append(header_cell['data-stat'])
-        #
-        #     if header_cell['data-stat'] not in self._possible_cols_for_all_seasons:
-        #         self._possible_cols_for_all_seasons.append(header_cell['data-stat'])
-
         cols_for_single_season = [header_cell['data-stat'] for header_cell in header_elements[1:]]
         cols_for_single_season.insert(1, 'player_url')
-
-        # if 'player_url' not in self._possible_cols_for_all_seasons:
-        #     self._possible_cols_for_all_seasons.insert(1, 'player_url')
 
         return cols_for_single_season
 
@@ -305,7 +305,30 @@ class ProRefScraper(object):
 
         return df
 
+    def _remove_player_accolades(self, df, remove_pro_bowl, remove_all_pro):
+        """
+
+        :param remove_pro_bowl:
+        :param remove_all_pro:
+        :return:
+        """
+        if remove_pro_bowl and not remove_all_pro:
+            df['player'] = df['player'].apply(lambda x: ''.join(x.split('*')))
+        elif remove_all_pro and not remove_pro_bowl:
+            df['player'] = df['player'].apply(lambda x: ''.join(x.split('+')))
+        else:
+            df['player'] = df['player'].apply(lambda x: x[:-2])
+
+    def _check_table_type(self, table_type):
+        # Only scrapes from tables in self._tables.
+        if table_type.lower() not in self._tables:
+            raise KeyError("Error, make sure to specify table_type. "
+                           + "Can only currently handle the following table names: "
+                           + str(self._tables))
+
+# NEED FUNCTIONS TO GET RID OF PRO BOWL AND ALL PRO (*+). MAKE IT OPTIONAL.
 
 ref = ProRefScraper()
-df = ref.get_data(2018, 2018, 'kicking')
-df.to_csv('kicking2018.csv')
+# df = ref.get_data(2018, 2018, 'passing')
+df = ref.get_data('2017', '2017', 'passing')
+df.to_csv('passing2017.csv')
