@@ -53,7 +53,7 @@ class ProRefScraper(object):
         :param remove_pro_bowl:
         :param remove_all_pro:
 
-        :return: DataFrame of one or more seasons of data for a given stat.
+        :return: Data frame of one or more seasons of data for a given stat.
         """
         self._check_table_type(table_type)
         start_year, end_year = self._check_start_and_end_years(start_year, end_year)
@@ -63,27 +63,6 @@ class ProRefScraper(object):
         else:
             df = self._get_multiple_seasons(start_year, end_year, table_type)
 
-        # # Different years of data may have different columns. Keeps track of all possibilities.
-        # self._possible_cols_for_all_seasons = []
-        #
-        # # Get seasons to iterate through.
-        # year_range = self._get_year_range(start_year, end_year)
-        #
-        # # Scrape data for each season.
-        # data_frames = [self._get_single_season(year, table_type) for year in year_range]
-        #
-        # # Concatenate all seasons into one big data frame.
-        # # sort = True because of FutureWarning when concatenating data frames with different number of columns (1/18/19)
-        # big_df = pd.concat(data_frames, sort=True)
-        #
-        # self._possible_cols_for_all_seasons.remove('player_url')  # player_url is an index, not a df column
-        # self._possible_cols_for_all_seasons += ['year']
-        #
-        # # Reorder the columns since pd.concat() may sort them if some data frames don't have the same columns.
-        # # Need to create a deep copy in order to prevent a SettingWithCopy warning.
-        # big_df = big_df[self._possible_cols_for_all_seasons].copy()
-
-        """"""
         df.set_index('player_url', inplace=True)
 
         # Change data from string to numeric, where applicable.
@@ -92,38 +71,33 @@ class ProRefScraper(object):
         if remove_pro_bowl or remove_all_pro:
             self._remove_player_accolades(df, remove_pro_bowl, remove_all_pro)
 
-        # Rename some columns if kicking data is being scraped.
+        # Rename some columns so field goal distance is obvious.
         if table_type.lower() == 'kicking':
             df = df.rename(index=str, columns=self._kicking_cols_to_rename)
 
         return df
 
     def _get_multiple_seasons(self, start_year, end_year, table_type):
-        # Different years of data may have different columns. Keeps track of all possibilities.
-        # self._possible_cols_for_all_seasons = []
-
         # Get seasons to iterate through.
         year_range = self._get_year_range(start_year, end_year)
 
         data_frames = []
 
+        # Get individual df for each season.
         for year in year_range:
-            df = self._get_single_season(year, table_type)
-            data_frames.append(df)
-            self._add_possible_cols_for_all_seasons(list(df.columns))
+            single_season_df = self._get_single_season(year, table_type)
+            data_frames.append(single_season_df)
+            self._add_possible_cols_for_all_seasons(list(single_season_df.columns))
 
-        # Scrape data for each season.
-        # data_frames = [self._get_single_season(year, table_type) for year in year_range]
+        # Combine all seasons into one large df.
+        # sort = False prevents FutureWarning when concatenating data frames with different number of columns (1/18/19)
+        big_df = pd.concat(data_frames, sort=False)
 
-        # Concatenate all seasons into one big data frame.
-        # sort = True because of FutureWarning when concatenating data frames with different number of columns (1/18/19)
-        big_df = pd.concat(data_frames, sort=True)
-
-        self._possible_cols_for_all_seasons += ['year']
-
-        # Reorder the columns since pd.concat() may sort them if some data frames don't have the same columns.
-        # Need to create a deep copy in order to prevent a SettingWithCopy warning.
-        big_df = big_df[self._possible_cols_for_all_seasons].copy()
+        # if self._possible_cols_for_all_seasons[-1] != 'year':
+        #     self._possible_cols_for_all_seasons.remove('year')
+        #     self._possible_cols_for_all_seasons.append('year')
+        #     # Reorder columns. Need to create a deep copy in order to prevent a SettingWithCopy warning.
+        #     big_df = big_df[self._possible_cols_for_all_seasons].copy()
 
         return big_df
 
@@ -210,10 +184,9 @@ class ProRefScraper(object):
         head = table_element.find('thead')
 
         # 'tr' refers to a table row
-        # Each element in player_list has data for a single player.
         col_names = head.find_all('tr')[-1]
 
-        # th is a table header cell in HTML
+        # 'th' is a table header cell
         return col_names.find_all('th')
 
     def _get_df_columns(self, header_elements, table_type):
@@ -341,7 +314,8 @@ class ProRefScraper(object):
         # df_columns = list(self._tables_dict[table_type]['all_columns'].keys())
 
         df = pd.DataFrame(data=league_stats, columns=column_headers)
-        df['year'] = year
+        df.insert(loc=3, column='year', value=year)
+        # df['year'] = year
 
         # Combined player_url + year acts as a unique identifier for a player's season of data.
         df['player_url'] = df['player_url'].apply(lambda x: x + str(year))
