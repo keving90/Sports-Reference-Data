@@ -5,48 +5,48 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import pytest
 from pro_football_ref.pro_football_ref_scraper import ProFbRefScraper
 from football_db.football_db_scraper import FbDbScraper
+from pro_football_ref.pro_ref2 import ProRefScraper
 
 
 class TestProReferenceScraper(object):
 
     @pytest.fixture
     def create_pro_ref_scraper(self):
-        return ProFbRefScraper()
+        return ProRefScraper()
 
+    # Oldest year: 1932
     def test_pro_football_ref_scraper_rushing(self, create_pro_ref_scraper):
-        create_pro_ref_scraper.get_data(2017, 2018, 'rushing')  # Two seasons of data
-        create_pro_ref_scraper.get_data(1941, 1942, 'rushing')
+        create_pro_ref_scraper.get_data(1941, 1900, 'rushing')    # Passed on previous run
+        # create_pro_ref_scraper.get_data(1941, 1942, 'rushing')
 
+    # Oldest year: 1932
     def test_pro_football_ref_scraper_passing(self, create_pro_ref_scraper):
-        create_pro_ref_scraper.get_data(2017, 2018, 'passing')
-        create_pro_ref_scraper.get_data(1941, 1942, 'passing')
+        # 2006 has QBR, 2005 does not
+        create_pro_ref_scraper.get_data(1941, 1900, 'passing')    # Failed on previous run
+        # create_pro_ref_scraper.get_data(1941, 1942, 'passing')
 
     # Catch % stat not available before 1992
     def test_pro_football_ref_scraper_receiving(self, create_pro_ref_scraper):
-        create_pro_ref_scraper.get_data(2017, 2018, 'receiving')
-        create_pro_ref_scraper.get_data(1941, 1942, 'receiving')
+        create_pro_ref_scraper.get_data(2018, 1941, 'receiving')
+        # create_pro_ref_scraper.get_data(2017, 2018, 'receiving')
+        # create_pro_ref_scraper.get_data(1941, 1942, 'receiving')
 
     def test_pro_football_ref_scraper_kicking(self, create_pro_ref_scraper):
-        create_pro_ref_scraper.get_data(2017, 2018, 'kicking')
-        create_pro_ref_scraper.get_data(1941, 1942, 'kicking')
+        create_pro_ref_scraper.get_data(2018, 1941, 'kicking')
 
     # No data before 1941 available
     def test_pro_football_ref_scraper_returns(self, create_pro_ref_scraper):
-        create_pro_ref_scraper.get_data(2017, 2018, 'returns')
-        create_pro_ref_scraper.get_data(1941, 1942, 'returns')
+        create_pro_ref_scraper.get_data(2018, 1941, 'returns')
 
     def test_pro_football_ref_scraper_scoring(self, create_pro_ref_scraper):
-        create_pro_ref_scraper.get_data(2017, 2018, 'scoring')
-        create_pro_ref_scraper.get_data(1941, 1942, 'scoring')
+        create_pro_ref_scraper.get_data(2018, 1941, 'scoring')
 
     # No data before 1970 available
     def test_pro_football_ref_scraper_fantasy(self, create_pro_ref_scraper):
-        create_pro_ref_scraper.get_data(2017, 2018, 'fantasy')
-        create_pro_ref_scraper.get_data(1941, 1942, 'fantasy')
+        create_pro_ref_scraper.get_data(2018, 1970, 'fantasy')
 
     def test_pro_football_ref_scraper_defense(self, create_pro_ref_scraper):
-        create_pro_ref_scraper.get_data(2017, 2018, 'defense')
-        create_pro_ref_scraper.get_data(1941, 1942, 'defense')
+        create_pro_ref_scraper.get_data(2018, 1941, 'defense')
 
 
 class TestFootballDatabaseScraper(object):
