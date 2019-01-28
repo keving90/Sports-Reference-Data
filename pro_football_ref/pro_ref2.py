@@ -24,7 +24,6 @@ class ProFbRefScraper(object):
     """
     def __init__(self):
         self._tables = ['rushing', 'passing', 'receiving', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
-        self._possible_cols_for_all_seasons = None
         self._kicking_cols_to_rename = {
             'fga1': 'att_0-19',
             'fgm1': 'made_0-19',
@@ -45,7 +44,7 @@ class ProFbRefScraper(object):
 
     def get_data(self, start_year, end_year, table_type, remove_pro_bowl=True, remove_all_pro=True):
         """
-        Gets a data frame of NFL player stats for one for more seasons from Pro Football Reference.
+        Gets a data frame of NFL player stats from Pro Football Reference for one for more seasons.
         :param start_year: First season to scrape data from (string or int)
         :param end_year: Final season (inclusive) to scrape data from (string or int)
         :param table_type: Stat category to scrape
@@ -69,8 +68,8 @@ class ProFbRefScraper(object):
         if remove_pro_bowl or remove_all_pro:
             self._remove_player_accolades(df, remove_pro_bowl, remove_all_pro)
 
-        # Rename some columns so field goal distance is obvious.
         if table_type.lower() == 'kicking':
+            # For kicking data, rename some columns so field goal distance is obvious.
             df = df.rename(index=str, columns=self._kicking_cols_to_rename)
 
         return df
@@ -86,13 +85,8 @@ class ProFbRefScraper(object):
         # Get seasons to iterate through.
         year_range = self._get_year_range(start_year, end_year)
 
-        seasons = []
-
-        # Get individual df for each season.
-        for year in year_range:
-            single_season_df = self._get_single_season(year, table_type)
-            seasons.append(single_season_df)
-            self._add_possible_cols_for_all_seasons(list(single_season_df.columns))
+        # Get a data frame of each season.
+        seasons = [self._get_single_season(year, table_type) for year in year_range]
 
         # Combine all seasons into one large df.
         # sort = False prevents FutureWarning when concatenating data frames with different number of columns (1/18/19)
@@ -202,21 +196,6 @@ class ProFbRefScraper(object):
 
         return cols_for_single_season
 
-    def _add_possible_cols_for_all_seasons(self, single_season_cols):
-        """
-        Keeps track of all stat column names that will be used when scraping multiple seasons. Different seasons can
-        have different stat columns for a given category.
-        :param single_season_cols:
-        :return:
-        """
-        if not self._possible_cols_for_all_seasons:
-            # No columns accounted for yet.
-            self._possible_cols_for_all_seasons = single_season_cols
-        else:
-            # Check for column names that haven't been accounted for.
-            new_cols = list(set(single_season_cols) - set(self._possible_cols_for_all_seasons))
-            self._possible_cols_for_all_seasons += new_cols
-
     def _get_player_rows(self, table_element):
         """
         Gets a list of rows from an HTML table.
@@ -317,9 +296,9 @@ class ProFbRefScraper(object):
                            + "Can only currently handle the following table names: "
                            + str(self._tables))
 
-
-ref = ProRefScraper()
-# df = ref.get_data(2018, 2018, 'passing')
-df = ref.get_data('2005', '2006', 'passing')
-# df = ref.get_data('1969', '1969', 'fantasy')
-df.to_csv('passing05-06.csv')
+if __name__ == '__main__':
+    ref = ProFbRefScraper()
+    df = ref.get_data(2005, 2006, 'passing')
+    # df = ref.get_data('1932', '1900', 'scoring')
+    # df = ref.get_data('1969', '1969', 'fantasy')
+    df.to_csv('passing05-06.csv')
