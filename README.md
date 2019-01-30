@@ -1,14 +1,19 @@
 # NFL-Data-Python
 This repository contains Python programs capable of scraping data from [The Football Database](https://www.footballdb.com/) and [Pro Football Reference](https://www.pro-football-reference.com/).
 
+I am updating the code for both programs to optimize the scraping algorithms and make the programs more dynamic.
+
+Optimizing - The programs create an object for every row of data scraped. This is not a necessary step and leads to a more complex algorithm. Creating objects helps clean the data, but it is better to clean all of the data at once using Pandas when it is all in a data frame.
+
+More dynamic - Certain tables are missing columns. For instance, the Passing page for 2006 on Pro Football Reference has QBR. This column is completely missing for years 2005 and before. I have updated my code so this can be handled. Before, my program would crash because it was expecting a certain column format for the tables. I may need to update the Football Database scraper as well.
+
 ## Requirements
 
-* This package was built using Python 3.6.1, so dictionaries are ordered. This information is important because the `get_fantasy_df()` method in `football_db_scraper.py` requires an ordered dictionary. I highly recommend using a version of Python that is 3.6 or later.
 * Requests
 * BeautifulSoup4
 * NumPy
 * Pandas
-* Selenium (optional - if you want to run `football_db/yahoo_scraper.py`)
+* Built using Python 3.7
 
 ## Brief Overview
 
