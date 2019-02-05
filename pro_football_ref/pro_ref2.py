@@ -273,16 +273,32 @@ class ProFbRefScraper(object):
     def _remove_player_accolades(self, df, remove_pro_bowl, remove_all_pro):
         """
         Removes Pro Bowl ('*') and All-Pro ('+') accolades from a player's name.
-        :param remove_pro_bowl: Boolean indicates to remove this accolade.
-        :param remove_all_pro: Boolean indicates to remove this accolade.
+        :param remove_pro_bowl: Boolean; remove if True
+        :param remove_all_pro: Boolean; remove if True
         :return: No return value
         """
         if remove_pro_bowl and not remove_all_pro:
-            df['player'] = df['player'].apply(lambda x: ''.join(x.split('*')))
-        elif remove_all_pro and not remove_pro_bowl:
-            df['player'] = df['player'].apply(lambda x: ''.join(x.split('+')))
-        else:
-            df['player'] = df['player'].apply(lambda x: x[:-2])
+            # Remove '*' in player's name.
+            df['player'] = df['player'].apply(lambda x: ''.join(x.split('*')) if '*' in x else x)
+        elif not remove_pro_bowl and remove_all_pro:
+            # Remove '+' in player's name.
+            df['player'] = df['player'].apply(lambda x: ''.join(x.split('+')) if '+' in x else x)
+        elif remove_pro_bowl and remove_all_pro:
+            # Remove '*', '+', or '*+'.
+            df['player'] = df['player'].apply(self._remove_chars)
+
+    def _remove_chars(self, string):
+        """
+        Removes any combination of a single '*' and '+' from the end of a string.
+        :param string: String
+        :return: String
+        """
+        if string.endswith('*+'):
+            string = string[:-2]
+        elif string.endswith('*') or string.endswith('+'):
+            string = string[:-1]
+
+        return string
 
     def _check_table_type(self, table_type):
         """
@@ -296,9 +312,10 @@ class ProFbRefScraper(object):
                            + "Can only currently handle the following table names: "
                            + str(self._tables))
 
+
 if __name__ == '__main__':
     ref = ProFbRefScraper()
-    df = ref.get_data(2005, 2006, 'passing')
+    df = ref.get_data(2005, 2006, 'passing', remove_pro_bowl=True, remove_all_pro=False)
     # df = ref.get_data('1932', '1900', 'scoring')
     # df = ref.get_data('1969', '1969', 'fantasy')
     df.to_csv('passing05-06.csv')
