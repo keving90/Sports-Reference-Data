@@ -1,6 +1,6 @@
 """
 This module contains a ProFbRefScraper class used to scrape NFL data from www.pro-football-reference.com. It places
-the data into a Pandas data frame and saves it as a CSV file. Built using Python 3.7.0.
+the data into a Pandas data frame, which can be saved as a CSV file. Built using Python 3.7.0.
 """
 
 import requests
@@ -60,6 +60,7 @@ class ProFbRefScraper(object):
         else:
             df = self._get_multiple_seasons(start_year, end_year, table_type)
 
+        # Unique identifier for each player's particular season of data.
         df.set_index('player_url', inplace=True)
 
         # Change data from string to numeric, where applicable.
@@ -121,12 +122,12 @@ class ProFbRefScraper(object):
             try:
                 start_year = int(start_year)
             except ValueError:
-                raise ValueError('Must input number as type string or int for start_year.')
+                raise ValueError('Cannot convert start_year to type int.')
         if not isinstance(end_year, int):
             try:
                 end_year = int(end_year)
             except ValueError:
-                raise ValueError('Must input number as type string or int for end_year.')
+                raise ValueError('Cannot convert end_year to type int.')
 
         return start_year, end_year
 
@@ -137,10 +138,10 @@ class ProFbRefScraper(object):
         :param table_type: String representing the type of table to be scraped.
         :return: A data frame of the scraped table for a single season.
         """
-        table_rows = self._get_table(year, table_type)
-        header_row = self._get_table_headers(table_rows)
+        table = self._get_table(year, table_type)
+        header_row = self._get_table_headers(table)
         df_cols = self._get_df_columns(header_row)
-        player_elements = self._get_player_rows(table_rows)
+        player_elements = self._get_player_rows(table)
         season_data = self._get_player_stats(player_elements)
 
         # Final data frame for single season
@@ -165,7 +166,7 @@ class ProFbRefScraper(object):
 
         if table is None:
             # No table found
-            raise AttributeError(table_type.capitalize() + " stats table not found for year " + str(year) + ".")
+            raise RuntimeError(table_type.capitalize() + " stats table not found for year " + str(year) + ".")
 
         # Return the table containing the data.
         return table
@@ -315,7 +316,7 @@ class ProFbRefScraper(object):
 
 if __name__ == '__main__':
     ref = ProFbRefScraper()
-    df = ref.get_data(2005, 2006, 'passing', remove_pro_bowl=True, remove_all_pro=False)
+    df = ref.get_data(1900, 1900, 'passing')
     # df = ref.get_data('1932', '1900', 'scoring')
     # df = ref.get_data('1969', '1969', 'fantasy')
-    df.to_csv('passing05-06.csv')
+    df.to_csv('sample_data.csv')
