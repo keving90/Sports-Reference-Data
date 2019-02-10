@@ -1,5 +1,5 @@
 """
-This module contains a ProFbRefScraper class used to scrape NFL data from www.pro-football-reference.com. It places
+This module contains a FootballRefScraper class used to scrape NFL data from www.pro-football-reference.com. It places
 the data into a Pandas data frame, which can be saved as a CSV file. Built using Python 3.7.0.
 """
 
@@ -11,7 +11,8 @@ import pandas as pd
 class FootballRefScraper(object):
     """
     Scrapes NFL data from www.pro-football-reference.com and places it into a Pandas data frame. Multiple years of data
-    can be scraped and placed into a single data frame for the same statistical category. These categories include:
+    can be scraped and placed into a single data frame for the same statistical category. Each category is referred to
+    as a 'table type'. Possible table types include:
 
     'rushing': Rushing data.
     'passing': Passing data.
@@ -54,7 +55,7 @@ class FootballRefScraper(object):
         :param table_type: Stat category to scrape
         :param remove_pro_bowl: Boolean - If true, removes Pro Bowl accolade ('*') from player's name
         :param remove_all_pro: Boolean - If true, removes All-Pro accolade ('+') from player's name
-        :return: Data frame of one or more seasons of data for a given stat.
+        :return: Data frame of one or more seasons of data for a given stat category.
         """
         self._check_table_type(table_type)
         start_year, end_year = self._check_start_and_end_years(start_year, end_year)
