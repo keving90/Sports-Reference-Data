@@ -8,7 +8,7 @@ import bs4
 import pandas as pd
 
 
-class ProFbRefScraper(object):
+class FootballRefScraper(object):
     """
     Scrapes NFL data from www.pro-football-reference.com and places it into a Pandas data frame. Multiple years of data
     can be scraped and placed into a single data frame for the same statistical category. These categories include:
@@ -21,6 +21,10 @@ class ProFbRefScraper(object):
     'scoring': All types of scoring data, such as touchdowns (defense/offense), two point conversions, kicking, etc.
     'fantasy': Rushing, receiving, and passing stats, along with fantasy point totals from various leagues.
     'defense': Defensive player stats.
+
+    Each player on Pro Football Reference has their own unique URL. This URL, combined with the year for the player's
+    specific season of data, is used as a unique identifier for each row in the data frame. It is used as the data
+    frame's index.
     """
     def __init__(self):
         self._tables = ['rushing', 'passing', 'receiving', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
@@ -60,7 +64,7 @@ class ProFbRefScraper(object):
         else:
             df = self._get_multiple_seasons(start_year, end_year, table_type)
 
-        # Unique identifier for each player's particular season of data.
+        # Unique identifier for each player's season of data.
         df.set_index('player_url', inplace=True)
 
         # Change data from string to numeric, where applicable.
@@ -142,6 +146,12 @@ class ProFbRefScraper(object):
         header_row = self._get_table_headers(table)
         df_cols = self._get_df_columns(header_row)
         player_elements = self._get_player_rows(table)
+
+        if not player_elements:
+            # Table found, but it doesn't have data.
+            raise RuntimeError(table_type.capitalize() + " stats table found for year " + str(year)
+                               + ", but it does not contain data.")
+
         season_data = self._get_player_stats(player_elements)
 
         # Final data frame for single season
@@ -315,8 +325,6 @@ class ProFbRefScraper(object):
 
 
 if __name__ == '__main__':
-    ref = ProFbRefScraper()
-    df = ref.get_data(1900, 1900, 'passing')
-    # df = ref.get_data('1932', '1900', 'scoring')
-    # df = ref.get_data('1969', '1969', 'fantasy')
+    football_ref = FootballRefScraper()
+    df = football_ref.get_data(start_year=1900, end_year=1900, table_type='passing')
     df.to_csv('sample_data.csv')
