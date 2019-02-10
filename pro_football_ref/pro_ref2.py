@@ -326,5 +326,5 @@ class FootballRefScraper(object):
 
 if __name__ == '__main__':
     football_ref = FootballRefScraper()
-    df = football_ref.get_data(start_year=1900, end_year=1900, table_type='passing')
+    df = football_ref.get_data(start_year=2017, end_year=2018, table_type='passing')
     df.to_csv('sample_data.csv')
