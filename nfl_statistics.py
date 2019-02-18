@@ -8,7 +8,7 @@ import bs4
 import pandas as pd
 
 
-class FootballRefScraper(object):
+class NflStatistics(object):
     """
     Scrapes NFL data from www.pro-football-reference.com and places it into a Pandas data frame. Multiple years of data
     can be scraped and placed into a single data frame for the same statistical category. Each category is referred to
@@ -27,25 +27,40 @@ class FootballRefScraper(object):
     specific season of data, is used as a unique identifier for each row in the data frame. It is used as the data
     frame's index.
     """
-    def __init__(self):
-        self._tables = ['rushing', 'passing', 'receiving', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
-        self._kicking_cols_to_rename = {
-            'fga1': 'att_0-19',
-            'fgm1': 'made_0-19',
-            'fga2': 'att_20-29',
-            'fgm2': 'made_20-29',
-            'fga3': 'att_30-39',
-            'fgm3': 'made_30-39',
-            'fga4': 'att_40-49',
-            'fgm4': 'made_40-49',
-            'fga5': 'att_50_plus',
-            'fgm5': 'made_50_plus'
-        }
+    _stat_types = ['rushing', 'passing', 'receiving', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
+    _kicking_cols_to_rename = {
+        'fga1': 'att_0-19',
+        'fgm1': 'made_0-19',
+        'fga2': 'att_20-29',
+        'fgm2': 'made_20-29',
+        'fga3': 'att_30-39',
+        'fgm3': 'made_30-39',
+        'fga4': 'att_40-49',
+        'fgm4': 'made_40-49',
+        'fga5': 'att_50_plus',
+        'fgm5': 'made_50_plus'
+    }
+
+    # def __init__(self):
+    #     pass
+        # self._tables = ['rushing', 'passing', 'receiving', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
+        # self._kicking_cols_to_rename = {
+        #     'fga1': 'att_0-19',
+        #     'fgm1': 'made_0-19',
+        #     'fga2': 'att_20-29',
+        #     'fgm2': 'made_20-29',
+        #     'fga3': 'att_30-39',
+        #     'fgm3': 'made_30-39',
+        #     'fga4': 'att_40-49',
+        #     'fgm4': 'made_40-49',
+        #     'fga5': 'att_50_plus',
+        #     'fgm5': 'made_50_plus'
+        # }
 
     @property
-    def tables(self):
-        """getter: Returns a list of the possible table types to scrape from."""
-        return self._tables
+    def stat_types(self):
+        """getter: Returns a list of the possible stat types to scrape from."""
+        return self._stat_types
 
     def get_data(self, start_year, end_year, table_type, remove_pro_bowl=True, remove_all_pro=True):
         """
@@ -57,7 +72,7 @@ class FootballRefScraper(object):
         :param remove_all_pro: Boolean - If true, removes All-Pro accolade ('+') from player's name
         :return: Data frame of one or more seasons of data for a given stat category.
         """
-        self._check_table_type(table_type)
+        self._check_stat_type(table_type)
         start_year, end_year = self._check_start_and_end_years(start_year, end_year)
 
         if start_year == end_year:
@@ -312,20 +327,20 @@ class FootballRefScraper(object):
 
         return string
 
-    def _check_table_type(self, table_type):
+    def _check_stat_type(self, stat_type):
         """
         Checks for valid table types. Raises value error for invalid table.
-        :param table_type: String
+        :param stat_type: String
         :return: No return value
         """
-        # Only scrapes from tables in self._tables.
-        if table_type.lower() not in self._tables:
-            raise ValueError("Error, make sure to specify table_type. "
-                           + "Can only currently handle the following table names: "
-                           + str(self._tables))
+        # Only scrapes from tables in self._stat_types.
+        if stat_type.lower() not in self._stat_types:
+            raise ValueError("Error, make sure to specify stat_type. "
+                             + "Can only currently handle the following stat names: "
+                             + str(self._stat_types))
 
 
 if __name__ == '__main__':
-    football_ref = FootballRefScraper()
-    df = football_ref.get_data(start_year=2017, end_year=2018, table_type='passing')
+    nfl_stats = NflStatistics()
+    df = nfl_stats.get_data(start_year=2017, end_year=2018, table_type='passing')
     df.to_csv('sample_data.csv')
