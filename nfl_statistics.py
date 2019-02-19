@@ -12,7 +12,7 @@ class NflStatistics(object):
     """
     Scrapes NFL data from www.pro-football-reference.com and places it into a Pandas data frame. Multiple years of data
     can be scraped and placed into a single data frame for the same statistical category. Each category is referred to
-    as a 'table type'. Possible table types include:
+    as a 'stat type'. Possible stat types include:
 
     'rushing': Rushing data.
     'passing': Passing data.
@@ -41,44 +41,28 @@ class NflStatistics(object):
         'fgm5': 'made_50_plus'
     }
 
-    # def __init__(self):
-    #     pass
-        # self._tables = ['rushing', 'passing', 'receiving', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
-        # self._kicking_cols_to_rename = {
-        #     'fga1': 'att_0-19',
-        #     'fgm1': 'made_0-19',
-        #     'fga2': 'att_20-29',
-        #     'fgm2': 'made_20-29',
-        #     'fga3': 'att_30-39',
-        #     'fgm3': 'made_30-39',
-        #     'fga4': 'att_40-49',
-        #     'fgm4': 'made_40-49',
-        #     'fga5': 'att_50_plus',
-        #     'fgm5': 'made_50_plus'
-        # }
-
     @property
     def stat_types(self):
         """getter: Returns a list of the possible stat types to scrape from."""
         return self._stat_types
 
-    def get_data(self, start_year, end_year, table_type, remove_pro_bowl=True, remove_all_pro=True):
+    def get_data(self, start_year, end_year, stat_type, remove_pro_bowl=True, remove_all_pro=True):
         """
         Gets a data frame of NFL player stats from Pro Football Reference for one for more seasons.
         :param start_year: First season to scrape data from (string or int)
         :param end_year: Final season (inclusive) to scrape data from (string or int)
-        :param table_type: Stat category to scrape
+        :param stat_type: Stat category to scrape
         :param remove_pro_bowl: Boolean - If true, removes Pro Bowl accolade ('*') from player's name
         :param remove_all_pro: Boolean - If true, removes All-Pro accolade ('+') from player's name
         :return: Data frame of one or more seasons of data for a given stat category.
         """
-        self._check_stat_type(table_type)
+        self._check_stat_type(stat_type)
         start_year, end_year = self._check_start_and_end_years(start_year, end_year)
 
         if start_year == end_year:
-            df = self._get_single_season(start_year, table_type)
+            df = self._get_single_season(start_year, stat_type)
         else:
-            df = self._get_multiple_seasons(start_year, end_year, table_type)
+            df = self._get_multiple_seasons(start_year, end_year, stat_type)
 
         # Unique identifier for each player's season of data.
         df.set_index('player_url', inplace=True)
@@ -89,25 +73,25 @@ class NflStatistics(object):
         if remove_pro_bowl or remove_all_pro:
             self._remove_player_accolades(df, remove_pro_bowl, remove_all_pro)
 
-        if table_type.lower() == 'kicking':
+        if stat_type.lower() == 'kicking':
             # For kicking data, rename some columns so field goal distance is obvious.
             df = df.rename(index=str, columns=self._kicking_cols_to_rename)
 
         return df
 
-    def _get_multiple_seasons(self, start_year, end_year, table_type):
+    def _get_multiple_seasons(self, start_year, end_year, stat_type):
         """
         Scrapes multiple seasons of data from Pro Football Reference and puts it into a Pandas data frame.
         :param start_year: First season to scrape data from (string or int)
         :param end_year: Final season (inclusive) to scrape data from (string or int)
-        :param table_type: Stat category to scrape
+        :param stat_type: Stat category to scrape
         :return: Data frame with multiple seasons of data for a given stat category.
         """
         # Get seasons to iterate through.
         year_range = self._get_year_range(start_year, end_year)
 
         # Get a data frame of each season.
-        seasons = [self._get_single_season(year, table_type) for year in year_range]
+        seasons = [self._get_single_season(year, stat_type) for year in year_range]
 
         # Combine all seasons into one large df.
         # sort = False prevents FutureWarning when concatenating data frames with different number of columns (1/18/19)
@@ -151,21 +135,21 @@ class NflStatistics(object):
 
         return start_year, end_year
 
-    def _get_single_season(self, year, table_type):
+    def _get_single_season(self, year, stat_type):
         """
-        Scrapes a single table from Pro Football Reference and puts it into a Pandas data frame.
+        Scrapes a single stat table from Pro Football Reference and puts it into a Pandas data frame.
         :param year: Season's year.
-        :param table_type: String representing the type of table to be scraped.
-        :return: A data frame of the scraped table for a single season.
+        :param stat_type: String representing the type of stats to be scraped.
+        :return: A data frame of the scraped stats for a single season.
         """
-        table = self._get_table(year, table_type)
+        table = self._get_table(year, stat_type)
         header_row = self._get_table_headers(table)
         df_cols = self._get_df_columns(header_row)
         player_elements = self._get_player_rows(table)
 
         if not player_elements:
             # Table found, but it doesn't have data.
-            raise RuntimeError(table_type.capitalize() + " stats table found for year " + str(year)
+            raise RuntimeError(stat_type.capitalize() + " stats table found for year " + str(year)
                                + ", but it does not contain data.")
 
         season_data = self._get_player_stats(player_elements)
@@ -173,26 +157,26 @@ class NflStatistics(object):
         # Final data frame for single season
         return self._make_df(year, season_data, df_cols)
 
-    def _get_table(self, year, table_type):
+    def _get_table(self, year, stat_type):
         """
         Sends a GET request to Pro-Football Reference and uses BeautifulSoup to find the HTML table.
         :param year: Season's year.
-        :param table_type: String representing the type of table to be scraped.
+        :param stat_type: String representing the type of table to be scraped.
         :return: BeautifulSoup table element.
         """
         # Send a GET request to Pro-Football Reference
-        url = 'https://www.pro-football-reference.com/years/' + str(year) + '/' + table_type + '.htm'
+        url = 'https://www.pro-football-reference.com/years/' + str(year) + '/' + stat_type + '.htm'
         response = requests.get(url)
         response.raise_for_status()
 
         # Create a BeautifulSoup object.
         soup = bs4.BeautifulSoup(response.text, 'lxml')
 
-        table = soup.find('table', id=table_type)
+        table = soup.find('table', id=stat_type)
 
         if table is None:
             # No table found
-            raise RuntimeError(table_type.capitalize() + " stats table not found for year " + str(year) + ".")
+            raise RuntimeError(stat_type.capitalize() + " stats table not found for year " + str(year) + ".")
 
         # Return the table containing the data.
         return table
@@ -329,11 +313,11 @@ class NflStatistics(object):
 
     def _check_stat_type(self, stat_type):
         """
-        Checks for valid table types. Raises value error for invalid table.
+        Checks for valid stat types. Raises value error for invalid type.
         :param stat_type: String
         :return: No return value
         """
-        # Only scrapes from tables in self._stat_types.
+        # Only scrapes from stat types in self._stat_types.
         if stat_type.lower() not in self._stat_types:
             raise ValueError("Error, make sure to specify stat_type. "
                              + "Can only currently handle the following stat names: "
@@ -342,5 +326,5 @@ class NflStatistics(object):
 
 if __name__ == '__main__':
     nfl_stats = NflStatistics()
-    df = nfl_stats.get_data(start_year=2017, end_year=2018, table_type='passing')
+    df = nfl_stats.get_data(start_year=2017, end_year=2018, stat_type='passing')
     df.to_csv('sample_data.csv')
