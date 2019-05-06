@@ -50,17 +50,6 @@ class NflStatistics(object):
         # Dict of oldest year available for each stat type.
         self._oldest_years = dict(zip(self._stat_types, [1932, 1932, 1932, 1938, 1941, 1922, 1970, 1932]))
 
-        # self._valid_years = {
-        #     'rushing': 1932,
-        #     'passing': 1932,
-        #     'receiving': 1932,
-        #     'kicking': 1938,
-        #     'returns': 1941,
-        #     'scoring': 1922,
-        #     'fantasy': 1970,
-        #     'defense': 1932
-        # }
-
     @property
     def stat_types(self):
         """getter: Returns a list of the possible stat types to scrape from."""
@@ -89,41 +78,6 @@ class NflStatistics(object):
 
         return df
 
-
-    # OBSOLETE
-    def get_data(self, start_year, end_year, stat_type, remove_pro_bowl=True, remove_all_pro=True):
-        """
-        Gets a data frame of NFL player stats from Pro Football Reference for one for more seasons.
-        :param start_year: First season to scrape data from (string or int)
-        :param end_year: Final season (inclusive) to scrape data from (string or int)
-        :param stat_type: Stat category to scrape
-        :param remove_pro_bowl: Boolean - If true, removes Pro Bowl accolade ('*') from player's name
-        :param remove_all_pro: Boolean - If true, removes All-Pro accolade ('+') from player's name
-        :return: Data frame of one or more seasons of data for a given stat category.
-        """
-        self._check_stat_type(stat_type)
-        start_year, end_year = self._check_start_and_end_years(start_year, end_year)
-
-        if start_year == end_year:
-            df = self._get_single_season(start_year, stat_type)
-        else:
-            df = self._get_multiple_seasons(start_year, end_year, stat_type)
-
-        # Unique identifier for each player's season of data.
-        df.set_index('player_url', inplace=True)
-
-        # Change data from string to numeric, where applicable.
-        df = df.apply(pd.to_numeric, errors='ignore')
-
-        if remove_pro_bowl or remove_all_pro:
-            self._remove_player_accolades(df, remove_pro_bowl, remove_all_pro)
-
-        if stat_type.lower() == 'kicking':
-            # For kicking data, rename some columns so field goal distance is obvious.
-            df = df.rename(index=str, columns=self._kicking_cols_to_rename)
-
-        return df
-
     def _get_multiple_seasons(self, years, stat_type):
         """
         Scrapes multiple seasons of data from Pro Football Reference and puts it into a Pandas data frame.
@@ -144,77 +98,6 @@ class NflStatistics(object):
 
         return big_df
 
-    # OBSOLETE
-    # def _get_multiple_seasons(self, start_year, end_year, stat_type):
-    #     """
-    #     Scrapes multiple seasons of data from Pro Football Reference and puts it into a Pandas data frame.
-    #     :param start_year: First season to scrape data from (string or int)
-    #     :param end_year: Final season (inclusive) to scrape data from (string or int)
-    #     :param stat_type: Stat category to scrape
-    #     :return: Data frame with multiple seasons of data for a given stat category.
-    #     """
-    #     # Get seasons to iterate through.
-    #     year_range = self._get_year_range(start_year, end_year)
-    #
-    #     # Get a data frame of each season.
-    #     seasons = [self._get_single_season(year, stat_type) for year in year_range]
-    #
-    #     # Combine all seasons into one large df.
-    #     # sort = False prevents FutureWarning when concatenating data frames with different number of columns (1/18/19)
-    #     big_df = pd.concat(seasons, sort=False)
-    #
-    #     return big_df
-
-
-
-
-    # OBSOLETE
-    def _get_year_range(self, start_year, end_year):
-        """
-        Uses start_year and end_year to build an iterable sequence.
-        :param start_year: Year to begin iterable at.
-        :param end_year: Final year in iterable.
-        :return: An iterable sequence.
-        """
-        # Build range iterator depending on how start_year and end_year are related.
-        if start_year > end_year:
-            year_range = range(start_year, end_year - 1, -1)
-        else:
-            year_range = range(start_year, end_year + 1)
-
-        return year_range
-
-    # PROBABLY NOT NEEDED
-    def _check_year(self, year, stat_type):
-        try:
-            if (int(year) < self._oldest_years[stat_type]):
-                raise ValueError("Oldest year with data for '"
-                                 + stat_type + "' stats is " + str(self._oldest_years[stat_type]) + ".")
-        except ValueError as e:
-            raise ValueError('Cannot convert year {} to type int.'.format(e))
-
-    # OBSOLETE
-    def _check_start_and_end_years(self, start_year, end_year):
-        """
-        Tries to convert start_year and end_year to int, if necessary. Raises ValueError for unsuccessful conversions.
-        :param start_year: Data to convert to int
-        :param end_year: Data to convert to int
-        :return: Tuple - (start_year, end_year)
-        """
-        # Convert years to int, if needed.
-        if not isinstance(start_year, int):
-            try:
-                start_year = int(start_year)
-            except ValueError:
-                raise ValueError('Cannot convert start_year to type int.')
-        if not isinstance(end_year, int):
-            try:
-                end_year = int(end_year)
-            except ValueError:
-                raise ValueError('Cannot convert end_year to type int.')
-
-        return start_year, end_year
-
     def _get_single_season(self, year, stat_type):
         """
         Scrapes a single stat table from Pro Football Reference and puts it into a Pandas data frame.
@@ -223,7 +106,7 @@ class NflStatistics(object):
         :return: A data frame of the scraped stats for a single season.
         """
         # self._check_year(year, stat_type)
-        
+
         table = self._get_table(year, stat_type)
         header_row = self._get_table_headers(table)
         df_cols = self._get_df_columns(header_row)
@@ -365,24 +248,6 @@ class NflStatistics(object):
 
         return df
 
-    # OBSOLETE
-    def _remove_player_accolades(self, df, remove_pro_bowl, remove_all_pro):
-        """
-        Removes Pro Bowl ('*') and All-Pro ('+') accolades from a player's name.
-        :param remove_pro_bowl: Boolean; remove if True
-        :param remove_all_pro: Boolean; remove if True
-        :return: No return value
-        """
-        if remove_pro_bowl and not remove_all_pro:
-            # Remove '*' in player's name.
-            df['player'] = df['player'].apply(lambda x: ''.join(x.split('*')) if '*' in x else x)
-        elif not remove_pro_bowl and remove_all_pro:
-            # Remove '+' in player's name.
-            df['player'] = df['player'].apply(lambda x: ''.join(x.split('+')) if '+' in x else x)
-        elif remove_pro_bowl and remove_all_pro:
-            # Remove '*', '+', or '*+'.
-            df['player'] = df['player'].apply(self._remove_chars)
-
     def create_accolade_columns(self, df):
         """
         Creates pro_bowl and all_pro columns for each player.
@@ -393,36 +258,9 @@ class NflStatistics(object):
         # df['pro_bowl'] = d
         pass
 
-    # OBSOLETE
-    def _remove_chars(self, string):
-        """
-        Removes any combination of a single '*' and '+' from the end of a string.
-        :param string: String
-        :return: String
-        """
-        if string.endswith('*+'):
-            string = string[:-2]
-        elif string.endswith('*') or string.endswith('+'):
-            string = string[:-1]
-
-        return string
-
-    # OBSOLETE
-    def _check_stat_type(self, stat_type):
-        """
-        Checks for valid stat types. Raises value error for invalid type.
-        :param stat_type: String
-        :return: No return value
-        """
-        # Only scrapes from stat types in self._stat_types.
-        if stat_type.lower() not in self._stat_types:
-            raise ValueError("Error, make sure to specify stat_type. "
-                             + "Can only currently handle the following stat names: "
-                             + str(self._stat_types))
-
 
 if __name__ == '__main__':
     nfl_stats = NflStatistics()
     # df = nfl_stats.get_data(start_year=2017, end_year=2018, stat_type='passing')
-    df = nfl_stats.get_stats(years=[1000, 2001], stat_type='passing')
+    df = nfl_stats.get_stats(year=2000, stat_type='passing')
     df.to_csv('sample_data.csv')
