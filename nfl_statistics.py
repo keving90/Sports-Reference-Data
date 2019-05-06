@@ -69,8 +69,9 @@ class NflStatistics(object):
         # Change data from string to numeric, where applicable.
         df = df.apply(pd.to_numeric, errors='ignore')
 
-        # if remove_pro_bowl or remove_all_pro:
-        #     self._remove_player_accolades(df, remove_pro_bowl, remove_all_pro)
+        # Create columns for Pro Bowl and All-Pro appearances, and remove the symbols from each player's name.
+        df = self.create_accolade_columns(df)
+        df['player'] = df['player'].apply(self._remove_chars)
 
         if stat_type.lower() == 'kicking':
             # For kicking data, rename some columns so field goal distance is obvious.
@@ -255,9 +256,24 @@ class NflStatistics(object):
         :param df: DataFrame of NFL players.
         :return: New DataFrame containing accolade columns.
         """
-        # df['pro_bowl'] = d
-        pass
+        df['pro_bowl'] = df['player'].apply(lambda x: True if '*' in x else False)
+        df['all_pro'] = df['player'].apply(lambda x: True if '+' in x else False)
 
+        return df
+
+    def _remove_chars(self, string):
+        """
+        Removes any combination of a single '*' and '+' from the end of a string.
+        :param string: String
+        :return: String
+        """
+        if string.endswith('*+'):
+            string = string[:-2]
+        elif string.endswith('*') or string.endswith('+'):
+            string = string[:-1]
+
+        return string
+    
 
 if __name__ == '__main__':
     nfl_stats = NflStatistics()
