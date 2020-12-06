@@ -148,19 +148,6 @@ class NflStatistics(object):
 
         return big_df
 
-    # def __check_year(self, year, stat_type):
-    #     """
-    #     Checks if year given has an existing season of data for the given stat type.
-    #
-    #     :param year: Integer representing season's year.
-    #     :param stat_type: String representing stat type.
-    #     :return: None
-    #     """
-    #     if int(year) < self.__oldest_years[stat_type]:
-    #         raise ValueError("Oldest year with data for '" + stat_type
-    #                          + "' stats is " + str(self.__oldest_years[stat_type]) + ". "
-    #                          + "Year given: " + str(year) + ".")
-
     def __get_single_season(self, year, stat_type):
         """
         Scrapes a single stat table from Pro Football Reference and puts it into a Pandas data frame.
@@ -169,12 +156,19 @@ class NflStatistics(object):
         :return: A data frame of the scraped stats for a single season.
         """
 
-        # self.__check_year(year, stat_type)
-
+        # get the HTML stat table from from Pro-Football Reference
         table = self.__get_table(year, stat_type)
+
+        # get the header row of the HTML table
         header_row = self.__get_table_headers(table)
+
+        # store each header name in a list (to be used as column names for each stat)
         df_cols = self.__get_df_columns(header_row)
+
+        # get all remaining rows of the HTML table (player stats)
         player_elements = self.__get_player_rows(table)
+
+        # extract each player's stats from the HTML table
         season_data = self.__get_player_stats(player_elements)
 
         # Final data frame for single season
@@ -190,7 +184,13 @@ class NflStatistics(object):
         # Send a GET request to Pro-Football Reference
         url = 'https://www.pro-football-reference.com/years/' + str(year) + '/' + stat_type + '.htm'
         response = requests.get(url)
-        response.raise_for_status()
+
+        # check the GET response
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as HTTPError:
+            error_message = "%s - Is %s a valid year?" % (str(HTTPError), year)
+            raise requests.exceptions.HTTPError(error_message)
 
         # Create a BeautifulSoup object.
         soup = bs4.BeautifulSoup(response.text, 'lxml')
@@ -199,8 +199,7 @@ class NflStatistics(object):
 
         if table is None:
             # No table found
-            raise ValueError(stat_type.capitalize() + " stats table not found for year '" + str(year) + "'."
-                               + " Oldest year with data is " + str(self.__oldest_years[stat_type]) + ".")
+            raise ValueError("No table was found for %s %s at URL: %s" % (year, stat_type, url))
 
         # Return the table containing the data.
         return table
@@ -334,15 +333,22 @@ class NflStatistics(object):
 if __name__ == '__main__':
     nfl_stats = NflStatistics()
 
-    df = nfl_stats.get_stats(year='2010', stat_type='passing')
+    df = nfl_stats.get_stats(year='2021', stat_type='passing')
 
-    # df = nfl_stats.get_passing_stats(year=2018)
-    # df = nfl_stats.get_receiving_stats(year=2018)
-    # df = nfl_stats.get_rushing_stats(year=2018)
-    # df = nfl_stats.get_kicking_stats(year=2018)
-    # df = nfl_stats.get_return_stats(year=2018)
-    # df = nfl_stats.get_scoring_stats(year=2018)
-    # df = nfl_stats.get_fantasy_stats(year=2018)
-    # df = nfl_stats.get_defensive_player_stats(year=2018)
+    # dfs = []
+    # dfs.append(nfl_stats.get_passing_stats(year=2018))
+    # dfs.append(nfl_stats.get_receiving_stats(year=2018))
+    # dfs.append(nfl_stats.get_rushing_stats(year=2018))
+    # dfs.append(nfl_stats.get_kicking_stats(year=2018))
+    # dfs.append(nfl_stats.get_scoring_stats(year=2018))
+    # dfs.append(nfl_stats.get_return_stats(year=2018))
+    # dfs.append(nfl_stats.get_fantasy_stats(year=2018))
+    # dfs.append(nfl_stats.get_defensive_player_stats(year=2018))
+
+    print(df)
 
     df.to_csv('sample_data.csv')
+
+    # for i, single_df in enumerate(dfs):
+    #     name = "sample_data%d.csv" % i
+    #     single_df.to_csv(name)
