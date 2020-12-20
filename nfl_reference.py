@@ -9,7 +9,7 @@ import pandas as pd
 from sports_reference import SportsReference
 
 
-class NflStatistics(SportsReference):
+class NflReference(SportsReference):
     """
     Scrapes NFL data from www.pro-football-reference.com and places it into a Pandas data frame. Multiple years of data
     can be scraped and placed into a single data frame for the same statistical category. Each category is referred to
@@ -37,8 +37,7 @@ class NflStatistics(SportsReference):
                        Pro-Football Reference.
     """
     def __init__(self):
-        super(NflStatistics, self).__init__()
-        self._url = 'https://www.pro-football-reference.com/years/%d/%s.htm'
+        super(NflReference, self).__init__()
         self.__stat_types = ['rushing', 'passing', 'receiving', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
         self.__kicking_cols_to_rename = {
             'fga1': 'att_0-19',
@@ -78,7 +77,7 @@ class NflStatistics(SportsReference):
         :param stat_type:
         :return:
         """
-        df = super(NflStatistics, self).get_stats(year, years, stat_type)
+        df = super(NflReference, self).get_stats(year, years, stat_type)
 
         # Create columns for Pro Bowl and All-Pro appearances, and remove the symbols from each player's name.
         df = self.__create_accolade_columns(df)
@@ -144,9 +143,11 @@ class NflStatistics(SportsReference):
 
 
 if __name__ == '__main__':
-    nfl_stats = NflStatistics()
+    nfl_stats = NflReference()
 
     df = nfl_stats.get_stats(year=2019, stat_type='passing')
+
+    print(df)
 
     # dfs = []
     # dfs.append(nfl_stats.get_passing_stats(year=2018))
@@ -158,10 +159,9 @@ if __name__ == '__main__':
     # dfs.append(nfl_stats.get_fantasy_stats(year=2018))
     # dfs.append(nfl_stats.get_defensive_player_stats(year=2018))
 
-    print(df)
-
-    df.to_csv('sample_data.csv')
-
     # for i, single_df in enumerate(dfs):
     #     name = "sample_data%d.csv" % i
     #     single_df.to_csv(name)
+
+    df.to_csv('sample_data.csv')
+
