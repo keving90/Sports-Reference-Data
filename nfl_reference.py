@@ -3,9 +3,6 @@ This module contains a NflStatistics class used to scrape NFL data from www.pro-
 the data into a Pandas data frame, which can be saved as a CSV file. Built using Python 3.7.0.
 """
 
-import requests
-import bs4
-import pandas as pd
 from sports_reference import SportsReference
 
 
