@@ -6,7 +6,7 @@ the data into a Pandas data frame, which can be saved as a CSV file. Built using
 import requests
 import bs4
 import pandas as pd
-from sports_reference_scraper import SportsReference
+from sports_reference import SportsReference
 
 
 class NflStatistics(SportsReference):
