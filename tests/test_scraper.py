@@ -3,9 +3,6 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pytest
-# from pro_football_ref.pro_football_ref_scraper import ProFbRefScraper
-# from football_db.football_db_scraper import FbDbScraper
-from football_db.fb_db_scraper2 import FbDbScraper
 from nfl_reference import NflReference
 
 
