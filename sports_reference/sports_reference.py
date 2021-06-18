@@ -1,7 +1,7 @@
 """
-This module contains an abstract class used to scrape sports data from www.sports-reference.com. It places
-the data into a Pandas data frame, which can be saved as a CSV file. Classes that inherit from SportsReference
-can get data from sites such as pro-football-reference.com and basketball-reference.com. Built using Python 3.7.0.
+This module contains an abstract class used to scrape sports data from www.sports-reference.com. It stores the data in
+a Pandas data frame, which can be saved as a .csv file. Classes that inherit from the abstract class can get data from
+sites such as pro-football-reference.com and basketball-reference.com, among others.
 """
 
 import requests
@@ -16,28 +16,88 @@ class SportsReference(object):
     def __init__(self):
         pass
 
-    def get_stats(self, year=None, years=None, stat_type=None):
+    def get_season_player_stats(self, year=None, years=None, stat_type=None, stat_types=None):
         """
         Gets a DataFrame of statistics for a certain stat.
-
         :param year: Integer or string representing season's year to get data for.
         :param years: Iterable of integers or strings for each season's year.
         :param stat_type: String representing what stat type to get.
+        :param stat_types: List of strings for gathering multiple tables and joining them
         :return: DataFrame of statistics.
-
         """
+        # Mutually exclusive args.
         if (year is None) == (years is None):
-            raise RuntimeError("Need to have an argument for either 'year' or 'years', but not both.")
-        elif year:
-            df = self.__get_single_season(year, stat_type)
-        else:
-            df = self.__get_multiple_seasons(years, stat_type)
+            raise RuntimeError("Need to provide an argument for either 'year' or 'years', but not both.")
+        if (stat_type is None) == (stat_types is None):
+            raise RuntimeError("Need to provide an argument for either 'stat_type' or 'stat_types', but not both.")
 
-        # Unique identifier for each player's season of data.
-        df.set_index('player_url', inplace=True)
+        df = None
+        if stat_type:
+            # Get one or more years of data for just one stat type.
+            df = self.__get_stat_data_for_all_years(year=year, years=years, stat_type=stat_type)
+        elif stat_types:
+            # Get one or more years of data for multiple stats types.
+            sports_data_tables = self.__get_data_for_all_stat_types(year=year, years=years, stat_types=stat_types)
+            if len(sports_data_tables) > 1:
+                df = self.__merge_data_frames(sports_data_tables, stat_types)
+            elif len(sports_data_tables) == 1:
+                df = sports_data_tables[0]
+        else:
+            raise RuntimeError("Invalid value given for stat_type or stat_types")
 
         # Change data from string to numeric, where applicable.
         df = df.apply(pd.to_numeric, errors='ignore')
+
+        return df
+
+    def __get_data_for_all_stat_types(self, year=None, years=None, stat_types=None):
+        """
+        Gets one or more years of data for one or more different stat types. One year's worth of data for one stat type
+        is stored in its own data frame.
+        :param year: Single year.
+        :param years: List of years.
+        :param stat_types: List of stat types.
+        :return: List of data frames.
+        """
+        stat_data_frames = []
+        for stat in stat_types:
+            df = self.__get_stat_data_for_all_years(year=year, years=years, stat_type=stat)
+            stat_data_frames.append(df)
+
+        return stat_data_frames
+
+    def __get_stat_data_for_all_years(self, year=None, years=None, stat_type=None):
+        """
+        Returns a data frame of a specific stat type for all years provided.
+        :param year: Single year
+        :param years: List of years
+        :param stat_type: String representing stat type
+        :return: Data frame, all of a specific stat type over a specified number of years.
+        """
+        df = None
+        if year:
+            df = self.__get_single_season(year, stat_type)
+        elif years:
+            df = self.__get_multiple_seasons(years, stat_type)
+        df.set_index('player_url', inplace=True)
+
+        return df
+
+    def __merge_data_frames(self, data_frames, stat_types):
+        """
+        Merges a list of data frames.
+        :param data_frames: List of data frames.
+        :param stat_types: List of stat types.
+        :return: Single, merged data frame.
+        """
+        df = None
+        # Merge first two data frames together, if needed.
+        if len(data_frames) >= 2:
+            df = data_frames[0].merge(data_frames[1], on='player_url', how='outer', suffixes=('', '_' + stat_types[1]))
+        # Merge remaining data frames to the main data frame, if necessary.
+        if len(data_frames) > 2:
+            for stat, table in zip(stat_types[2:], data_frames[2:]):
+                df = df.merge(table, on='player_url', how='outer', suffixes=('', '_' + stat))
 
         return df
 
@@ -217,8 +277,10 @@ class SportsReference(object):
         """
         df = pd.DataFrame(data=league_stats, columns=column_names)
         df.insert(loc=3, column='year', value=year)  # Column for current year.
-
-        # Combined player_url + year acts as a unique identifier for a player's season of data.
-        df['player_url'] = df['player_url'].apply(lambda x: x + str(year))
+        self._create_player_url_column(df, year)
 
         return df
+
+    def _create_player_url_column(self, df, year):
+        """Abstract method for creating player_url column to use as an index."""
+        raise NotImplementedError()
