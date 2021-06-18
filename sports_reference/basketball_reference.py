@@ -42,7 +42,7 @@ class BasketballReference(SportsReference):
         return df
 
     def _create_url(self, year, stat_type):
-        # Extract everything in stat_type before the '_stats' prefix.
+        # Extract everything in stat_type before the '_stats' suffix.
         stat_type = re.match('(.*)(_stats)', stat_type)[1]
         return 'https://www.basketball-reference.com/leagues/NBA_' + str(year) + '_' + stat_type + '.html'
 
@@ -53,9 +53,8 @@ class BasketballReference(SportsReference):
 
 if __name__ == '__main__':
     nba_stats = BasketballReference()
-    # stat_types = ['passing', 'receiving', 'rushing', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
     stat_types = ['per_game_stats']
-    df = nba_stats.get_season_player_stats(year=2021, stat_types=nba_stats.stat_types)
+    df = nba_stats.get_season_player_stats(years=[2016, 2017, 2018], stat_types=nba_stats.stat_types)
     df.to_csv('nba_sample_data.csv')
 
 
