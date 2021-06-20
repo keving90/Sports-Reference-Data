@@ -1,12 +1,9 @@
-import os
-import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 import pytest
-from sports_reference.pro_football_reference import ProFootballReference
+from sports_reference.pro_football_reference.pro_football_reference import ProFootballReference
+import sports_reference.custom_exceptions as ce
 
 
-class TestProReferenceScraper(object):
+class TestProFootballReference(object):
 
     @pytest.fixture
     def create_pro_ref_scraper(self):
@@ -114,3 +111,62 @@ class TestProReferenceScraper(object):
     def test_stat_types_property(self, create_pro_ref_scraper):
         assert create_pro_ref_scraper.stat_types == ['rushing', 'passing', 'receiving', 'kicking', 'returns',
                                                      'scoring', 'fantasy', 'defense']
+
+
+class TestExceptions(object):
+    @pytest.fixture
+    def create_pro_ref_scraper(self):
+        # stat_types = ['passing', 'receiving', 'rushing', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
+        return ProFootballReference()
+
+    def test_empty_string_stat_type(self, create_pro_ref_scraper):
+        with pytest.raises(ce.EmptyValueError):
+            create_pro_ref_scraper.get_season_player_stats(year=2000, stat_type='')
+
+    def test_empty_stat_types(self, create_pro_ref_scraper):
+        with pytest.raises(ce.EmptyValueError):
+            create_pro_ref_scraper.get_season_player_stats(year=2000, stat_types=[])
+
+    def test_empty_string_in_stat_types(self, create_pro_ref_scraper):
+        with pytest.raises(ce.EmptyValueError):
+            create_pro_ref_scraper.get_season_player_stats(year=2000, stat_types=[''])
+
+    def test_empty_string_for_year(self, create_pro_ref_scraper):
+        with pytest.raises(ce.EmptyValueError):
+            create_pro_ref_scraper.get_season_player_stats(year='', stat_types=['passing'])
+
+    def test_zero_value_year(self, create_pro_ref_scraper):
+        with pytest.raises(ce.EmptyValueError):
+            create_pro_ref_scraper.get_season_player_stats(year=0, stat_types=['passing'])
+
+    def test_empty_years(self, create_pro_ref_scraper):
+        with pytest.raises(ce.EmptyValueError):
+            create_pro_ref_scraper.get_season_player_stats(years=[], stat_type='rushing')
+
+    def test_empty_string_in_years(self, create_pro_ref_scraper):
+        with pytest.raises(ce.EmptyValueError):
+            create_pro_ref_scraper.get_season_player_stats(years=[''], stat_types=['passing', 'rushing'])
+
+    def test_oldest_year_for_year_and_stat_type(self, create_pro_ref_scraper):
+        with pytest.raises(ValueError):
+            create_pro_ref_scraper.get_season_player_stats(year=1800, stat_type='passing')
+
+    def test_oldest_year_for_year_and_stat_types(self, create_pro_ref_scraper):
+        with pytest.raises(ValueError):
+            create_pro_ref_scraper.get_season_player_stats(year=1800, stat_types=['passing', 'rushing'])
+
+    def test_oldest_year_for_years_and_stat_type(self, create_pro_ref_scraper):
+        with pytest.raises(ValueError):
+            create_pro_ref_scraper.get_season_player_stats(years=[2000, 1900], stat_type='receiving')
+
+    def test_oldest_year_for_years_and_stat_types(self, create_pro_ref_scraper):
+        with pytest.raises(ValueError):
+            create_pro_ref_scraper.get_season_player_stats(years=[2000, 1900], stat_types=['receiving', 'rushing'])
+
+    def test_not_iterable_years(self, create_pro_ref_scraper):
+        with pytest.raises(ce.NotIterableError):
+            create_pro_ref_scraper.get_season_player_stats(years=5, stat_type='passing')
+
+    def test_not_iterable_stat_types(self, create_pro_ref_scraper):
+        with pytest.raises(ce.NotIterableError):
+            create_pro_ref_scraper.get_season_player_stats(year=2018, stat_types=7)
