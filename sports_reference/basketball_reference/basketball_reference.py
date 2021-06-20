@@ -3,7 +3,7 @@ This module contains a class used to scrape NBA data from https://www.basketball
 a Pandas data frame, which can be saved as a .csv file.
 """
 
-from sports_reference import SportsReference
+from sports_reference.sports_reference import SportsReference
 import re
 
 

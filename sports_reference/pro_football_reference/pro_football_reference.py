@@ -66,6 +66,11 @@ class ProFootballReference(SportsReference):
         """getter: Returns a list of the possible stat types to get data for."""
         return ProFootballReference.__stat_types
 
+    @property
+    def oldest_years(self):
+        """getter: Returns a list of the possible stat types to get data for."""
+        return ProFootballReference.__oldest_years
+
     def get_season_player_stats(self, year=None, years=None, stat_type=None, stat_types=None):
         """
         Overrides SportsReference superclass' get_season_player_stats method. This method does some extra cleaning such
