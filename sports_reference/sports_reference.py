@@ -54,48 +54,21 @@ class SportsReference(object):
             for stat in stat_types:
                 self.__check_for_invalid_stat_type(stat)
 
-        if year and stat_type:
-            if year < self.oldest_years[stat_type]:
-                raise ValueError(f"{year} is not a valid year for {stat_type}. Oldest year is "
-                                 f"{self.oldest_years[stat_type]}")
-        if year and stat_types:
-            for stat in stat_types:
-                if year < self.oldest_years[stat]:
-                    raise ValueError(f"{year} is not a valid year for {stat}. Oldest year is "
-                                     f"{self.oldest_years[stat]}")
-        if years and stat_type:
-            for yr in years:
-                if yr < self.oldest_years[stat_type]:
-                    raise ValueError(f"{yr} is not a valid year for {stat_type}. Oldest year is "
-                                     f"{self.oldest_years[stat_type]}")
-        if years and stat_types:
-            for yr in years:
-                for stat in stat_types:
-                    if yr < self.oldest_years[stat]:
-                        raise ValueError(f"{yr} is not a valid year for {stat}. Oldest year is "
-                                         f"{self.oldest_years[stat]}")
-
-        current_year = datetime.now().year
-        if year:
-            if year > current_year:
-                raise ValueError(f"year value of {year} is greater than current year ({current_year}).")
-            stat_arg = None
-            if stat_type:
-                stat_arg = [stat_type]
-            elif stat_types:
-                stat_arg = stat_types
-
-        elif years:
-            pass
-
+        # Check if provided year is older than the oldest year with data for a stat type.
         year_arg = self.__get_mutually_exclusive_arg(year, years)
         stat_arg = self.__get_mutually_exclusive_arg(stat_type, stat_types)
-
         for stat in stat_arg:
             for yr in year_arg:
                 if yr < self.oldest_years[stat]:
                     raise ValueError(f"{yr} is not a valid year for {stat}. Oldest year for {stat} is "
                                      f"{self.oldest_years[stat]}")
+
+        # Check if provided year is greater than the current year.
+        current_year = datetime.now().year
+        for yr in year_arg:
+            if yr > current_year:
+                raise ValueError(f"year value of {year} is greater than current year ({current_year}).")
+
 
     def __get_mutually_exclusive_arg(self, value_arg, iterable_arg):
         mutually_exclusive_arg = None

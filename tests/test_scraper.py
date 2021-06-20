@@ -170,3 +170,8 @@ class TestExceptions(object):
     def test_not_iterable_stat_types(self, create_pro_ref_scraper):
         with pytest.raises(ce.NotIterableError):
             create_pro_ref_scraper.get_season_player_stats(year=2018, stat_types=7)
+
+    def test_if_given_year_is_greater_than_current_year(self, create_pro_ref_scraper):
+        with pytest.raises(ValueError):
+            create_pro_ref_scraper.get_season_player_stats(year=3000, stat_type='passing')
+            create_pro_ref_scraper.get_season_player_stats(years=[2000, 2001, 3002], stat_types=['passing', 'rushing'])
