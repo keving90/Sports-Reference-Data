@@ -3,7 +3,7 @@ This module contains a class used to scrape NFL data from www.pro-football-refer
 Pandas data frame, which can be saved as a .csv file.
 """
 
-from sports_reference import SportsReference
+from sports_reference.sports_reference import SportsReference
 
 
 class ProFootballReference(SportsReference):
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     stat_types = ['passing', 'receiving', 'rushing', 'kicking', 'returns', 'scoring', 'fantasy', 'defense']
     # stat_types = ['passing', 'receiving', 'rushing', 'kicking']
     # df = nfl_stats.get_season_player_stats(years=[2018, 2019, 2020], stat_types=stat_types)
-    df = nfl_stats.get_season_player_stats(year=2012, stat_types=['rushing'])
+    df = nfl_stats.get_season_player_stats(years=[2000, 0, '0'], stat_types=['passing', 'receiving'])
     df.to_csv('sample_data.csv')
 
 

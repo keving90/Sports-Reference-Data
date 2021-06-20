@@ -7,6 +7,8 @@ sites such as pro-football-reference.com and basketball-reference.com, among oth
 import requests
 import bs4
 import pandas as pd
+import sports_reference.custom_exceptions as ce
+from datetime import datetime
 
 
 class SportsReference(object):
@@ -16,21 +18,128 @@ class SportsReference(object):
     def __init__(self):
         pass
 
+    @property
+    def stat_types(self):
+        raise NotImplementedError("A subclass must implement this property.")
+
+    @property
+    def oldest_years(self):
+        raise NotImplementedError("A subclass must implement this property.")
+
+    def __check_args(self, year, years, stat_type, stat_types):
+        # year and years are mutually exclusive.
+        # stat_type and stat_types are mutually exclusive.
+        for arg1, arg2, arg1_name, arg2_name in ((year, years, 'year', 'years'),
+                                                 (stat_type, stat_types, 'stat_type', 'stat_types')):
+            self.__ensure_mutually_exclusive_args(arg1, arg2, arg1_name, arg2_name)
+
+        # Check for empty values given to args such as '', 0, and [].
+        for arg, arg_name in zip(list(locals().values())[1:], ['year', 'years', 'stat_type', 'stat_types']):
+            self.__check_for_empty_value_arg(arg, arg_name)
+
+        # Check that years and stat_types args can be iterated over.
+        for arg, arg_name in zip((years, stat_types), ('years', 'stat_types')):
+            if arg is not None:
+                self.__check_for_iterable_arg(arg, arg_name)
+
+        # Check for empty values in iterable args, such as [''] and [0].
+        for arg, arg_name in zip((years, stat_types), ('years', 'stat_types')):
+            if arg is not None:
+                self.__check_for_empty_values_in_iterable_arg(arg, arg_name)
+
+        # Check for stat types that don't exist.
+        if stat_type:
+            self.__check_for_invalid_stat_type(stat_type)
+        elif stat_types:
+            for stat in stat_types:
+                self.__check_for_invalid_stat_type(stat)
+
+        if year and stat_type:
+            if year < self.oldest_years[stat_type]:
+                raise ValueError(f"{year} is not a valid year for {stat_type}. Oldest year is "
+                                 f"{self.oldest_years[stat_type]}")
+        if year and stat_types:
+            for stat in stat_types:
+                if year < self.oldest_years[stat]:
+                    raise ValueError(f"{year} is not a valid year for {stat}. Oldest year is "
+                                     f"{self.oldest_years[stat]}")
+        if years and stat_type:
+            for yr in years:
+                if yr < self.oldest_years[stat_type]:
+                    raise ValueError(f"{yr} is not a valid year for {stat_type}. Oldest year is "
+                                     f"{self.oldest_years[stat_type]}")
+        if years and stat_types:
+            for yr in years:
+                for stat in stat_types:
+                    if yr < self.oldest_years[stat]:
+                        raise ValueError(f"{yr} is not a valid year for {stat}. Oldest year is "
+                                         f"{self.oldest_years[stat]}")
+
+        current_year = datetime.now().year
+        if year:
+            if year > current_year:
+                raise ValueError(f"year value of {year} is greater than current year ({current_year}).")
+            stat_arg = None
+            if stat_type:
+                stat_arg = [stat_type]
+            elif stat_types:
+                stat_arg = stat_types
+
+        elif years:
+            pass
+
+        year_arg = self.__get_mutually_exclusive_arg(year, years)
+        stat_arg = self.__get_mutually_exclusive_arg(stat_type, stat_types)
+
+        for stat in stat_arg:
+            for yr in year_arg:
+                if yr < self.oldest_years[stat]:
+                    raise ValueError(f"{yr} is not a valid year for {stat}. Oldest year for {stat} is "
+                                     f"{self.oldest_years[stat]}")
+
+    def __get_mutually_exclusive_arg(self, value_arg, iterable_arg):
+        mutually_exclusive_arg = None
+        if value_arg:
+            mutually_exclusive_arg = [value_arg]
+        elif iterable_arg:
+            mutually_exclusive_arg = iterable_arg
+        return mutually_exclusive_arg
+
+    def __check_for_iterable_arg(self, arg, arg_name):
+        try:
+            [i for i in arg]
+        except TypeError as e:
+            raise ce.NotIterableError(f"Cannot iterate over years args. Received {arg_name}")
+
+    def __ensure_mutually_exclusive_args(self, arg1, arg2, arg1_name, arg2_name):
+        if (arg1 is not None) == (arg2 is not None):
+            raise ce.MutuallyExclusiveArgsError(f"Need to provide an argument for either '{arg1_name}' or "
+                                                f"'{arg2_name}', but not both.")
+
+    def __check_for_empty_value_arg(self, arg, arg_name):
+        if (not arg) and (arg is not None):
+            raise ce.EmptyValueError(f"{arg_name} arg must be non-zero or not be empty. Received {arg}")
+
+    def __check_for_empty_values_in_iterable_arg(self, arg, arg_name):
+        for item in arg:
+            if not item:
+                raise ce.EmptyValueError(f"'{arg_name}' arg contains a non-zero or empty value: {item}")
+
+    def __check_for_invalid_stat_type(self, stat_type):
+        if stat_type not in self.stat_types:
+            raise ce.InvalidStatTypeError(f"Invalid stat_type of: {stat_type}.  "
+                                          f"Valid stat types include: {self.stat_types}")
+
     def get_season_player_stats(self, year=None, years=None, stat_type=None, stat_types=None):
         """
-        Gets a DataFrame of statistics for a certain stat.
+        Gets a DataFrame of statistics for specified stats over a given amount of seasons.
         :param year: Integer or string representing season's year to get data for.
         :param years: Iterable of integers or strings for each season's year.
         :param stat_type: String representing what stat type to get.
         :param stat_types: List of strings for gathering multiple tables and joining them
         :return: DataFrame of statistics.
         """
-        # Mutually exclusive args.
-        if (year is None) == (years is None):
-            raise RuntimeError("Need to provide an argument for either 'year' or 'years', but not both.")
-        if (stat_type is None) == (stat_types is None):
-            raise RuntimeError("Need to provide an argument for either 'stat_type' or 'stat_types', but not both.")
-
+        self.__check_args(year, years, stat_type, stat_types)
         df = None
         if stat_type:
             # Get one or more years of data for just one stat type.
@@ -42,8 +151,6 @@ class SportsReference(object):
                 df = self.__merge_data_frames(sports_data_tables, stat_types)
             elif len(sports_data_tables) == 1:
                 df = sports_data_tables[0]
-        else:
-            raise RuntimeError("Invalid value given for stat_type or stat_types")
 
         # Change data from string to numeric, where applicable.
         df = df.apply(pd.to_numeric, errors='ignore')
@@ -61,6 +168,8 @@ class SportsReference(object):
         """
         stat_data_frames = []
         for stat in stat_types:
+            if not stat:
+                raise ce.NoStatTypeError(f"No value given for stat_type. Received: '{stat}'")
             df = self.__get_stat_data_for_all_years(year=year, years=years, stat_type=stat)
             stat_data_frames.append(df)
 
@@ -125,7 +234,6 @@ class SportsReference(object):
         :param stat_type: String representing the type of stats to be scraped.
         :return: A data frame of the scraped stats for a single season.
         """
-
         # get the HTML stat table from website
         table = self.__get_table(year, stat_type)
 
@@ -178,7 +286,7 @@ class SportsReference(object):
 
     def _create_url(self, year, stat_type):
         """Abstract method for creating URL to get stats from."""
-        raise NotImplementedError()
+        raise NotImplementedError("A subclass must implement this method.")
 
     def __get_table_headers(self, table_element):
         """
@@ -283,4 +391,4 @@ class SportsReference(object):
 
     def _create_player_url_column(self, df, year):
         """Abstract method for creating player_url column to use as an index."""
-        raise NotImplementedError()
+        raise NotImplementedError("A subclass must implement this method.")
